@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: obar-db
+    restart: always
+    environment:
+      POSTGRES_DB: obar
+      POSTGRES_USER: obar_user
+      POSTGRES_PASSWORD: obar_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+
+volumes:
+  db-data:

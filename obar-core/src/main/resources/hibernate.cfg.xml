@@ -1,33 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE hibernate-configuration PUBLIC
-        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
-        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 
 <hibernate-configuration>
     <session-factory>
-        <!-- Ligação à BD -->
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
         <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/obar</property>
         <property name="hibernate.connection.username">obar_user</property>
         <property name="hibernate.connection.password">obar_pass</property>
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
-        <!-- validate = usa o schema existente, não toca na BD -->
         <property name="hibernate.hbm2ddl.auto">validate</property>
-
-        <!-- Ver SQL no terminal durante desenvolvimento -->
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.format_sql">true</property>
 
-        <!-- Entitys -->
-        <mapping class="com.obar.model.User"/>
-        <mapping class="com.obar.model.Route"/>
-        <mapping class="com.obar.model.Vehicle"/>
-        <mapping class="com.obar.model.Trip"/>
-        <mapping class="com.obar.model.TripDriver"/>
-        <mapping class="com.obar.model.PaymentMethod"/>
-        <mapping class="com.obar.model.Payment"/>
-        <mapping class="com.obar.model.Review"/>
-        <mapping class="com.obar.model.Notification"/>
+        <!-- automatic snake_case -->
+        <property name="hibernate.physical_naming_strategy">
+            org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy</property>
+
+        <mapping class="com.obar.model.User" />
+        <mapping class="com.obar.model.Route" />
+        <mapping class="com.obar.model.Vehicle" />
+        <mapping class="com.obar.model.Trip" />
+        <mapping class="com.obar.model.TripDriver" />
+        <mapping class="com.obar.model.PaymentMethod" />
+        <mapping class="com.obar.model.Payment" />
+        <mapping class="com.obar.model.Review" />
+        <mapping class="com.obar.model.Notification" />
+
     </session-factory>
 </hibernate-configuration>

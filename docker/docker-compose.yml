@@ -4,11 +4,11 @@ services:
     container_name: obar-db
     restart: always
     environment:
-      POSTGRES_DB: obar
-      POSTGRES_USER: obar_user
-      POSTGRES_PASSWORD: obar_pass
+      POSTGRES_DB: ${DB_NAME:-obar}
+      POSTGRES_USER: ${DB_USER:-obar_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-obar_pass}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
 

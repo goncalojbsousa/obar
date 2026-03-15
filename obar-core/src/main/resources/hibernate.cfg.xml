@@ -4,9 +4,6 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/obar</property>
-        <property name="hibernate.connection.username">obar_user</property>
-        <property name="hibernate.connection.password">obar_pass</property>
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
         <property name="hibernate.hbm2ddl.auto">validate</property>

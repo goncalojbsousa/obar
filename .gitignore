@@ -199,3 +199,8 @@ README.html
 *.iml
 .idea
 .exercism
+
+# Local environment files
+.env
+.env.*
+!.env.example

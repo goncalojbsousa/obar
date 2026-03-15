@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"Trip\"")
+@Table(name = "trips")
 public class Trip {
 
     @Id
@@ -22,41 +22,51 @@ public class Trip {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "\"clientId\"", nullable = false)
+    @JoinColumn(name = "client_id", nullable = false)
     private User client;
 
     @ManyToOne
-    @JoinColumn(name = "\"driverId\"")
+    @JoinColumn(name = "driver_id")
     private User driver;
 
     @ManyToOne
-    @JoinColumn(name = "\"vehicleId\"")
+    @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
     @ManyToOne
-    @JoinColumn(name = "\"routeId\"", nullable = false)
+    @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(nullable = false)
+    @Column(name = "request_time", nullable = false)
     private LocalDateTime requestTime = LocalDateTime.now();
 
+    @Column(name = "start_time")
     private LocalDateTime startTime;
+
+    @Column(name = "end_time")
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "trip_status")
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private TripStatus status = TripStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "trip_type", nullable = false, columnDefinition = "trip_type")
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private TripType tripType;
 
+    @Column(name = "cancelled_by")
     private String cancelledBy;
+
+    @Column(name = "cancel_reason")
     private String cancelReason;
+
     private String notes;
 
+    @Column(name = "estimated_price")
     private BigDecimal estimatedPrice;
+
+    @Column(name = "final_price")
     private BigDecimal finalPrice;
 }

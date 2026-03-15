@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"Payment\"")
+@Table(name = "payments")
 public class Payment {
 
     @Id
@@ -21,21 +21,21 @@ public class Payment {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "\"tripId\"", nullable = false)
+    @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
     @ManyToOne
-    @JoinColumn(name = "\"paymentMethodId\"", nullable = false)
+    @JoinColumn(name = "payment_method_id", nullable = false)
     private PaymentMethod paymentMethod;
 
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "payment_status")
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private PaymentStatus status = PaymentStatus.PENDING;
 }

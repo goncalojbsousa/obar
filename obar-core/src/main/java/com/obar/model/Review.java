@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"Review\"")
+@Table(name = "reviews")
 public class Review {
 
     @Id
@@ -19,15 +19,15 @@ public class Review {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "\"tripId\"", nullable = false)
+    @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
 
     @ManyToOne
-    @JoinColumn(name = "\"reviewerId\"", nullable = false)
+    @JoinColumn(name = "reviewer_id", nullable = false)
     private User reviewer;
 
     @ManyToOne
-    @JoinColumn(name = "\"reviewedId\"", nullable = false)
+    @JoinColumn(name = "reviewed_id", nullable = false)
     private User reviewed;
 
     @Column(nullable = false)
@@ -35,9 +35,9 @@ public class Review {
 
     private String comment;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
+    @Column(name = "reviewer_type", nullable = false)
     private String reviewerType;
 }

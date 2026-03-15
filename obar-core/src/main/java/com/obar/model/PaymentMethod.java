@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"PaymentMethod\"")
+@Table(name = "payment_methods")
 public class PaymentMethod {
 
     @Id
@@ -17,7 +17,7 @@ public class PaymentMethod {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "\"clientId\"", nullable = false)
+    @JoinColumn(name = "client_id", nullable = false)
     private User client;
 
     @Column(nullable = false)

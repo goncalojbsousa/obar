@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "\"Vehicle\"")
+@Table(name = "vehicles")
 public class Vehicle {
 
     @Id
@@ -19,7 +19,7 @@ public class Vehicle {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "\"driverId\"", nullable = false)
+    @JoinColumn(name = "driver_id", nullable = false)
     private User driver;
 
     @Column(nullable = false)
@@ -30,7 +30,7 @@ public class Vehicle {
 
     private String color;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "license_plate", nullable = false, unique = true)
     private String licensePlate;
 
     private Integer year;
@@ -38,7 +38,10 @@ public class Vehicle {
     @Column(nullable = false)
     private String category;
 
+    @Column(name = "base_fare")
     private BigDecimal baseFare;
+
+    @Column(name = "price_per_km")
     private BigDecimal pricePerKm;
 
     @Column(nullable = false)

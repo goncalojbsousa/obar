@@ -1,20 +1,15 @@
 package com.obar;
 
-import com.obar.bll.UserService;
-import com.obar.model.User;
+import com.obar.bll.auth.AuthService;
+import com.obar.bll.auth.AuthenticatedUserDto;
+import com.obar.bll.auth.PasswordService;
+import com.obar.dal.UserRepository;
 import com.obar.model.enums.UserType;
 
 public class TestCore {
     public static void main(String[] args) {
-        UserService service = new UserService();
-
-        User user = new User();
-        user.setName("Teste");
-        user.setEmail("teste@obar.pt");
-        user.setPasswordHash("hash123");
-        user.setType(UserType.CLIENT);
-
-        User saved = service.register(user);
-        System.out.println("Utilizador criado com ID: " + saved.getId());
+        AuthService authService = new AuthService(new UserRepository(), new PasswordService());
+        AuthenticatedUserDto saved = authService.register("Teste", "teste@obar.pt", "Pass1234!", UserType.CLIENT);
+        System.out.println("User created with ID: " + saved.id());
     }
 }

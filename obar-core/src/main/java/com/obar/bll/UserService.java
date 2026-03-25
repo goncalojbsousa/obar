@@ -12,21 +12,6 @@ public class UserService {
 
     private final UserRepository userRepository = new UserRepository();
 
-    public User register(User user) {
-        // Verifica se o email já existe
-        Optional<User> existing = userRepository.findByEmail(user.getEmail());
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Email já registado: " + user.getEmail());
-        }
-        return userRepository.save(user);
-    }
-
-    public Optional<User> login(String email, String passwordHash) {
-        return userRepository.findByEmail(email)
-                .filter(u -> u.getPasswordHash().equals(passwordHash))
-                .filter(u -> u.getStatus() == AccountStatus.ACTIVE);
-    }
-
     public Optional<User> findById(Integer id) {
         return userRepository.findById(id);
     }

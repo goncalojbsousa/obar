@@ -1,6 +1,7 @@
 package com.obar.model;
 
 import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.ClientTaxCategory;
 import com.obar.model.enums.UserType;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -50,6 +51,19 @@ public class User {
 
     @Column(name = "default_payment_method_id")
     private Integer defaultPaymentMethodId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tax_category", columnDefinition = "client_tax_category")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
+    private ClientTaxCategory taxCategory;
+
+    @ManyToOne
+    @JoinColumn(name = "default_tax_rate_id")
+    private TaxRate defaultTaxRate;
+
+    @ManyToOne
+    @JoinColumn(name = "default_currency_id")
+    private Currency defaultCurrency;
 
     // Campos DRIVER
     @Column(name = "license_number")

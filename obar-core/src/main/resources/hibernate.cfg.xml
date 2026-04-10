@@ -21,6 +21,8 @@
         <mapping class="com.obar.model.TripDriver" />
         <mapping class="com.obar.model.PaymentMethod" />
         <mapping class="com.obar.model.Payment" />
+        <mapping class="com.obar.model.TaxRate" />
+        <mapping class="com.obar.model.Currency" />
         <mapping class="com.obar.model.Review" />
         <mapping class="com.obar.model.Notification" />
 

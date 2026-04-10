@@ -38,4 +38,30 @@ public class Payment {
     @Column(nullable = false, columnDefinition = "payment_status")
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private PaymentStatus status = PaymentStatus.PENDING;
+
+    @ManyToOne
+    @JoinColumn(name = "tax_rate_id")
+    private TaxRate taxRate;
+
+    @Column(name = "tax_rate_applied")
+    private BigDecimal taxRateApplied;
+
+    @Column(name = "net_amount")
+    private BigDecimal netAmount;
+
+    @Column(name = "tax_amount")
+    private BigDecimal taxAmount;
+
+    @Column(name = "billing_nif")
+    private String billingNif;
+
+    @Column(name = "billing_name")
+    private String billingName;
+
+    @ManyToOne
+    @JoinColumn(name = "currency_id")
+    private Currency currency;
+
+    @Column(name = "exchange_rate_to_eur")
+    private BigDecimal exchangeRateToEur;
 }

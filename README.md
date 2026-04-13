@@ -43,7 +43,7 @@ docker compose --env-file .env -f docker/docker-compose.yml up -d
 
 This starts a PostgreSQL 16 instance on `localhost:5432`.
 
-> The database schema is managed by **Flyway** and is applied automatically when the application starts for the first time.
+> The database schema and seed data are managed by **Flyway** migrations. They are applied automatically when you first run either the desktop or web application.
 
 ### 3. Open in IntelliJ
 
@@ -96,6 +96,7 @@ Naming convention:
 V1__create_schema.sql
 V2__add_some_feature.sql
 V3__insert_seed_data.sql
+V4__seed_admin_users.sql
 ```
 
 **Never edit an existing migration file.** Always create a new one.

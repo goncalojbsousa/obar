@@ -161,7 +161,9 @@ $RECYCLE.BIN/
 *.lnk
 
 ### IntelliJ IDEA ###
-.idea
+.idea/*
+!.idea/runConfigurations/
+!.idea/runConfigurations/*.xml
 *.iws
 *.iml
 *.ipr
@@ -197,7 +199,6 @@ dependency-reduced-pom.xml
 .gradle
 README.html
 *.iml
-.idea
 .exercism
 
 # Local environment files

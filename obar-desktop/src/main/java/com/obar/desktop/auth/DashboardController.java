@@ -4,13 +4,17 @@ import com.obar.bll.auth.AuthService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
+import com.obar.model.enums.UserType;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 /**
  * JavaFX controller for the desktop authentication dashboard screen
  */
 public class DashboardController {
+
+    private final AuthService authService;
 
     @FXML
     private Label welcomeLabel;
@@ -20,6 +24,9 @@ public class DashboardController {
 
     @FXML
     private Label statusLabel;
+
+    @FXML
+    private Button openAdminButton;
 
     /**
      * Creates a dashboard controller with the authentication service dependency
@@ -31,6 +38,7 @@ public class DashboardController {
         if (authService == null) {
             throw new IllegalArgumentException("AuthService must not be null.");
         }
+        this.authService = authService;
     }
 
     /**
@@ -44,6 +52,15 @@ public class DashboardController {
         welcomeLabel.setText("Welcome, " + currentUser.name());
         roleLabel.setText("Role: " + currentUser.type());
         statusLabel.setText("Status: " + currentUser.status());
+
+        boolean isAdmin = currentUser.type() == UserType.ADMIN;
+        openAdminButton.setVisible(isAdmin);
+        openAdminButton.setManaged(isAdmin);
+    }
+
+    @FXML
+    public void handleOpenAdmin() {
+        NavigationManager.navigateToAdmin();
     }
 
     /**

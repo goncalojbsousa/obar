@@ -127,3 +127,11 @@ docker compose --env-file .env -f docker/docker-compose.yml down -v
 | Web | Spring Web MVC + Thymeleaf |
 | Build | Maven (multi-module) |
 | Language | Java 21 |
+
+---
+
+## Documentation
+
+Project documentation for architecture and development workflow is in `docs/`:
+
+- `docs/ARCHITECTURE.md`

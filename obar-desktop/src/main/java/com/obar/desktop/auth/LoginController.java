@@ -5,6 +5,7 @@ import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.bll.auth.AuthenticationException;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
+import com.obar.model.enums.UserType;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -40,7 +41,8 @@ public class LoginController {
     }
 
     /**
-     * Handles login button actions by authenticating credentials and navigating on success
+     * Handles login button actions by authenticating credentials and navigating on
+     * success
      *
      * @throws RuntimeException when authentication dependencies fail unexpectedly
      */
@@ -55,7 +57,11 @@ public class LoginController {
                     passwordField.getText());
 
             SessionManager.login(authenticatedUser);
-            NavigationManager.navigateToDashboard();
+            if (authenticatedUser.type() == UserType.ADMIN) {
+                NavigationManager.navigateToAdmin();
+            } else {
+                NavigationManager.navigateToDashboard();
+            }
         } catch (AuthenticationException exception) {
             errorLabel.setText(exception.getMessage());
             errorLabel.setVisible(true);

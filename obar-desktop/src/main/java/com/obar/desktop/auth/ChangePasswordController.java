@@ -13,8 +13,6 @@ import javafx.scene.control.PasswordField;
  */
 public class ChangePasswordController {
 
-    private static final int MIN_PASSWORD_LENGTH = 8;
-
     private final AuthService authService;
 
     @FXML
@@ -30,7 +28,8 @@ public class ChangePasswordController {
     private Label messageLabel;
 
     /**
-     * Creates a change-password controller with the authentication service dependency
+     * Creates a change-password controller with the authentication service
+     * dependency
      *
      * @param authService authentication service used for password updates
      * @throws IllegalArgumentException when {@code authService} is {@code null}
@@ -46,7 +45,7 @@ public class ChangePasswordController {
      * Saves the new password when local confirmation succeeds
      *
      * @throws IllegalStateException when no authenticated session exists
-     * @throws RuntimeException when navigation fails after a successful update
+     * @throws RuntimeException      when navigation fails after a successful update
      */
     @FXML
     public void handleSave() {
@@ -58,14 +57,6 @@ public class ChangePasswordController {
 
         if (newPassword == null || !newPassword.equals(confirmPassword)) {
             messageLabel.setText("New password and confirmation do not match.");
-            messageLabel.setVisible(true);
-            messageLabel.setManaged(true);
-            return;
-        }
-
-        String passwordValidationMessage = validatePasswordComplexity(newPassword);
-        if (passwordValidationMessage != null) {
-            messageLabel.setText(passwordValidationMessage);
             messageLabel.setVisible(true);
             messageLabel.setManaged(true);
             return;
@@ -92,25 +83,5 @@ public class ChangePasswordController {
     @FXML
     public void handleCancel() {
         NavigationManager.navigateToDashboard();
-    }
-
-    private String validatePasswordComplexity(String password) {
-        if (password.length() < MIN_PASSWORD_LENGTH) {
-            return "New password must be at least " + MIN_PASSWORD_LENGTH + " characters.";
-        }
-        if (password.chars().noneMatch(Character::isDigit)) {
-            return "New password must contain at least one number.";
-        }
-        if (password.chars().noneMatch(Character::isUpperCase)) {
-            return "New password must contain at least one uppercase letter.";
-        }
-        if (password.chars().noneMatch(Character::isLowerCase)) {
-            return "New password must contain at least one lowercase letter.";
-        }
-        boolean hasSpecialCharacter = password.chars().anyMatch(ch -> !Character.isLetterOrDigit(ch));
-        if (!hasSpecialCharacter) {
-            return "New password must contain at least one special character.";
-        }
-        return null;
     }
 }

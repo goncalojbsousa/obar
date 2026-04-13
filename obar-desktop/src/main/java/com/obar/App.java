@@ -1,19 +1,22 @@
 package com.obar;
 
 import atlantafx.base.theme.PrimerLight;
-import com.obar.config.HibernateUtil;
+import com.obar.bll.CoreLifecycleService;
 import com.obar.desktop.navigation.NavigationManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
 /**
- * Desktop module JavaFX application entry point for manually testing authentication flows
+ * Desktop module JavaFX application entry point for manually testing
+ * authentication flows
  */
 public class App extends Application {
 
+    private final CoreLifecycleService coreLifecycleService = new CoreLifecycleService();
+
     @Override
     public void init() {
-        HibernateUtil.warmUp();
+        coreLifecycleService.warmUp();
     }
 
     /**
@@ -33,7 +36,7 @@ public class App extends Application {
 
     @Override
     public void stop() {
-        HibernateUtil.shutdown();
+        coreLifecycleService.shutdown();
     }
 
 }

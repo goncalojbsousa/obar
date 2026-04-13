@@ -17,10 +17,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordService passwordService;
 
+    public AuthService() {
+        this(new UserRepository(), new PasswordService());
+    }
+
     /**
      * Creates a new authentication service with required collaborators
      *
-     * @param userRepository repository used to load and update users
+     * @param userRepository  repository used to load and update users
      * @param passwordService service used to hash and verify passwords
      */
     public AuthService(UserRepository userRepository, PasswordService passwordService) {
@@ -31,12 +35,13 @@ public class AuthService {
     /**
      * Registers a new user with secure password hashing
      *
-     * @param name user full name
-     * @param email user email address
+     * @param name          user full name
+     * @param email         user email address
      * @param plainPassword plain-text password provided at registration
-     * @param type role assigned to the new user
+     * @param type          role assigned to the new user
      * @return authenticated user DTO for the newly created user
-     * @throws AuthenticationException when required values are missing or email is already registered
+     * @throws AuthenticationException when required values are missing or email is
+     *                                 already registered
      */
     public AuthenticatedUserDto register(String name, String email, String plainPassword, UserType type) {
         String safeName = name == null ? "" : name.trim();
@@ -70,10 +75,13 @@ public class AuthService {
     /**
      * Authenticates a user by email and password
      *
-     * @param email user email
+     * @param email    user email
      * @param password plain-text password
-     * @return authenticated user DTO when credentials are valid and account is active
-     * @throws AuthenticationException when the email is unknown, password is invalid, or account status does not permit login
+     * @return authenticated user DTO when credentials are valid and account is
+     *         active
+     * @throws AuthenticationException when the email is unknown, password is
+     *                                 invalid, or account status does not permit
+     *                                 login
      */
     public AuthenticatedUserDto authenticate(String email, String password) {
         String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
@@ -93,10 +101,12 @@ public class AuthService {
     /**
      * Changes a user's password after validating current credentials
      *
-     * @param userId identifier of the user updating credentials
+     * @param userId          identifier of the user updating credentials
      * @param currentPassword current plain-text password for confirmation
-     * @param newPassword new plain-text password to persist
-     * @throws AuthenticationException when the user does not exist, current password is incorrect, or the new password is blank or unchanged
+     * @param newPassword     new plain-text password to persist
+     * @throws AuthenticationException when the user does not exist, current
+     *                                 password is incorrect, or the new password is
+     *                                 blank or unchanged
      */
     public void changePassword(Integer userId, String currentPassword, String newPassword) {
         User user = userRepository.findById(userId)

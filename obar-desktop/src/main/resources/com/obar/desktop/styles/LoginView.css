@@ -1,0 +1,223 @@
+.login-root {
+    -fx-background-color: linear-gradient(to right, #05070d 0%, #070a12 54%, #11131c 100%);
+}
+
+.login-hero {
+    -fx-background-color: #03050a;
+}
+
+.login-panel {
+    -fx-background-color: #090c14;
+}
+
+.login-glow-top,
+.login-glow-bottom {
+    -fx-background-radius: 220;
+    -fx-opacity: 1;
+}
+
+.login-glow-top {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 50%, rgba(255, 104, 44, 0.24) 0%, rgba(255, 104, 44, 0.14) 40%, rgba(255, 104, 44, 0.05) 68%, transparent 100%);
+    -fx-pref-width: 290;
+    -fx-pref-height: 220;
+}
+
+.login-glow-bottom {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 50%, rgba(255, 91, 28, 0.26) 0%, rgba(255, 91, 28, 0.15) 42%, rgba(255, 91, 28, 0.05) 70%, transparent 100%);
+    -fx-pref-width: 340;
+    -fx-pref-height: 260;
+}
+
+.login-hero-content {
+    -fx-padding: 0;
+}
+
+.logo-white,
+.logo-orange {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-font-family: "Arial Black";
+}
+
+.logo-white {
+    -fx-text-fill: #f4f5f8;
+}
+
+.logo-orange {
+    -fx-text-fill: #ff5e1d;
+}
+
+.login-headline-wrap {
+    -fx-padding: 0;
+}
+
+.login-headline {
+    -fx-line-spacing: 4px;
+}
+
+.headline-white,
+.headline-orange {
+    -fx-font-size: 58px;
+    -fx-font-weight: 800;
+    -fx-font-family: "Arial Black";
+}
+
+.headline-white {
+    -fx-fill: #f3f4f7;
+}
+
+.headline-orange {
+    -fx-fill: #ff5f1e;
+}
+
+.login-hero-subtitle {
+    -fx-text-fill: #6d7282;
+    -fx-font-size: 18px;
+    -fx-line-spacing: 3px;
+}
+
+.login-stats-row {
+    -fx-padding: 0;
+}
+
+.stat-value {
+    -fx-text-fill: #eceef2;
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+}
+
+.stat-label {
+    -fx-text-fill: #5f6574;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.login-card {
+    -fx-background-color: #090c14;
+    -fx-background-radius: 14;
+    -fx-border-color: transparent;
+    -fx-border-radius: 14;
+    -fx-max-width: 460;
+    -fx-min-width: 390;
+    -fx-pref-width: 430;
+    -fx-translate-y: 34;
+}
+
+.login-segment {
+    -fx-background-color: #0a0c13;
+    -fx-background-radius: 10;
+    -fx-padding: 4;
+}
+
+.login-segment .button {
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 8 14;
+}
+
+.login-segment .button.segment-active {
+    -fx-background-color: #ff601e;
+    -fx-text-fill: #fff6f2;
+}
+
+.login-segment .button.segment-idle {
+    -fx-background-color: transparent;
+    -fx-text-fill: #666f83;
+}
+
+.login-segment .button.segment-idle:hover {
+    -fx-background-color: #151929;
+}
+
+.login-title {
+    -fx-text-fill: #eff2f8;
+    -fx-font-size: 36px;
+    -fx-font-weight: 750;
+}
+
+.login-subtitle {
+    -fx-text-fill: #616a7e;
+    -fx-font-size: 16px;
+}
+
+.field-label {
+    -fx-text-fill: #5d667b;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.login-card .text-field,
+.login-card .password-field {
+    -fx-background-color: #090c14;
+    -fx-text-fill: #e5eaf7;
+    -fx-prompt-text-fill: #515a6f;
+    -fx-border-color: #232a3c;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 14px;
+    -fx-padding: 11 12;
+}
+
+.forgot-link {
+    -fx-text-fill: #ff6a2e;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-border-color: transparent;
+}
+
+.forgot-link:hover {
+    -fx-text-fill: #ff8455;
+}
+
+.login-submit {
+    -fx-background-color: linear-gradient(to right, #ff6a2f, #ff5317);
+    -fx-text-fill: #fff6f1;
+    -fx-font-size: 16px;
+    -fx-font-weight: 750;
+    -fx-background-radius: 8;
+    -fx-padding: 12 16;
+}
+
+.login-submit:hover {
+    -fx-background-color: linear-gradient(to right, #ff7a43, #ff6332);
+}
+
+.login-card .separator .line {
+    -fx-border-color: #262c3f;
+}
+
+.or-label {
+    -fx-text-fill: #5d6578;
+    -fx-font-size: 12px;
+}
+
+.login-card .button.role-active,
+.login-card .button.role-idle {
+    -fx-padding: 10 12;
+    -fx-font-weight: 700;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.login-card .button.role-active {
+    -fx-background-color: rgba(255, 96, 30, 0.18);
+    -fx-border-color: rgba(255, 96, 30, 0.55);
+    -fx-text-fill: #ff8959;
+}
+
+.login-card .button.role-idle {
+    -fx-background-color: #101421;
+    -fx-border-color: #232a3d;
+    -fx-text-fill: #647089;
+}
+
+.login-card .button.role-idle:hover {
+    -fx-background-color: #161c2d;
+}
+
+.login-error {
+    -fx-text-fill: #ff9191;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}

@@ -89,12 +89,13 @@
 
                 <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="users-table">
                     <columns>
-                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="265.0" />
-                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="115.0" />
-                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="115.0" />
-                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="110.0" />
-                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="130.0" />
-                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="160.0" />
+                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="220.0" />
+                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="240.0" />
+                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="110.0" />
+                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="110.0" />
+                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="100.0" />
+                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="125.0" />
+                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="150.0" />
                     </columns>
                 </TableView>
 

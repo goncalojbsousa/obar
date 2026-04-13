@@ -136,6 +136,9 @@ public class AdminController {
     private TableColumn<AdminUserDTO, String> nameColumn;
 
     @FXML
+    private TableColumn<AdminUserDTO, String> emailColumn;
+
+    @FXML
     private TableColumn<AdminUserDTO, String> statusColumn;
 
     @FXML
@@ -394,6 +397,7 @@ public class AdminController {
 
     private void setupColumns() {
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
+        emailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(fallback(cellData.getValue().getEmail())));
 
         statusColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(prettyStatus(cellData.getValue().getStatus())));
@@ -441,12 +445,15 @@ public class AdminController {
 
         if (section == AdminSection.DRIVERS) {
             nameColumn.setText("Motorista");
+            emailColumn.setText("Email");
+            emailColumn.setVisible(true);
             metricColumn.setText("Avaliacao");
             volumeColumn.setText("Viagens");
             referenceColumn.setText("Licenca");
             searchField.setPromptText("Pesquisar por nome, email, telefone, licenca...");
         } else {
             nameColumn.setText("Cliente");
+            emailColumn.setVisible(false);
             metricColumn.setText("Email");
             volumeColumn.setText("Telefone");
             referenceColumn.setText("NIF");

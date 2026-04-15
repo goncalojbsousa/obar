@@ -46,6 +46,9 @@
                 <Button fx:id="clientesSectionButton" text="Clientes"
                     onAction="#handleClientesSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
+                <Button fx:id="viagensSectionButton" text="Viagens"
+                    onAction="#handleViagensSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
 
                 <Label text="SISTEMA" styleClass="sidebar-group-title" />
                 <Button text="Back to Dashboard" onAction="#handleBackToDashboard"
@@ -118,6 +121,19 @@
                         <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="100.0" />
                         <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="125.0" />
                         <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="150.0" />
+                    </columns>
+                </TableView>
+
+                <TableView fx:id="tripsTable" VBox.vgrow="ALWAYS" styleClass="users-table"
+                    visible="false" managed="false">
+                    <columns>
+                        <TableColumn fx:id="tripIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="tripClientColumn" text="Cliente" prefWidth="180.0" />
+                        <TableColumn fx:id="tripDriverColumn" text="Motorista" prefWidth="180.0" />
+                        <TableColumn fx:id="tripStatusColumn" text="Estado" prefWidth="120.0" />
+                        <TableColumn fx:id="tripTypeColumn" text="Tipo" prefWidth="110.0" />
+                        <TableColumn fx:id="tripPriceColumn" text="Valor" prefWidth="100.0" />
+                        <TableColumn fx:id="tripRequestedAtColumn" text="Pedido em" prefWidth="160.0" />
                     </columns>
                 </TableView>
 

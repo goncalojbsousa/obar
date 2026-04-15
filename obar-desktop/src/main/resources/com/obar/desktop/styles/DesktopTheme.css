@@ -250,6 +250,27 @@
     -fx-text-fill: #ffd379;
 }
 
+.users-table .table-cell.trip-completed {
+    -fx-text-fill: #56e39a;
+}
+
+.users-table .table-cell.trip-in-progress {
+    -fx-text-fill: #7fb6ff;
+}
+
+.users-table .table-cell.trip-accepted {
+    -fx-text-fill: #8dc5ff;
+}
+
+.users-table .table-cell.trip-pending {
+    -fx-text-fill: #ffd379;
+}
+
+.users-table .table-cell.trip-cancelled,
+.users-table .table-cell.trip-rejected {
+    -fx-text-fill: #ff8f8f;
+}
+
 .detail-panel {
     -fx-background-color: #111113;
     -fx-border-color: #232326;

@@ -1,6 +1,7 @@
 package com.obar.bll.admin;
 
 import com.obar.bll.auth.PasswordService;
+import com.obar.dal.TripRepository;
 import com.obar.dal.UserRepository;
 import com.obar.model.User;
 import com.obar.model.enums.AccountStatus;
@@ -19,20 +20,32 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final PasswordService passwordService;
+    private final TripRepository tripRepository;
 
     public AdminService() {
-        this(new UserRepository(), new PasswordService());
+        this(new UserRepository(), new PasswordService(), new TripRepository());
     }
 
     public AdminService(UserRepository userRepository, PasswordService passwordService) {
+        this(userRepository, passwordService, new TripRepository());
+    }
+
+    public AdminService(
+            UserRepository userRepository,
+            PasswordService passwordService,
+            TripRepository tripRepository) {
         if (userRepository == null) {
             throw new IllegalArgumentException("UserRepository must not be null.");
         }
         if (passwordService == null) {
             throw new IllegalArgumentException("PasswordService must not be null.");
         }
+        if (tripRepository == null) {
+            throw new IllegalArgumentException("TripRepository must not be null.");
+        }
         this.userRepository = userRepository;
         this.passwordService = passwordService;
+        this.tripRepository = tripRepository;
     }
 
     public List<AdminUserDTO> listUsersByType(UserType type) {
@@ -41,6 +54,12 @@ public class AdminService {
         }
         return userRepository.findByType(type).stream()
                 .map(AdminUserDTO::from)
+                .toList();
+    }
+
+    public List<AdminTripDTO> listTrips() {
+        return tripRepository.findAllForAdminDashboard().stream()
+                .map(AdminTripDTO::from)
                 .toList();
     }
 

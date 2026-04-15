@@ -1,6 +1,7 @@
 package com.obar.desktop.admin;
 
 import com.obar.bll.admin.AdminService;
+import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
@@ -8,6 +9,8 @@ import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
 import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.TripType;
 import com.obar.model.enums.UserType;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -38,13 +41,14 @@ public class AdminController {
         NONE,
         CREATE,
         EDIT,
+        CREATE_TRIP,
         DELETE_CONFIRM
     }
 
     private enum AdminSection {
         DRIVERS("Motoristas", "+ Novo Motorista", UserType.DRIVER, "Motorista"),
         CLIENTS("Clientes", "+ Novo Cliente", UserType.CLIENT, "Cliente"),
-        TRIPS("Viagens", "", null, "Viagem");
+        TRIPS("Viagens", "+ Nova Viagem", null, "Viagem");
 
         private final String title;
         private final String createLabel;
@@ -155,6 +159,9 @@ public class AdminController {
     private TableColumn<AdminUserDTO, String> nameColumn;
 
     @FXML
+    private TableColumn<AdminUserDTO, String> userIdColumn;
+
+    @FXML
     private TableColumn<AdminUserDTO, String> emailColumn;
 
     @FXML
@@ -239,6 +246,9 @@ public class AdminController {
     private VBox modalUserFormSection;
 
     @FXML
+    private VBox modalTripFormSection;
+
+    @FXML
     private VBox modalDeleteSection;
 
     @FXML
@@ -258,6 +268,33 @@ public class AdminController {
 
     @FXML
     private TextField modalReferenceField;
+
+    @FXML
+    private TextField modalTripClientIdField;
+
+    @FXML
+    private TextField modalTripDriverIdField;
+
+    @FXML
+    private ComboBox<TripType> modalTripTypeCombo;
+
+    @FXML
+    private ComboBox<TripStatus> modalTripStatusCombo;
+
+    @FXML
+    private TextField modalTripOriginField;
+
+    @FXML
+    private TextField modalTripDestinationField;
+
+    @FXML
+    private TextField modalTripEstimatedPriceField;
+
+    @FXML
+    private TextField modalTripFinalPriceField;
+
+    @FXML
+    private TextField modalTripNotesField;
 
     @FXML
     private ComboBox<AccountStatus> modalStatusCombo;
@@ -298,6 +335,8 @@ public class AdminController {
                 .addListener((obs, previous, current) -> onSelectionChanged(current));
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
+        modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
+        modalTripStatusCombo.setItems(FXCollections.observableArrayList(TripStatus.values()));
 
         editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
         deleteUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
@@ -357,7 +396,7 @@ public class AdminController {
     @FXML
     public void handleAddUser() {
         if (currentSection == AdminSection.TRIPS) {
-            showFeedback("Criacao direta de viagens nao esta disponivel nesta vista.", true);
+            openTripFormModal();
             return;
         }
         openUserFormModal(null);
@@ -405,8 +444,13 @@ public class AdminController {
 
     @FXML
     public void handleModalSave() {
-        if (modalMode != ModalMode.CREATE && modalMode != ModalMode.EDIT) {
+        if (modalMode != ModalMode.CREATE && modalMode != ModalMode.EDIT && modalMode != ModalMode.CREATE_TRIP) {
             hideModal();
+            return;
+        }
+
+        if (modalMode == ModalMode.CREATE_TRIP) {
+            persistCreateTrip();
             return;
         }
 
@@ -459,6 +503,10 @@ public class AdminController {
     }
 
     private void setupColumns() {
+        userIdColumn.setCellValueFactory(cellData ->
+            new SimpleStringProperty(cellData.getValue().getId() == null
+                ? "-"
+                : "#" + cellData.getValue().getId()));
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         emailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(fallback(cellData.getValue().getEmail())));
 
@@ -570,8 +618,8 @@ public class AdminController {
         usersTable.setManaged(!isTripsSection);
         tripsTable.setVisible(isTripsSection);
         tripsTable.setManaged(isTripsSection);
-        addUserButton.setVisible(!isTripsSection);
-        addUserButton.setManaged(!isTripsSection);
+        addUserButton.setVisible(true);
+        addUserButton.setManaged(true);
         editUserButton.setVisible(!isTripsSection);
         editUserButton.setManaged(!isTripsSection);
         deleteUserButton.setVisible(!isTripsSection);
@@ -845,6 +893,8 @@ public class AdminController {
 
         modalUserFormSection.setVisible(true);
         modalUserFormSection.setManaged(true);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
         modalDeleteSection.setVisible(false);
         modalDeleteSection.setManaged(false);
 
@@ -878,6 +928,38 @@ public class AdminController {
         showModal();
     }
 
+    private void openTripFormModal() {
+        modalMode = ModalMode.CREATE_TRIP;
+        modalTargetUser = null;
+
+        modalTitleLabel.setText("Nova viagem");
+
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(true);
+        modalTripFormSection.setManaged(true);
+        modalDeleteSection.setVisible(false);
+        modalDeleteSection.setManaged(false);
+
+        modalSaveButton.setVisible(true);
+        modalSaveButton.setManaged(true);
+        modalDeleteConfirmButton.setVisible(false);
+        modalDeleteConfirmButton.setManaged(false);
+
+        modalTripClientIdField.clear();
+        modalTripDriverIdField.clear();
+        modalTripTypeCombo.setValue(TripType.IMMEDIATE);
+        modalTripStatusCombo.setValue(TripStatus.PENDING);
+        modalTripOriginField.clear();
+        modalTripDestinationField.clear();
+        modalTripEstimatedPriceField.clear();
+        modalTripFinalPriceField.clear();
+        modalTripNotesField.clear();
+
+        clearModalError();
+        showModal();
+    }
+
     private void openDeleteConfirmModal(AdminUserDTO selectedUser) {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTargetUser = selectedUser;
@@ -887,6 +969,8 @@ public class AdminController {
 
         modalUserFormSection.setVisible(false);
         modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
         modalDeleteSection.setVisible(true);
         modalDeleteSection.setManaged(true);
 
@@ -928,6 +1012,28 @@ public class AdminController {
         }
     }
 
+    private void persistCreateTrip() {
+        try {
+            AdminTripCommand command = new AdminTripCommand(
+                    parseRequiredInteger(modalTripClientIdField.getText(), "Cliente ID"),
+                    parseOptionalInteger(modalTripDriverIdField.getText()),
+                    modalTripOriginField.getText(),
+                    modalTripDestinationField.getText(),
+                    modalTripTypeCombo.getValue(),
+                    modalTripStatusCombo.getValue(),
+                    modalTripNotesField.getText(),
+                    parseOptionalDecimal(modalTripEstimatedPriceField.getText()),
+                    parseOptionalDecimal(modalTripFinalPriceField.getText()));
+
+            adminService.createTrip(command);
+            hideModal();
+            refreshSectionData();
+            showFeedback("Viagem criada com sucesso.", false);
+        } catch (Exception exception) {
+            showModalError("Falha ao criar viagem: " + exception.getMessage());
+        }
+    }
+
     private void persistEditUser() {
         try {
             if (modalTargetUser == null) {
@@ -961,6 +1067,12 @@ public class AdminController {
     private void hideModal() {
         modalMode = ModalMode.NONE;
         modalTargetUser = null;
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
+        modalDeleteSection.setVisible(false);
+        modalDeleteSection.setManaged(false);
         modalOverlay.setVisible(false);
         modalOverlay.setManaged(false);
         clearModalError();
@@ -1073,6 +1185,38 @@ public class AdminController {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private Integer parseRequiredInteger(String rawValue, String fieldName) {
+        Integer parsed = parseOptionalInteger(rawValue);
+        if (parsed == null) {
+            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
+        }
+        return parsed;
+    }
+
+    private Integer parseOptionalInteger(String rawValue) {
+        String safe = rawValue == null ? "" : rawValue.trim();
+        if (safe.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(safe);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("ID invalido: " + safe);
+        }
+    }
+
+    private java.math.BigDecimal parseOptionalDecimal(String rawValue) {
+        String safe = rawValue == null ? "" : rawValue.trim();
+        if (safe.isBlank()) {
+            return null;
+        }
+        try {
+            return new java.math.BigDecimal(safe);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Valor monetario invalido: " + safe);
+        }
     }
 
 }

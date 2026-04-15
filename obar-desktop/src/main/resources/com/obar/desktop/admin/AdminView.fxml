@@ -114,13 +114,14 @@
 
                 <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="users-table">
                     <columns>
-                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="220.0" />
-                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="240.0" />
-                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="110.0" />
-                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="110.0" />
-                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="100.0" />
-                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="125.0" />
-                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="150.0" />
+                        <TableColumn fx:id="userIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="200.0" />
+                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="220.0" />
+                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="105.0" />
+                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="105.0" />
+                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="95.0" />
+                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="120.0" />
+                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="140.0" />
                     </columns>
                 </TableView>
 
@@ -245,6 +246,57 @@
                         <PasswordField fx:id="modalConfirmPasswordField" promptText="Confirmar" />
                     </VBox>
                 </HBox>
+            </VBox>
+
+            <VBox fx:id="modalTripFormSection" spacing="10.0" visible="false" managed="false">
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Cliente ID" styleClass="meta-title" />
+                        <TextField fx:id="modalTripClientIdField" promptText="ID do cliente" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Motorista ID (opcional)" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDriverIdField" promptText="ID do motorista" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Tipo" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripTypeCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Estado" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripStatusCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Origem" styleClass="meta-title" />
+                        <TextField fx:id="modalTripOriginField" promptText="Morada de origem" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Destino" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDestinationField" promptText="Morada de destino" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco estimado" styleClass="meta-title" />
+                        <TextField fx:id="modalTripEstimatedPriceField" promptText="ex: 12.50" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco final" styleClass="meta-title" />
+                        <TextField fx:id="modalTripFinalPriceField" promptText="ex: 13.80" />
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="4.0">
+                    <Label text="Notas" styleClass="meta-title" />
+                    <TextField fx:id="modalTripNotesField" promptText="Notas opcionais" />
+                </VBox>
             </VBox>
 
             <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">

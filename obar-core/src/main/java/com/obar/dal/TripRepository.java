@@ -38,4 +38,17 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
                     .list();
         }
     }
+
+    public List<Trip> findAllForAdminDashboard() {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                            "SELECT t FROM Trip t "
+                                    + "LEFT JOIN FETCH t.client "
+                                    + "LEFT JOIN FETCH t.driver "
+                                    + "LEFT JOIN FETCH t.route "
+                                    + "ORDER BY t.requestTime DESC",
+                            Trip.class)
+                    .list();
+        }
+    }
 }

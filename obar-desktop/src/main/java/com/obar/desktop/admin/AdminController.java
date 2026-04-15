@@ -1,12 +1,16 @@
 package com.obar.desktop.admin;
 
 import com.obar.bll.admin.AdminService;
+import com.obar.bll.admin.AdminTripCommand;
+import com.obar.bll.admin.AdminTripDTO;
 import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
 import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.TripType;
 import com.obar.model.enums.UserType;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -30,17 +34,23 @@ public class AdminController {
             Locale.forLanguageTag("pt-PT"));
     private static final DateTimeFormatter DETAIL_CREATED_AT_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm",
             Locale.forLanguageTag("pt-PT"));
+        private static final DateTimeFormatter TRIP_REQUESTED_AT_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     private enum ModalMode {
         NONE,
         CREATE,
         EDIT,
+        CREATE_TRIP,
+        EDIT_TRIP,
+        DELETE_TRIP_CONFIRM,
         DELETE_CONFIRM
     }
 
     private enum AdminSection {
         DRIVERS("Motoristas", "+ Novo Motorista", UserType.DRIVER, "Motorista"),
-        CLIENTS("Clientes", "+ Novo Cliente", UserType.CLIENT, "Cliente");
+        CLIENTS("Clientes", "+ Novo Cliente", UserType.CLIENT, "Cliente"),
+        TRIPS("Viagens", "+ Nova Viagem", null, "Viagem");
 
         private final String title;
         private final String createLabel;
@@ -58,11 +68,15 @@ public class AdminController {
     private final AdminService adminService;
     private final ObservableList<AdminUserDTO> allUsers = FXCollections.observableArrayList();
     private final FilteredList<AdminUserDTO> filteredUsers = new FilteredList<>(allUsers, user -> true);
+    private final ObservableList<AdminTripDTO> allTrips = FXCollections.observableArrayList();
+    private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
 
     private AdminSection currentSection = AdminSection.DRIVERS;
     private AccountStatus currentStatusFilter;
+    private TripStatus currentTripStatusFilter;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminUserDTO modalTargetUser;
+    private AdminTripDTO modalTargetTrip;
 
     @FXML
     private Label currentSectionLabel;
@@ -84,6 +98,9 @@ public class AdminController {
 
     @FXML
     private Label detailInitialsLabel;
+
+    @FXML
+    private Label detailTitleLabel;
 
     @FXML
     private Label detailNameLabel;
@@ -134,6 +151,24 @@ public class AdminController {
     private Label detailCreatedValueLabel;
 
     @FXML
+    private Label detailExtraOneTitleLabel;
+
+    @FXML
+    private Label detailExtraOneValueLabel;
+
+    @FXML
+    private Label detailExtraTwoTitleLabel;
+
+    @FXML
+    private Label detailExtraTwoValueLabel;
+
+    @FXML
+    private Label detailExtraThreeTitleLabel;
+
+    @FXML
+    private Label detailExtraThreeValueLabel;
+
+    @FXML
     private VBox detailPanel;
 
     @FXML
@@ -143,7 +178,13 @@ public class AdminController {
     private TableView<AdminUserDTO> usersTable;
 
     @FXML
+    private TableView<AdminTripDTO> tripsTable;
+
+    @FXML
     private TableColumn<AdminUserDTO, String> nameColumn;
+
+    @FXML
+    private TableColumn<AdminUserDTO, String> userIdColumn;
 
     @FXML
     private TableColumn<AdminUserDTO, String> emailColumn;
@@ -164,6 +205,27 @@ public class AdminController {
     private TableColumn<AdminUserDTO, String> createdAtColumn;
 
     @FXML
+    private TableColumn<AdminTripDTO, String> tripIdColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripClientColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripDriverColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripStatusColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripTypeColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripPriceColumn;
+
+    @FXML
+    private TableColumn<AdminTripDTO, String> tripRequestedAtColumn;
+
+    @FXML
     private Button addUserButton;
 
     @FXML
@@ -177,6 +239,9 @@ public class AdminController {
 
     @FXML
     private Button clientesSectionButton;
+
+    @FXML
+    private Button viagensSectionButton;
 
     @FXML
     private Button filterAllButton;
@@ -206,6 +271,9 @@ public class AdminController {
     private VBox modalUserFormSection;
 
     @FXML
+    private VBox modalTripFormSection;
+
+    @FXML
     private VBox modalDeleteSection;
 
     @FXML
@@ -225,6 +293,33 @@ public class AdminController {
 
     @FXML
     private TextField modalReferenceField;
+
+    @FXML
+    private TextField modalTripClientIdField;
+
+    @FXML
+    private TextField modalTripDriverIdField;
+
+    @FXML
+    private ComboBox<TripType> modalTripTypeCombo;
+
+    @FXML
+    private ComboBox<TripStatus> modalTripStatusCombo;
+
+    @FXML
+    private TextField modalTripOriginField;
+
+    @FXML
+    private TextField modalTripDestinationField;
+
+    @FXML
+    private TextField modalTripEstimatedPriceField;
+
+    @FXML
+    private TextField modalTripFinalPriceField;
+
+    @FXML
+    private TextField modalTripNotesField;
 
     @FXML
     private ComboBox<AccountStatus> modalStatusCombo;
@@ -257,12 +352,18 @@ public class AdminController {
 
         updateSidebarUserCard();
         setupColumns();
+        setupTripColumns();
 
         usersTable.setItems(filteredUsers);
+        tripsTable.setItems(filteredTrips);
         usersTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, previous, current) -> onSelectionChanged(current));
+        tripsTable.getSelectionModel().selectedItemProperty()
+            .addListener((obs, previous, current) -> onTripSelectionChanged(current));
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
+        modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
+        modalTripStatusCombo.setItems(FXCollections.observableArrayList(TripStatus.values()));
 
         editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
         deleteUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
@@ -285,42 +386,81 @@ public class AdminController {
     }
 
     @FXML
+    public void handleViagensSection() {
+        switchSection(AdminSection.TRIPS);
+    }
+
+    @FXML
     public void handleFilterAll() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(null);
+            return;
+        }
         setStatusFilter(null);
     }
 
     @FXML
     public void handleFilterActive() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.ACCEPTED);
+            return;
+        }
         setStatusFilter(AccountStatus.ACTIVE);
     }
 
     @FXML
     public void handleFilterInactive() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.IN_PROGRESS);
+            return;
+        }
         setStatusFilter(AccountStatus.INACTIVE);
     }
 
     @FXML
     public void handleFilterBlocked() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.COMPLETED);
+            return;
+        }
         setStatusFilter(AccountStatus.BLOCKED);
     }
 
     @FXML
     public void handleFilterPending() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.PENDING);
+            return;
+        }
         setStatusFilter(AccountStatus.PENDING);
     }
 
     @FXML
     public void handleExportSection() {
-        showFeedback("Exportacao ainda nao implementada. Registos filtrados: " + filteredUsers.size(), false);
+        int filteredCount = currentSection == AdminSection.TRIPS ? filteredTrips.size() : filteredUsers.size();
+        showFeedback("Exportacao ainda nao implementada. Registos filtrados: " + filteredCount, false);
     }
 
     @FXML
     public void handleAddUser() {
+        if (currentSection == AdminSection.TRIPS) {
+            openTripFormModal();
+            return;
+        }
         openUserFormModal(null);
     }
 
     @FXML
     public void handleEditUser() {
+        if (currentSection == AdminSection.TRIPS) {
+            AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
+            if (selectedTrip == null) {
+                showFeedback("Selecione uma viagem primeiro.", true);
+                return;
+            }
+            openTripFormModal(selectedTrip);
+            return;
+        }
         AdminUserDTO selectedUser = usersTable.getSelectionModel().getSelectedItem();
         if (selectedUser == null) {
             showFeedback("Selecione um registo primeiro.", true);
@@ -337,6 +477,15 @@ public class AdminController {
 
     @FXML
     public void handleDeleteUser() {
+        if (currentSection == AdminSection.TRIPS) {
+            AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
+            if (selectedTrip == null) {
+                showFeedback("Selecione uma viagem primeiro.", true);
+                return;
+            }
+            openDeleteTripConfirmModal(selectedTrip);
+            return;
+        }
         AdminUserDTO selectedUser = usersTable.getSelectionModel().getSelectedItem();
         if (selectedUser == null) {
             showFeedback("Selecione um registo primeiro.", true);
@@ -353,8 +502,16 @@ public class AdminController {
 
     @FXML
     public void handleModalSave() {
-        if (modalMode != ModalMode.CREATE && modalMode != ModalMode.EDIT) {
+        if (modalMode != ModalMode.CREATE
+                && modalMode != ModalMode.EDIT
+                && modalMode != ModalMode.CREATE_TRIP
+                && modalMode != ModalMode.EDIT_TRIP) {
             hideModal();
+            return;
+        }
+
+        if (modalMode == ModalMode.CREATE_TRIP || modalMode == ModalMode.EDIT_TRIP) {
+            persistTrip();
             return;
         }
 
@@ -376,6 +533,17 @@ public class AdminController {
     @FXML
     public void handleModalConfirmDelete() {
         if (modalMode != ModalMode.DELETE_CONFIRM || modalTargetUser == null) {
+            if (modalMode == ModalMode.DELETE_TRIP_CONFIRM && modalTargetTrip != null) {
+                try {
+                    adminService.deleteTrip(modalTargetTrip.getId());
+                    showFeedback("Viagem apagada com sucesso.", false);
+                    hideModal();
+                    refreshSectionData();
+                } catch (Exception exception) {
+                    showModalError("Falha ao apagar viagem: " + exception.getMessage());
+                }
+                return;
+            }
             hideModal();
             return;
         }
@@ -407,6 +575,10 @@ public class AdminController {
     }
 
     private void setupColumns() {
+        userIdColumn.setCellValueFactory(cellData ->
+            new SimpleStringProperty(cellData.getValue().getId() == null
+                ? "-"
+                : "#" + cellData.getValue().getId()));
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         emailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(fallback(cellData.getValue().getEmail())));
 
@@ -449,10 +621,95 @@ public class AdminController {
         });
     }
 
+    private void setupTripColumns() {
+        tripIdColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getId() == null
+                        ? "-"
+                        : "#" + cellData.getValue().getId()));
+        tripClientColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(fallback(cellData.getValue().getClientName())));
+        tripDriverColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(fallback(cellData.getValue().getDriverName())));
+        tripTypeColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(prettyTripType(cellData.getValue().getTripType())));
+        tripPriceColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(formatTripPrice(cellData.getValue())));
+        tripRequestedAtColumn.setCellValueFactory(cellData -> {
+            LocalDateTime requestTime = cellData.getValue().getRequestTime();
+            return new SimpleStringProperty(requestTime == null ? "-" : TRIP_REQUESTED_AT_FORMAT.format(requestTime));
+        });
+
+        tripStatusColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(prettyTripStatus(cellData.getValue().getStatus())));
+        tripStatusColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll(
+                        "trip-completed",
+                        "trip-in-progress",
+                        "trip-accepted",
+                        "trip-pending",
+                        "trip-cancelled",
+                        "trip-rejected");
+
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+
+                setText(item);
+                if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    return;
+                }
+
+                AdminTripDTO rowTrip = getTableView().getItems().get(getIndex());
+                if (rowTrip.getStatus() == null) {
+                    return;
+                }
+
+                switch (rowTrip.getStatus()) {
+                    case COMPLETED -> getStyleClass().add("trip-completed");
+                    case IN_PROGRESS -> getStyleClass().add("trip-in-progress");
+                    case ACCEPTED -> getStyleClass().add("trip-accepted");
+                    case PENDING -> getStyleClass().add("trip-pending");
+                    case CANCELLED -> getStyleClass().add("trip-cancelled");
+                    case REJECTED -> getStyleClass().add("trip-rejected");
+                }
+            }
+        });
+    }
+
     private void switchSection(AdminSection section) {
         this.currentSection = section;
         currentSectionLabel.setText(section.title);
         addUserButton.setText(section.createLabel);
+
+        boolean isTripsSection = section == AdminSection.TRIPS;
+        usersTable.setVisible(!isTripsSection);
+        usersTable.setManaged(!isTripsSection);
+        tripsTable.setVisible(isTripsSection);
+        tripsTable.setManaged(isTripsSection);
+        addUserButton.setVisible(true);
+        addUserButton.setManaged(true);
+        editUserButton.setVisible(true);
+        editUserButton.setManaged(true);
+        deleteUserButton.setVisible(true);
+        deleteUserButton.setManaged(true);
+        filterAllButton.setVisible(true);
+        filterAllButton.setManaged(true);
+        filterActiveButton.setVisible(true);
+        filterActiveButton.setManaged(true);
+        filterInactiveButton.setVisible(true);
+        filterInactiveButton.setManaged(true);
+        filterBlockedButton.setVisible(true);
+        filterBlockedButton.setManaged(true);
+        filterPendingButton.setVisible(true);
+        filterPendingButton.setManaged(true);
+        boolean hasUserSelection = usersTable.getSelectionModel().getSelectedItem() != null;
+        boolean hasTripSelection = tripsTable.getSelectionModel().getSelectedItem() != null;
+        detailPanel.setVisible(isTripsSection ? hasTripSelection : hasUserSelection);
+        detailPanel.setManaged(isTripsSection ? hasTripSelection : hasUserSelection);
 
         if (section == AdminSection.DRIVERS) {
             nameColumn.setText("Motorista");
@@ -461,24 +718,51 @@ public class AdminController {
             metricColumn.setText("Avaliacao");
             volumeColumn.setText("Viagens");
             referenceColumn.setText("Licenca");
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Bloquear/Apagar");
             searchField.setPromptText("Pesquisar por nome, email, telefone, licenca...");
-        } else {
+        } else if (section == AdminSection.CLIENTS) {
             nameColumn.setText("Cliente");
             emailColumn.setVisible(false);
             metricColumn.setText("Email");
             volumeColumn.setText("Telefone");
             referenceColumn.setText("NIF");
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Bloquear/Apagar");
             searchField.setPromptText("Pesquisar por nome, email, telefone, NIF...");
+        } else {
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Apagar");
+            editUserButton.disableProperty().unbind();
+            deleteUserButton.disableProperty().unbind();
+            editUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
+            deleteUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
+            searchField.setPromptText("Pesquisar por ID, cliente, motorista, estado...");
+        }
+
+        if (!isTripsSection) {
+            editUserButton.disableProperty().unbind();
+            deleteUserButton.disableProperty().unbind();
+            editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
+            deleteUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
         }
 
         updateSectionButtonState();
-        setStatusFilter(null);
+        if (isTripsSection) {
+            setTripStatusFilter(null);
+        } else {
+            setStatusFilter(null);
+        }
         refreshSectionData();
         hideModal();
     }
 
     private void refreshSectionData() {
-        allUsers.setAll(adminService.listUsersByType(currentSection.userType));
+        if (currentSection == AdminSection.TRIPS) {
+            allTrips.setAll(adminService.listTrips());
+        } else {
+            allUsers.setAll(adminService.listUsersByType(currentSection.userType));
+        }
         applyFilters();
         updateFilterLabels();
         usersTable.getSelectionModel().clearSelection();
@@ -486,6 +770,10 @@ public class AdminController {
     }
 
     private void onSelectionChanged(AdminUserDTO selectedUser) {
+        if (currentSection == AdminSection.TRIPS) {
+            return;
+        }
+
         boolean hasSelection = selectedUser != null;
         detailPanel.setVisible(hasSelection);
         detailPanel.setManaged(hasSelection);
@@ -497,25 +785,60 @@ public class AdminController {
         }
     }
 
+    private void onTripSelectionChanged(AdminTripDTO selectedTrip) {
+        if (currentSection != AdminSection.TRIPS) {
+            return;
+        }
+
+        boolean hasSelection = selectedTrip != null;
+        detailPanel.setVisible(hasSelection);
+        detailPanel.setManaged(hasSelection);
+
+        if (hasSelection) {
+            updateTripDetailsPanel(selectedTrip);
+        } else {
+            clearDetailPanel();
+        }
+    }
+
     private void setStatusFilter(AccountStatus status) {
         this.currentStatusFilter = status;
         updateFilterButtonState();
         applyFilters();
     }
 
+    private void setTripStatusFilter(TripStatus status) {
+        this.currentTripStatusFilter = status;
+        updateFilterButtonState();
+        applyFilters();
+    }
+
     private void applyFilters() {
         String query = normalize(searchField.getText());
-        filteredUsers.setPredicate(user -> matchesStatus(user) && matchesQuery(user, query));
+        if (currentSection == AdminSection.TRIPS) {
+            filteredTrips.setPredicate(trip -> matchesTripStatus(trip) && matchesTripQuery(trip, query));
+        } else {
+            filteredUsers.setPredicate(user -> matchesStatus(user) && matchesQuery(user, query));
+        }
         updateListInfo();
     }
 
     private void updateListInfo() {
+        if (currentSection == AdminSection.TRIPS) {
+            listInfoLabel.setText("A mostrar " + filteredTrips.size() + " de " + allTrips.size() + " viagens");
+            return;
+        }
+
         listInfoLabel.setText("A mostrar " + filteredUsers.size() + " de " + allUsers.size() + " "
                 + currentSection.title.toLowerCase(Locale.ROOT));
     }
 
     private boolean matchesStatus(AdminUserDTO user) {
         return currentStatusFilter == null || user.getStatus() == currentStatusFilter;
+    }
+
+    private boolean matchesTripStatus(AdminTripDTO trip) {
+        return currentTripStatusFilter == null || trip.getStatus() == currentTripStatusFilter;
     }
 
     private boolean matchesQuery(AdminUserDTO user, String query) {
@@ -530,23 +853,53 @@ public class AdminController {
                 || normalize(user.getTaxNumber()).contains(query);
     }
 
+    private boolean matchesTripQuery(AdminTripDTO trip, String query) {
+        if (query.isBlank()) {
+            return true;
+        }
+
+        String idValue = trip.getId() == null ? "" : String.valueOf(trip.getId());
+        return normalize(idValue).contains(query)
+                || normalize(trip.getClientName()).contains(query)
+                || normalize(trip.getDriverName()).contains(query)
+                || normalize(prettyTripStatus(trip.getStatus())).contains(query)
+                || normalize(prettyTripType(trip.getTripType())).contains(query)
+                || normalize(trip.getOriginAddress()).contains(query)
+                || normalize(trip.getDestinationAddress()).contains(query);
+    }
+
     private void updateSectionButtonState() {
         setButtonState(motoristasSectionButton, currentSection == AdminSection.DRIVERS, "sidebar-item",
                 "sidebar-item-active");
         setButtonState(clientesSectionButton, currentSection == AdminSection.CLIENTS, "sidebar-item",
                 "sidebar-item-active");
+        setButtonState(viagensSectionButton, currentSection == AdminSection.TRIPS, "sidebar-item",
+                "sidebar-item-active");
     }
 
     private void updateFilterButtonState() {
+        if (currentSection == AdminSection.TRIPS) {
+            setButtonState(filterAllButton, currentTripStatusFilter == null, "filter-chip", "filter-chip-active");
+            setButtonState(filterActiveButton, currentTripStatusFilter == TripStatus.ACCEPTED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterInactiveButton, currentTripStatusFilter == TripStatus.IN_PROGRESS, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterBlockedButton, currentTripStatusFilter == TripStatus.COMPLETED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterPendingButton, currentTripStatusFilter == TripStatus.PENDING, "filter-chip",
+                "filter-chip-active");
+            return;
+        }
+
         setButtonState(filterAllButton, currentStatusFilter == null, "filter-chip", "filter-chip-active");
         setButtonState(filterActiveButton, currentStatusFilter == AccountStatus.ACTIVE, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterInactiveButton, currentStatusFilter == AccountStatus.INACTIVE, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterBlockedButton, currentStatusFilter == AccountStatus.BLOCKED, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterPendingButton, currentStatusFilter == AccountStatus.PENDING, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
     }
 
     private void setButtonState(Button button, boolean active, String baseClass, String activeClass) {
@@ -555,6 +908,20 @@ public class AdminController {
     }
 
     private void updateFilterLabels() {
+        if (currentSection == AdminSection.TRIPS) {
+            long pendingCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.PENDING).count();
+            long acceptedCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.ACCEPTED).count();
+            long inProgressCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.IN_PROGRESS).count();
+            long completedCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.COMPLETED).count();
+
+            filterAllButton.setText("Todos (" + allTrips.size() + ")");
+            filterActiveButton.setText("Aceites (" + acceptedCount + ")");
+            filterInactiveButton.setText("Em progresso (" + inProgressCount + ")");
+            filterBlockedButton.setText("Concluidas (" + completedCount + ")");
+            filterPendingButton.setText("Pendentes (" + pendingCount + ")");
+            return;
+        }
+
         long activeCount = allUsers.stream().filter(user -> user.getStatus() == AccountStatus.ACTIVE).count();
         long inactiveCount = allUsers.stream().filter(user -> user.getStatus() == AccountStatus.INACTIVE).count();
         long blockedCount = allUsers.stream().filter(user -> user.getStatus() == AccountStatus.BLOCKED).count();
@@ -572,6 +939,36 @@ public class AdminController {
         sidebarUserInitialsLabel.setText(extractInitials(currentUser.name()));
         sidebarUserNameLabel.setText(fallback(currentUser.name()));
         sidebarUserRoleLabel.setText(prettyUserType(currentUser.type()));
+    }
+
+    private void updateTripDetailsPanel(AdminTripDTO trip) {
+        detailTitleLabel.setText("Detalhe da viagem");
+        detailInitialsLabel.setText(trip.getId() == null ? "--" : "#" + trip.getId());
+        detailNameLabel.setText(fallback(trip.getOriginAddress()) + " -> " + fallback(trip.getDestinationAddress()));
+        detailEmailLabel.setText("Cliente: " + fallback(trip.getClientName()));
+        detailStatusLabel.setText(prettyTripStatus(trip.getStatus()));
+        detailRoleLabel.setText(prettyTripType(trip.getTripType()));
+        detailPhoneValueLabel.setText("Motorista: " + fallback(trip.getDriverName()));
+        detailCreatedValueLabel.setText(trip.getRequestTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getRequestTime()));
+
+        detailCardOneTitleLabel.setText("ID Cliente");
+        detailCardOneValueLabel.setText(trip.getClientId() == null ? "-" : "#" + trip.getClientId());
+        detailCardTwoTitleLabel.setText("ID Motorista");
+        detailCardTwoValueLabel.setText(trip.getDriverId() == null ? "-" : "#" + trip.getDriverId());
+        detailCardThreeTitleLabel.setText("Veiculo");
+        detailCardThreeValueLabel.setText(fallback(trip.getVehicleDisplay()));
+        detailCardFourTitleLabel.setText("Distancia");
+        detailCardFourValueLabel.setText(trip.getDistanceKm() == null ? "-" : trip.getDistanceKm() + " km");
+
+        detailReferenceTitleLabel.setText("Preco estimado");
+        detailReferenceValueLabel.setText(trip.getEstimatedPrice() == null ? "-" : "EUR " + trip.getEstimatedPrice());
+
+        detailExtraOneTitleLabel.setText("Preco final");
+        detailExtraOneValueLabel.setText(trip.getFinalPrice() == null ? "-" : "EUR " + trip.getFinalPrice());
+        detailExtraTwoTitleLabel.setText("Inicio");
+        detailExtraTwoValueLabel.setText(trip.getStartTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getStartTime()));
+        detailExtraThreeTitleLabel.setText("Fim");
+        detailExtraThreeValueLabel.setText(trip.getEndTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getEndTime()));
     }
 
     private void updateDetailsPanel(AdminUserDTO user) {
@@ -616,6 +1013,7 @@ public class AdminController {
     }
 
     private void clearDetailPanel() {
+        detailTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Detalhe da viagem" : "Detalhe do utilizador");
         detailInitialsLabel.setText("--");
         detailNameLabel.setText("Sem selecao");
         detailEmailLabel.setText("-");
@@ -633,6 +1031,12 @@ public class AdminController {
         detailReferenceValueLabel.setText("-");
         detailPhoneValueLabel.setText("-");
         detailCreatedValueLabel.setText("-");
+        detailExtraOneTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Preco final" : "");
+        detailExtraOneValueLabel.setText("-");
+        detailExtraTwoTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Inicio" : "");
+        detailExtraTwoValueLabel.setText("-");
+        detailExtraThreeTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Fim" : "");
+        detailExtraThreeValueLabel.setText("-");
     }
 
     private String metricValue(AdminUserDTO user) {
@@ -674,6 +1078,8 @@ public class AdminController {
 
         modalUserFormSection.setVisible(true);
         modalUserFormSection.setManaged(true);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
         modalDeleteSection.setVisible(false);
         modalDeleteSection.setManaged(false);
 
@@ -707,6 +1113,58 @@ public class AdminController {
         showModal();
     }
 
+    private void openTripFormModal() {
+        openTripFormModal(null);
+    }
+
+    private void openTripFormModal(AdminTripDTO editingTrip) {
+        boolean editing = editingTrip != null;
+        modalMode = editing ? ModalMode.EDIT_TRIP : ModalMode.CREATE_TRIP;
+        modalTargetTrip = editingTrip;
+        modalTargetUser = null;
+
+        modalTitleLabel.setText(editing ? "Editar viagem" : "Nova viagem");
+
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(true);
+        modalTripFormSection.setManaged(true);
+        modalDeleteSection.setVisible(false);
+        modalDeleteSection.setManaged(false);
+
+        modalSaveButton.setVisible(true);
+        modalSaveButton.setManaged(true);
+        modalDeleteConfirmButton.setVisible(false);
+        modalDeleteConfirmButton.setManaged(false);
+
+        if (editing) {
+            modalTripClientIdField.setText(editingTrip.getClientId() == null ? "" : String.valueOf(editingTrip.getClientId()));
+            modalTripDriverIdField.setText(editingTrip.getDriverId() == null ? "" : String.valueOf(editingTrip.getDriverId()));
+            modalTripTypeCombo.setValue(editingTrip.getTripType() == null ? TripType.IMMEDIATE : editingTrip.getTripType());
+            modalTripStatusCombo.setValue(editingTrip.getStatus() == null ? TripStatus.PENDING : editingTrip.getStatus());
+            modalTripOriginField.setText(fallback(editingTrip.getOriginAddress()).equals("-") ? "" : editingTrip.getOriginAddress());
+            modalTripDestinationField.setText(fallback(editingTrip.getDestinationAddress()).equals("-") ? "" : editingTrip.getDestinationAddress());
+            modalTripEstimatedPriceField
+                .setText(editingTrip.getEstimatedPrice() == null ? "" : editingTrip.getEstimatedPrice().toPlainString());
+            modalTripFinalPriceField
+                .setText(editingTrip.getFinalPrice() == null ? "" : editingTrip.getFinalPrice().toPlainString());
+            modalTripNotesField.setText(fallback(editingTrip.getNotes()).equals("-") ? "" : editingTrip.getNotes());
+        } else {
+            modalTripClientIdField.clear();
+            modalTripDriverIdField.clear();
+            modalTripTypeCombo.setValue(TripType.IMMEDIATE);
+            modalTripStatusCombo.setValue(TripStatus.PENDING);
+            modalTripOriginField.clear();
+            modalTripDestinationField.clear();
+            modalTripEstimatedPriceField.clear();
+            modalTripFinalPriceField.clear();
+            modalTripNotesField.clear();
+        }
+
+        clearModalError();
+        showModal();
+    }
+
     private void openDeleteConfirmModal(AdminUserDTO selectedUser) {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTargetUser = selectedUser;
@@ -716,6 +1174,8 @@ public class AdminController {
 
         modalUserFormSection.setVisible(false);
         modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
         modalDeleteSection.setVisible(true);
         modalDeleteSection.setManaged(true);
 
@@ -732,6 +1192,35 @@ public class AdminController {
                     .setText("Bloquear " + selectedUser.getName() + "? A conta sera marcada como bloqueada.");
             modalDeleteConfirmButton.setText("Bloquear");
         }
+
+        clearModalError();
+        showModal();
+    }
+
+    private void openDeleteTripConfirmModal(AdminTripDTO selectedTrip) {
+        modalMode = ModalMode.DELETE_TRIP_CONFIRM;
+        modalTargetTrip = selectedTrip;
+        modalTargetUser = null;
+
+        modalTitleLabel.setText("Apagar viagem");
+
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
+        modalDeleteSection.setVisible(true);
+        modalDeleteSection.setManaged(true);
+
+        modalSaveButton.setVisible(false);
+        modalSaveButton.setManaged(false);
+        modalDeleteConfirmButton.setVisible(true);
+        modalDeleteConfirmButton.setManaged(true);
+        modalDeleteConfirmButton.setText("Apagar");
+
+        modalDeleteMessageLabel.setText("Tem a certeza que deseja apagar a viagem #" + selectedTrip.getId()
+            + "?\nRota: " + fallback(selectedTrip.getOriginAddress())
+            + " -> " + fallback(selectedTrip.getDestinationAddress())
+            + ".");
 
         clearModalError();
         showModal();
@@ -754,6 +1243,37 @@ public class AdminController {
             showFeedback(currentSection.badgeLabel + " criado com sucesso.", false);
         } catch (Exception exception) {
             showModalError("Falha ao criar registo: " + exception.getMessage());
+        }
+    }
+
+    private void persistTrip() {
+        try {
+            AdminTripCommand command = new AdminTripCommand(
+                    parseRequiredInteger(modalTripClientIdField.getText(), "Cliente ID"),
+                    parseOptionalInteger(modalTripDriverIdField.getText()),
+                    modalTripOriginField.getText(),
+                    modalTripDestinationField.getText(),
+                    modalTripTypeCombo.getValue(),
+                    modalTripStatusCombo.getValue(),
+                    modalTripNotesField.getText(),
+                    parseOptionalDecimal(modalTripEstimatedPriceField.getText()),
+                    parseOptionalDecimal(modalTripFinalPriceField.getText()));
+
+            if (modalMode == ModalMode.EDIT_TRIP) {
+                if (modalTargetTrip == null || modalTargetTrip.getId() == null) {
+                    showModalError("Viagem invalida.");
+                    return;
+                }
+                adminService.updateTrip(modalTargetTrip.getId(), command);
+                showFeedback("Viagem atualizada com sucesso.", false);
+            } else {
+                adminService.createTrip(command);
+                showFeedback("Viagem criada com sucesso.", false);
+            }
+            hideModal();
+            refreshSectionData();
+        } catch (Exception exception) {
+            showModalError("Falha ao guardar viagem: " + exception.getMessage());
         }
     }
 
@@ -790,6 +1310,13 @@ public class AdminController {
     private void hideModal() {
         modalMode = ModalMode.NONE;
         modalTargetUser = null;
+        modalTargetTrip = null;
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
+        modalDeleteSection.setVisible(false);
+        modalDeleteSection.setManaged(false);
         modalOverlay.setVisible(false);
         modalOverlay.setManaged(false);
         clearModalError();
@@ -832,6 +1359,40 @@ public class AdminController {
         };
     }
 
+    private String prettyTripStatus(com.obar.model.enums.TripStatus status) {
+        if (status == null) {
+            return "-";
+        }
+
+        return switch (status) {
+            case PENDING -> "Pendente";
+            case ACCEPTED -> "Aceite";
+            case IN_PROGRESS -> "Em progresso";
+            case COMPLETED -> "Concluida";
+            case CANCELLED -> "Cancelada";
+            case REJECTED -> "Rejeitada";
+        };
+    }
+
+    private String prettyTripType(com.obar.model.enums.TripType tripType) {
+        if (tripType == null) {
+            return "-";
+        }
+
+        return switch (tripType) {
+            case IMMEDIATE -> "Imediata";
+            case SCHEDULED -> "Agendada";
+        };
+    }
+
+    private String formatTripPrice(AdminTripDTO trip) {
+        java.math.BigDecimal amount = trip.getFinalPrice() != null ? trip.getFinalPrice() : trip.getEstimatedPrice();
+        if (amount == null) {
+            return "-";
+        }
+        return "EUR " + amount;
+    }
+
     private String starRating(Float rating) {
         if (rating == null) {
             return "-";
@@ -868,6 +1429,38 @@ public class AdminController {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private Integer parseRequiredInteger(String rawValue, String fieldName) {
+        Integer parsed = parseOptionalInteger(rawValue);
+        if (parsed == null) {
+            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
+        }
+        return parsed;
+    }
+
+    private Integer parseOptionalInteger(String rawValue) {
+        String safe = rawValue == null ? "" : rawValue.trim();
+        if (safe.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(safe);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("ID invalido: " + safe);
+        }
+    }
+
+    private java.math.BigDecimal parseOptionalDecimal(String rawValue) {
+        String safe = rawValue == null ? "" : rawValue.trim();
+        if (safe.isBlank()) {
+            return null;
+        }
+        try {
+            return new java.math.BigDecimal(safe);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Valor monetario invalido: " + safe);
+        }
     }
 
 }

@@ -46,6 +46,9 @@
                 <Button fx:id="clientesSectionButton" text="Clientes"
                     onAction="#handleClientesSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
+                <Button fx:id="viagensSectionButton" text="Viagens"
+                    onAction="#handleViagensSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
 
                 <Label text="SISTEMA" styleClass="sidebar-group-title" />
                 <Button text="Back to Dashboard" onAction="#handleBackToDashboard"
@@ -111,13 +114,27 @@
 
                 <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="users-table">
                     <columns>
-                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="220.0" />
-                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="240.0" />
-                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="110.0" />
-                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="110.0" />
-                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="100.0" />
-                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="125.0" />
-                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="150.0" />
+                        <TableColumn fx:id="userIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="200.0" />
+                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="220.0" />
+                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="105.0" />
+                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="105.0" />
+                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="95.0" />
+                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="120.0" />
+                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="140.0" />
+                    </columns>
+                </TableView>
+
+                <TableView fx:id="tripsTable" VBox.vgrow="ALWAYS" styleClass="users-table"
+                    visible="false" managed="false">
+                    <columns>
+                        <TableColumn fx:id="tripIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="tripClientColumn" text="Cliente" prefWidth="180.0" />
+                        <TableColumn fx:id="tripDriverColumn" text="Motorista" prefWidth="180.0" />
+                        <TableColumn fx:id="tripStatusColumn" text="Estado" prefWidth="120.0" />
+                        <TableColumn fx:id="tripTypeColumn" text="Tipo" prefWidth="110.0" />
+                        <TableColumn fx:id="tripPriceColumn" text="Valor" prefWidth="100.0" />
+                        <TableColumn fx:id="tripRequestedAtColumn" text="Pedido em" prefWidth="160.0" />
                     </columns>
                 </TableView>
 
@@ -126,16 +143,19 @@
         </center>
 
         <right>
-            <VBox fx:id="detailPanel" prefWidth="240.0" spacing="12.0" styleClass="detail-panel"
+            <VBox fx:id="detailPanel" prefWidth="340.0" spacing="12.0" styleClass="detail-panel"
                 visible="false" managed="false">
                 <padding>
-                    <Insets top="24.0" right="16.0" bottom="24.0" left="16.0" />
+                    <Insets top="24.0" right="18.0" bottom="24.0" left="18.0" />
                 </padding>
 
-                <Label text="Detalhe do utilizador" styleClass="detail-title" />
+                <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title"
+                    wrapText="true" maxWidth="300.0" />
                 <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
-                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name" />
-                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" />
+                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name"
+                    wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" wrapText="true"
+                    maxWidth="300.0" />
 
                 <HBox spacing="6.0">
                     <Label fx:id="detailStatusLabel" text="-" styleClass="status-pill" />
@@ -168,12 +188,29 @@
                     </VBox>
                 </HBox>
 
-                <Label fx:id="detailReferenceTitleLabel" text="N de Licenca" styleClass="meta-title" />
-                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value" />
-                <Label text="Telefone" styleClass="meta-title" />
-                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" />
-                <Label text="Registado em" styleClass="meta-title" />
-                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" />
+                <Label fx:id="detailReferenceTitleLabel" text="N de Licenca" styleClass="meta-title"
+                    wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value"
+                    wrapText="true" maxWidth="300.0" />
+                <Label text="Telefone" styleClass="meta-title" wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label text="Registado em" styleClass="meta-title" wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+
+                <Label fx:id="detailExtraOneTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraOneValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraTwoTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraTwoValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraThreeTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraThreeValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
                 <Region VBox.vgrow="ALWAYS" />
             </VBox>
         </right>
@@ -229,6 +266,57 @@
                         <PasswordField fx:id="modalConfirmPasswordField" promptText="Confirmar" />
                     </VBox>
                 </HBox>
+            </VBox>
+
+            <VBox fx:id="modalTripFormSection" spacing="10.0" visible="false" managed="false">
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Cliente ID" styleClass="meta-title" />
+                        <TextField fx:id="modalTripClientIdField" promptText="ID do cliente" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Motorista ID (opcional)" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDriverIdField" promptText="ID do motorista" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Tipo" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripTypeCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Estado" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripStatusCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Origem" styleClass="meta-title" />
+                        <TextField fx:id="modalTripOriginField" promptText="Morada de origem" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Destino" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDestinationField" promptText="Morada de destino" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco estimado" styleClass="meta-title" />
+                        <TextField fx:id="modalTripEstimatedPriceField" promptText="ex: 12.50" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco final" styleClass="meta-title" />
+                        <TextField fx:id="modalTripFinalPriceField" promptText="ex: 13.80" />
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="4.0">
+                    <Label text="Notas" styleClass="meta-title" />
+                    <TextField fx:id="modalTripNotesField" promptText="Notas opcionais" />
+                </VBox>
             </VBox>
 
             <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">

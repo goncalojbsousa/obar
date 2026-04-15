@@ -143,16 +143,19 @@
         </center>
 
         <right>
-            <VBox fx:id="detailPanel" prefWidth="240.0" spacing="12.0" styleClass="detail-panel"
+            <VBox fx:id="detailPanel" prefWidth="340.0" spacing="12.0" styleClass="detail-panel"
                 visible="false" managed="false">
                 <padding>
-                    <Insets top="24.0" right="16.0" bottom="24.0" left="16.0" />
+                    <Insets top="24.0" right="18.0" bottom="24.0" left="18.0" />
                 </padding>
 
-                <Label text="Detalhe do utilizador" styleClass="detail-title" />
+                <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title"
+                    wrapText="true" maxWidth="300.0" />
                 <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
-                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name" />
-                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" />
+                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name"
+                    wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" wrapText="true"
+                    maxWidth="300.0" />
 
                 <HBox spacing="6.0">
                     <Label fx:id="detailStatusLabel" text="-" styleClass="status-pill" />
@@ -185,12 +188,29 @@
                     </VBox>
                 </HBox>
 
-                <Label fx:id="detailReferenceTitleLabel" text="N de Licenca" styleClass="meta-title" />
-                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value" />
-                <Label text="Telefone" styleClass="meta-title" />
-                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" />
-                <Label text="Registado em" styleClass="meta-title" />
-                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" />
+                <Label fx:id="detailReferenceTitleLabel" text="N de Licenca" styleClass="meta-title"
+                    wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value"
+                    wrapText="true" maxWidth="300.0" />
+                <Label text="Telefone" styleClass="meta-title" wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label text="Registado em" styleClass="meta-title" wrapText="true" maxWidth="300.0" />
+                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+
+                <Label fx:id="detailExtraOneTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraOneValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraTwoTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraTwoValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraThreeTitleLabel" text="" styleClass="meta-title" wrapText="true"
+                    maxWidth="300.0" />
+                <Label fx:id="detailExtraThreeValueLabel" text="-" styleClass="meta-value" wrapText="true"
+                    maxWidth="300.0" />
                 <Region VBox.vgrow="ALWAYS" />
             </VBox>
         </right>

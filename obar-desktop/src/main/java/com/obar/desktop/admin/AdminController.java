@@ -96,6 +96,9 @@ public class AdminController {
     private Label detailInitialsLabel;
 
     @FXML
+    private Label detailTitleLabel;
+
+    @FXML
     private Label detailNameLabel;
 
     @FXML
@@ -142,6 +145,24 @@ public class AdminController {
 
     @FXML
     private Label detailCreatedValueLabel;
+
+    @FXML
+    private Label detailExtraOneTitleLabel;
+
+    @FXML
+    private Label detailExtraOneValueLabel;
+
+    @FXML
+    private Label detailExtraTwoTitleLabel;
+
+    @FXML
+    private Label detailExtraTwoValueLabel;
+
+    @FXML
+    private Label detailExtraThreeTitleLabel;
+
+    @FXML
+    private Label detailExtraThreeValueLabel;
 
     @FXML
     private VBox detailPanel;
@@ -333,6 +354,8 @@ public class AdminController {
         tripsTable.setItems(filteredTrips);
         usersTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, previous, current) -> onSelectionChanged(current));
+        tripsTable.getSelectionModel().selectedItemProperty()
+            .addListener((obs, previous, current) -> onTripSelectionChanged(current));
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
         modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
@@ -634,8 +657,10 @@ public class AdminController {
         filterBlockedButton.setManaged(!isTripsSection);
         filterPendingButton.setVisible(!isTripsSection);
         filterPendingButton.setManaged(!isTripsSection);
-        detailPanel.setVisible(!isTripsSection && usersTable.getSelectionModel().getSelectedItem() != null);
-        detailPanel.setManaged(!isTripsSection && usersTable.getSelectionModel().getSelectedItem() != null);
+        boolean hasUserSelection = usersTable.getSelectionModel().getSelectedItem() != null;
+        boolean hasTripSelection = tripsTable.getSelectionModel().getSelectedItem() != null;
+        detailPanel.setVisible(isTripsSection ? hasTripSelection : hasUserSelection);
+        detailPanel.setManaged(isTripsSection ? hasTripSelection : hasUserSelection);
 
         if (section == AdminSection.DRIVERS) {
             nameColumn.setText("Motorista");
@@ -675,12 +700,32 @@ public class AdminController {
     }
 
     private void onSelectionChanged(AdminUserDTO selectedUser) {
+        if (currentSection == AdminSection.TRIPS) {
+            return;
+        }
+
         boolean hasSelection = selectedUser != null;
         detailPanel.setVisible(hasSelection);
         detailPanel.setManaged(hasSelection);
 
         if (hasSelection) {
             updateDetailsPanel(selectedUser);
+        } else {
+            clearDetailPanel();
+        }
+    }
+
+    private void onTripSelectionChanged(AdminTripDTO selectedTrip) {
+        if (currentSection != AdminSection.TRIPS) {
+            return;
+        }
+
+        boolean hasSelection = selectedTrip != null;
+        detailPanel.setVisible(hasSelection);
+        detailPanel.setManaged(hasSelection);
+
+        if (hasSelection) {
+            updateTripDetailsPanel(selectedTrip);
         } else {
             clearDetailPanel();
         }
@@ -793,6 +838,36 @@ public class AdminController {
         sidebarUserRoleLabel.setText(prettyUserType(currentUser.type()));
     }
 
+    private void updateTripDetailsPanel(AdminTripDTO trip) {
+        detailTitleLabel.setText("Detalhe da viagem");
+        detailInitialsLabel.setText(trip.getId() == null ? "--" : "#" + trip.getId());
+        detailNameLabel.setText(fallback(trip.getOriginAddress()) + " -> " + fallback(trip.getDestinationAddress()));
+        detailEmailLabel.setText("Cliente: " + fallback(trip.getClientName()));
+        detailStatusLabel.setText(prettyTripStatus(trip.getStatus()));
+        detailRoleLabel.setText(prettyTripType(trip.getTripType()));
+        detailPhoneValueLabel.setText("Motorista: " + fallback(trip.getDriverName()));
+        detailCreatedValueLabel.setText(trip.getRequestTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getRequestTime()));
+
+        detailCardOneTitleLabel.setText("ID Cliente");
+        detailCardOneValueLabel.setText(trip.getClientId() == null ? "-" : "#" + trip.getClientId());
+        detailCardTwoTitleLabel.setText("ID Motorista");
+        detailCardTwoValueLabel.setText(trip.getDriverId() == null ? "-" : "#" + trip.getDriverId());
+        detailCardThreeTitleLabel.setText("Veiculo");
+        detailCardThreeValueLabel.setText(fallback(trip.getVehicleDisplay()));
+        detailCardFourTitleLabel.setText("Distancia");
+        detailCardFourValueLabel.setText(trip.getDistanceKm() == null ? "-" : trip.getDistanceKm() + " km");
+
+        detailReferenceTitleLabel.setText("Preco estimado");
+        detailReferenceValueLabel.setText(trip.getEstimatedPrice() == null ? "-" : "EUR " + trip.getEstimatedPrice());
+
+        detailExtraOneTitleLabel.setText("Preco final");
+        detailExtraOneValueLabel.setText(trip.getFinalPrice() == null ? "-" : "EUR " + trip.getFinalPrice());
+        detailExtraTwoTitleLabel.setText("Inicio");
+        detailExtraTwoValueLabel.setText(trip.getStartTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getStartTime()));
+        detailExtraThreeTitleLabel.setText("Fim");
+        detailExtraThreeValueLabel.setText(trip.getEndTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getEndTime()));
+    }
+
     private void updateDetailsPanel(AdminUserDTO user) {
         if (user == null) {
             clearDetailPanel();
@@ -835,6 +910,7 @@ public class AdminController {
     }
 
     private void clearDetailPanel() {
+        detailTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Detalhe da viagem" : "Detalhe do utilizador");
         detailInitialsLabel.setText("--");
         detailNameLabel.setText("Sem selecao");
         detailEmailLabel.setText("-");
@@ -852,6 +928,12 @@ public class AdminController {
         detailReferenceValueLabel.setText("-");
         detailPhoneValueLabel.setText("-");
         detailCreatedValueLabel.setText("-");
+        detailExtraOneTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Preco final" : "");
+        detailExtraOneValueLabel.setText("-");
+        detailExtraTwoTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Inicio" : "");
+        detailExtraTwoValueLabel.setText("-");
+        detailExtraThreeTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Fim" : "");
+        detailExtraThreeValueLabel.setText("-");
     }
 
     private String metricValue(AdminUserDTO user) {

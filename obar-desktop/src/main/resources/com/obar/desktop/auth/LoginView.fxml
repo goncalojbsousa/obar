@@ -89,7 +89,7 @@
 
                             <VBox spacing="4.0">
                                 <children>
-                                    <Label text="Bem-vindo de volta" styleClass="login-title" />
+                                    <Label text="Bem-vindo!" styleClass="login-title" />
                                     <Label text="Entra na tua conta para continuar" styleClass="login-subtitle" />
                                 </children>
                             </VBox>

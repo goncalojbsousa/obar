@@ -3,6 +3,7 @@ package com.obar.desktop.admin;
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
+import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
 import com.obar.model.enums.AccountStatus;
@@ -65,6 +66,15 @@ public class AdminController {
 
     @FXML
     private Label currentSectionLabel;
+
+    @FXML
+    private Label sidebarUserInitialsLabel;
+
+    @FXML
+    private Label sidebarUserNameLabel;
+
+    @FXML
+    private Label sidebarUserRoleLabel;
 
     @FXML
     private Label feedbackLabel;
@@ -245,6 +255,7 @@ public class AdminController {
             return;
         }
 
+        updateSidebarUserCard();
         setupColumns();
 
         usersTable.setItems(filteredUsers);
@@ -556,6 +567,13 @@ public class AdminController {
         filterPendingButton.setText("Pendentes (" + pendingCount + ")");
     }
 
+    private void updateSidebarUserCard() {
+        AuthenticatedUserDto currentUser = SessionManager.getCurrentUser();
+        sidebarUserInitialsLabel.setText(extractInitials(currentUser.name()));
+        sidebarUserNameLabel.setText(fallback(currentUser.name()));
+        sidebarUserRoleLabel.setText(prettyUserType(currentUser.type()));
+    }
+
     private void updateDetailsPanel(AdminUserDTO user) {
         if (user == null) {
             clearDetailPanel();
@@ -799,6 +817,18 @@ public class AdminController {
             case INACTIVE -> "Offline";
             case BLOCKED -> "Bloqueado";
             case PENDING -> "Pendente";
+        };
+    }
+
+    private String prettyUserType(UserType type) {
+        if (type == null) {
+            return "-";
+        }
+
+        return switch (type) {
+            case ADMIN -> "Administrador";
+            case DRIVER -> "Motorista";
+            case CLIENT -> "Cliente";
         };
     }
 

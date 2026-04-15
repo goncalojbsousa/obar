@@ -1,10 +1,10 @@
 .admin-root {
-    -fx-background-color: #07090f;
+    -fx-background-color: #09090B;
 }
 
 .admin-sidebar {
-    -fx-background-color: linear-gradient(to bottom, #0d1019, #0a0d15);
-    -fx-border-color: rgba(255, 255, 255, 0.06);
+    -fx-background-color: #111113;
+    -fx-border-color: rgba(255, 255, 255, 0.04);
     -fx-border-width: 0 1 0 0;
 }
 
@@ -12,15 +12,43 @@
     -fx-text-fill: #f3f6ff;
 }
 
+.admin-sidebar .brand-white {
+    -fx-text-fill: #f4f5f8;
+}
+
+.admin-sidebar .brand-orange {
+    -fx-text-fill: #ff6a2f;
+}
+
+.brand-block {
+    -fx-padding: 2 0 8 0;
+}
+
 .admin-subtitle {
     -fx-text-fill: #8b93a7;
     -fx-font-size: 11px;
 }
 
-.brand-title {
+.brand-white,
+.brand-orange {
     -fx-font-size: 28px;
     -fx-font-weight: 800;
+    -fx-font-family: "Arial Black";
+}
+
+.brand-white {
+    -fx-text-fill: #f4f5f8;
+}
+
+.brand-orange {
     -fx-text-fill: #ff6a2f;
+}
+
+.brand-caption {
+    -fx-padding: 0 0 0 2;
+    -fx-font-size: 9px;
+    -fx-font-weight: 600;
+    -fx-letter-spacing: 0.6px;
 }
 
 .sidebar-group-title {
@@ -54,8 +82,41 @@
     -fx-background-color: rgba(255, 106, 47, 0.26);
 }
 
+.sidebar-user-card {
+    -fx-background-color: #111113;
+    -fx-background-radius: 12;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-padding: 10 14;
+    -fx-max-width: 1.7976931348623157E308;
+}
+
+.sidebar-user-avatar {
+    -fx-background-color: #ff7a2d;
+    -fx-background-radius: 18;
+    -fx-min-width: 30;
+    -fx-min-height: 30;
+    -fx-max-width: 30;
+    -fx-max-height: 30;
+    -fx-alignment: center;
+    -fx-text-fill: #fff4ed;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+}
+
+.sidebar-user-name {
+    -fx-text-fill: #edf1f7;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+.sidebar-user-role {
+    -fx-text-fill: #7d8596;
+    -fx-font-size: 10px;
+}
+
 .admin-content {
-    -fx-background-color: linear-gradient(to bottom right, #090c13, #0b0e16);
+    -fx-background-color: #09090B;
 }
 
 .admin-content .title-2 {
@@ -65,26 +126,26 @@
 }
 
 .admin-content .text-field {
-    -fx-background-color: #111725;
+    -fx-background-color: #111113;
     -fx-text-fill: #e8edf7;
     -fx-prompt-text-fill: #67718a;
     -fx-background-radius: 10;
     -fx-border-radius: 10;
-    -fx-border-color: #1c2438;
+    -fx-border-color: #232326;
     -fx-padding: 10 12;
 }
 
 .admin-content .button {
-    -fx-background-color: #141b2b;
+    -fx-background-color: #111113;
     -fx-text-fill: #d2d9eb;
     -fx-background-radius: 9;
     -fx-border-radius: 9;
-    -fx-border-color: #232d44;
+    -fx-border-color: #232326;
     -fx-font-weight: 600;
 }
 
 .admin-content .button:hover {
-    -fx-background-color: #1a2437;
+    -fx-background-color: #17171A;
 }
 
 .admin-content .button.accent {
@@ -99,8 +160,8 @@
 }
 
 .admin-content .button.flat {
-    -fx-background-color: #101624;
-    -fx-border-color: #252f46;
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
 }
 
 .admin-content .button.danger,
@@ -119,9 +180,9 @@
 }
 
 .filter-chip {
-    -fx-background-color: transparent;
+    -fx-background-color: #111113;
     -fx-text-fill: #8992a8;
-    -fx-border-color: transparent;
+    -fx-border-color: #232326;
 }
 
 .filter-chip-active {
@@ -131,16 +192,16 @@
 }
 
 .users-table {
-    -fx-background-color: #0d121f;
-    -fx-control-inner-background: #0d121f;
-    -fx-border-color: #1f2739;
+    -fx-background-color: #111113;
+    -fx-control-inner-background: #111113;
+    -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-padding: 4;
 }
 
 .users-table .column-header-background {
-    -fx-background-color: #121a2a;
+    -fx-background-color: #111113;
     -fx-background-radius: 10 10 0 0;
 }
 
@@ -157,8 +218,8 @@
 }
 
 .users-table .table-row-cell {
-    -fx-background-color: #0d121f;
-    -fx-border-color: #1a2232;
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
     -fx-border-width: 0 0 1 0;
 }
 
@@ -190,8 +251,8 @@
 }
 
 .detail-panel {
-    -fx-background-color: #0a0e18;
-    -fx-border-color: #1d2538;
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
     -fx-border-width: 0 0 0 1;
 }
 
@@ -239,8 +300,8 @@
 }
 
 .metric-card {
-    -fx-background-color: #12192b;
-    -fx-border-color: #232d45;
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-padding: 10;
@@ -283,10 +344,24 @@
 }
 
 .modal-card {
-    -fx-background-color: #0f1523;
-    -fx-border-color: #27324a;
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
+}
+
+.modal-card .label {
+    -fx-text-fill: #f3f6ff;
+}
+
+.modal-card .meta-title {
+    -fx-font-size: 10px;
+}
+
+.modal-card .text-field,
+.modal-card .password-field,
+.modal-card .combo-box {
+    -fx-pref-height: 40;
 }
 
 .modal-title {
@@ -298,18 +373,18 @@
 .modal-card .text-field,
 .modal-card .password-field,
 .modal-card .combo-box {
-    -fx-background-color: #121a2b;
+    -fx-background-color: #111113;
     -fx-text-fill: #e4eaf7;
     -fx-prompt-text-fill: #6f7b95;
-    -fx-border-color: #2a3550;
+    -fx-border-color: #232326;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
 }
 
 .modal-card .button {
-    -fx-background-color: #162136;
+    -fx-background-color: #111113;
     -fx-text-fill: #d8dfef;
-    -fx-border-color: #2c3a58;
+    -fx-border-color: #232326;
 }
 
 .modal-card .button.accent {

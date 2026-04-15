@@ -71,6 +71,7 @@ public class AdminController {
 
     private AdminSection currentSection = AdminSection.DRIVERS;
     private AccountStatus currentStatusFilter;
+    private TripStatus currentTripStatusFilter;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminUserDTO modalTargetUser;
 
@@ -388,32 +389,53 @@ public class AdminController {
 
     @FXML
     public void handleFilterAll() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(null);
+            return;
+        }
         setStatusFilter(null);
     }
 
     @FXML
     public void handleFilterActive() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.ACCEPTED);
+            return;
+        }
         setStatusFilter(AccountStatus.ACTIVE);
     }
 
     @FXML
     public void handleFilterInactive() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.IN_PROGRESS);
+            return;
+        }
         setStatusFilter(AccountStatus.INACTIVE);
     }
 
     @FXML
     public void handleFilterBlocked() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.COMPLETED);
+            return;
+        }
         setStatusFilter(AccountStatus.BLOCKED);
     }
 
     @FXML
     public void handleFilterPending() {
+        if (currentSection == AdminSection.TRIPS) {
+            setTripStatusFilter(TripStatus.PENDING);
+            return;
+        }
         setStatusFilter(AccountStatus.PENDING);
     }
 
     @FXML
     public void handleExportSection() {
-        showFeedback("Exportacao ainda nao implementada. Registos filtrados: " + filteredUsers.size(), false);
+        int filteredCount = currentSection == AdminSection.TRIPS ? filteredTrips.size() : filteredUsers.size();
+        showFeedback("Exportacao ainda nao implementada. Registos filtrados: " + filteredCount, false);
     }
 
     @FXML
@@ -647,16 +669,16 @@ public class AdminController {
         editUserButton.setManaged(!isTripsSection);
         deleteUserButton.setVisible(!isTripsSection);
         deleteUserButton.setManaged(!isTripsSection);
-        filterAllButton.setVisible(!isTripsSection);
-        filterAllButton.setManaged(!isTripsSection);
-        filterActiveButton.setVisible(!isTripsSection);
-        filterActiveButton.setManaged(!isTripsSection);
-        filterInactiveButton.setVisible(!isTripsSection);
-        filterInactiveButton.setManaged(!isTripsSection);
-        filterBlockedButton.setVisible(!isTripsSection);
-        filterBlockedButton.setManaged(!isTripsSection);
-        filterPendingButton.setVisible(!isTripsSection);
-        filterPendingButton.setManaged(!isTripsSection);
+        filterAllButton.setVisible(true);
+        filterAllButton.setManaged(true);
+        filterActiveButton.setVisible(true);
+        filterActiveButton.setManaged(true);
+        filterInactiveButton.setVisible(true);
+        filterInactiveButton.setManaged(true);
+        filterBlockedButton.setVisible(true);
+        filterBlockedButton.setManaged(true);
+        filterPendingButton.setVisible(true);
+        filterPendingButton.setManaged(true);
         boolean hasUserSelection = usersTable.getSelectionModel().getSelectedItem() != null;
         boolean hasTripSelection = tripsTable.getSelectionModel().getSelectedItem() != null;
         detailPanel.setVisible(isTripsSection ? hasTripSelection : hasUserSelection);
@@ -682,7 +704,11 @@ public class AdminController {
         }
 
         updateSectionButtonState();
-        setStatusFilter(null);
+        if (isTripsSection) {
+            setTripStatusFilter(null);
+        } else {
+            setStatusFilter(null);
+        }
         refreshSectionData();
         hideModal();
     }
@@ -737,10 +763,16 @@ public class AdminController {
         applyFilters();
     }
 
+    private void setTripStatusFilter(TripStatus status) {
+        this.currentTripStatusFilter = status;
+        updateFilterButtonState();
+        applyFilters();
+    }
+
     private void applyFilters() {
         String query = normalize(searchField.getText());
         if (currentSection == AdminSection.TRIPS) {
-            filteredTrips.setPredicate(trip -> matchesTripQuery(trip, query));
+            filteredTrips.setPredicate(trip -> matchesTripStatus(trip) && matchesTripQuery(trip, query));
         } else {
             filteredUsers.setPredicate(user -> matchesStatus(user) && matchesQuery(user, query));
         }
@@ -759,6 +791,10 @@ public class AdminController {
 
     private boolean matchesStatus(AdminUserDTO user) {
         return currentStatusFilter == null || user.getStatus() == currentStatusFilter;
+    }
+
+    private boolean matchesTripStatus(AdminTripDTO trip) {
+        return currentTripStatusFilter == null || trip.getStatus() == currentTripStatusFilter;
     }
 
     private boolean matchesQuery(AdminUserDTO user, String query) {
@@ -798,15 +834,28 @@ public class AdminController {
     }
 
     private void updateFilterButtonState() {
+        if (currentSection == AdminSection.TRIPS) {
+            setButtonState(filterAllButton, currentTripStatusFilter == null, "filter-chip", "filter-chip-active");
+            setButtonState(filterActiveButton, currentTripStatusFilter == TripStatus.ACCEPTED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterInactiveButton, currentTripStatusFilter == TripStatus.IN_PROGRESS, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterBlockedButton, currentTripStatusFilter == TripStatus.COMPLETED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterPendingButton, currentTripStatusFilter == TripStatus.PENDING, "filter-chip",
+                "filter-chip-active");
+            return;
+        }
+
         setButtonState(filterAllButton, currentStatusFilter == null, "filter-chip", "filter-chip-active");
         setButtonState(filterActiveButton, currentStatusFilter == AccountStatus.ACTIVE, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterInactiveButton, currentStatusFilter == AccountStatus.INACTIVE, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterBlockedButton, currentStatusFilter == AccountStatus.BLOCKED, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
         setButtonState(filterPendingButton, currentStatusFilter == AccountStatus.PENDING, "filter-chip",
-                "filter-chip-active");
+            "filter-chip-active");
     }
 
     private void setButtonState(Button button, boolean active, String baseClass, String activeClass) {
@@ -816,6 +865,16 @@ public class AdminController {
 
     private void updateFilterLabels() {
         if (currentSection == AdminSection.TRIPS) {
+            long pendingCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.PENDING).count();
+            long acceptedCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.ACCEPTED).count();
+            long inProgressCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.IN_PROGRESS).count();
+            long completedCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.COMPLETED).count();
+
+            filterAllButton.setText("Todos (" + allTrips.size() + ")");
+            filterActiveButton.setText("Aceites (" + acceptedCount + ")");
+            filterInactiveButton.setText("Em progresso (" + inProgressCount + ")");
+            filterBlockedButton.setText("Concluidas (" + completedCount + ")");
+            filterPendingButton.setText("Pendentes (" + pendingCount + ")");
             return;
         }
 

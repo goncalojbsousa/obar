@@ -42,6 +42,8 @@ public class AdminController {
         CREATE,
         EDIT,
         CREATE_TRIP,
+        EDIT_TRIP,
+        DELETE_TRIP_CONFIRM,
         DELETE_CONFIRM
     }
 
@@ -74,6 +76,7 @@ public class AdminController {
     private TripStatus currentTripStatusFilter;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminUserDTO modalTargetUser;
+    private AdminTripDTO modalTargetTrip;
 
     @FXML
     private Label currentSectionLabel;
@@ -450,7 +453,12 @@ public class AdminController {
     @FXML
     public void handleEditUser() {
         if (currentSection == AdminSection.TRIPS) {
-            showFeedback("Edicao de viagens nao esta disponivel nesta vista.", true);
+            AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
+            if (selectedTrip == null) {
+                showFeedback("Selecione uma viagem primeiro.", true);
+                return;
+            }
+            openTripFormModal(selectedTrip);
             return;
         }
         AdminUserDTO selectedUser = usersTable.getSelectionModel().getSelectedItem();
@@ -470,7 +478,12 @@ public class AdminController {
     @FXML
     public void handleDeleteUser() {
         if (currentSection == AdminSection.TRIPS) {
-            showFeedback("Operacao indisponivel para viagens nesta vista.", true);
+            AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
+            if (selectedTrip == null) {
+                showFeedback("Selecione uma viagem primeiro.", true);
+                return;
+            }
+            openDeleteTripConfirmModal(selectedTrip);
             return;
         }
         AdminUserDTO selectedUser = usersTable.getSelectionModel().getSelectedItem();
@@ -489,13 +502,16 @@ public class AdminController {
 
     @FXML
     public void handleModalSave() {
-        if (modalMode != ModalMode.CREATE && modalMode != ModalMode.EDIT && modalMode != ModalMode.CREATE_TRIP) {
+        if (modalMode != ModalMode.CREATE
+                && modalMode != ModalMode.EDIT
+                && modalMode != ModalMode.CREATE_TRIP
+                && modalMode != ModalMode.EDIT_TRIP) {
             hideModal();
             return;
         }
 
-        if (modalMode == ModalMode.CREATE_TRIP) {
-            persistCreateTrip();
+        if (modalMode == ModalMode.CREATE_TRIP || modalMode == ModalMode.EDIT_TRIP) {
+            persistTrip();
             return;
         }
 
@@ -517,6 +533,17 @@ public class AdminController {
     @FXML
     public void handleModalConfirmDelete() {
         if (modalMode != ModalMode.DELETE_CONFIRM || modalTargetUser == null) {
+            if (modalMode == ModalMode.DELETE_TRIP_CONFIRM && modalTargetTrip != null) {
+                try {
+                    adminService.deleteTrip(modalTargetTrip.getId());
+                    showFeedback("Viagem apagada com sucesso.", false);
+                    hideModal();
+                    refreshSectionData();
+                } catch (Exception exception) {
+                    showModalError("Falha ao apagar viagem: " + exception.getMessage());
+                }
+                return;
+            }
             hideModal();
             return;
         }
@@ -665,10 +692,10 @@ public class AdminController {
         tripsTable.setManaged(isTripsSection);
         addUserButton.setVisible(true);
         addUserButton.setManaged(true);
-        editUserButton.setVisible(!isTripsSection);
-        editUserButton.setManaged(!isTripsSection);
-        deleteUserButton.setVisible(!isTripsSection);
-        deleteUserButton.setManaged(!isTripsSection);
+        editUserButton.setVisible(true);
+        editUserButton.setManaged(true);
+        deleteUserButton.setVisible(true);
+        deleteUserButton.setManaged(true);
         filterAllButton.setVisible(true);
         filterAllButton.setManaged(true);
         filterActiveButton.setVisible(true);
@@ -691,6 +718,8 @@ public class AdminController {
             metricColumn.setText("Avaliacao");
             volumeColumn.setText("Viagens");
             referenceColumn.setText("Licenca");
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Bloquear/Apagar");
             searchField.setPromptText("Pesquisar por nome, email, telefone, licenca...");
         } else if (section == AdminSection.CLIENTS) {
             nameColumn.setText("Cliente");
@@ -698,9 +727,24 @@ public class AdminController {
             metricColumn.setText("Email");
             volumeColumn.setText("Telefone");
             referenceColumn.setText("NIF");
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Bloquear/Apagar");
             searchField.setPromptText("Pesquisar por nome, email, telefone, NIF...");
         } else {
+            editUserButton.setText("Editar");
+            deleteUserButton.setText("Apagar");
+            editUserButton.disableProperty().unbind();
+            deleteUserButton.disableProperty().unbind();
+            editUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
+            deleteUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
             searchField.setPromptText("Pesquisar por ID, cliente, motorista, estado...");
+        }
+
+        if (!isTripsSection) {
+            editUserButton.disableProperty().unbind();
+            deleteUserButton.disableProperty().unbind();
+            editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
+            deleteUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
         }
 
         updateSectionButtonState();
@@ -1070,10 +1114,16 @@ public class AdminController {
     }
 
     private void openTripFormModal() {
-        modalMode = ModalMode.CREATE_TRIP;
+        openTripFormModal(null);
+    }
+
+    private void openTripFormModal(AdminTripDTO editingTrip) {
+        boolean editing = editingTrip != null;
+        modalMode = editing ? ModalMode.EDIT_TRIP : ModalMode.CREATE_TRIP;
+        modalTargetTrip = editingTrip;
         modalTargetUser = null;
 
-        modalTitleLabel.setText("Nova viagem");
+        modalTitleLabel.setText(editing ? "Editar viagem" : "Nova viagem");
 
         modalUserFormSection.setVisible(false);
         modalUserFormSection.setManaged(false);
@@ -1087,15 +1137,29 @@ public class AdminController {
         modalDeleteConfirmButton.setVisible(false);
         modalDeleteConfirmButton.setManaged(false);
 
-        modalTripClientIdField.clear();
-        modalTripDriverIdField.clear();
-        modalTripTypeCombo.setValue(TripType.IMMEDIATE);
-        modalTripStatusCombo.setValue(TripStatus.PENDING);
-        modalTripOriginField.clear();
-        modalTripDestinationField.clear();
-        modalTripEstimatedPriceField.clear();
-        modalTripFinalPriceField.clear();
-        modalTripNotesField.clear();
+        if (editing) {
+            modalTripClientIdField.setText(editingTrip.getClientId() == null ? "" : String.valueOf(editingTrip.getClientId()));
+            modalTripDriverIdField.setText(editingTrip.getDriverId() == null ? "" : String.valueOf(editingTrip.getDriverId()));
+            modalTripTypeCombo.setValue(editingTrip.getTripType() == null ? TripType.IMMEDIATE : editingTrip.getTripType());
+            modalTripStatusCombo.setValue(editingTrip.getStatus() == null ? TripStatus.PENDING : editingTrip.getStatus());
+            modalTripOriginField.setText(fallback(editingTrip.getOriginAddress()).equals("-") ? "" : editingTrip.getOriginAddress());
+            modalTripDestinationField.setText(fallback(editingTrip.getDestinationAddress()).equals("-") ? "" : editingTrip.getDestinationAddress());
+            modalTripEstimatedPriceField
+                .setText(editingTrip.getEstimatedPrice() == null ? "" : editingTrip.getEstimatedPrice().toPlainString());
+            modalTripFinalPriceField
+                .setText(editingTrip.getFinalPrice() == null ? "" : editingTrip.getFinalPrice().toPlainString());
+            modalTripNotesField.setText(fallback(editingTrip.getNotes()).equals("-") ? "" : editingTrip.getNotes());
+        } else {
+            modalTripClientIdField.clear();
+            modalTripDriverIdField.clear();
+            modalTripTypeCombo.setValue(TripType.IMMEDIATE);
+            modalTripStatusCombo.setValue(TripStatus.PENDING);
+            modalTripOriginField.clear();
+            modalTripDestinationField.clear();
+            modalTripEstimatedPriceField.clear();
+            modalTripFinalPriceField.clear();
+            modalTripNotesField.clear();
+        }
 
         clearModalError();
         showModal();
@@ -1133,6 +1197,35 @@ public class AdminController {
         showModal();
     }
 
+    private void openDeleteTripConfirmModal(AdminTripDTO selectedTrip) {
+        modalMode = ModalMode.DELETE_TRIP_CONFIRM;
+        modalTargetTrip = selectedTrip;
+        modalTargetUser = null;
+
+        modalTitleLabel.setText("Apagar viagem");
+
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
+        modalDeleteSection.setVisible(true);
+        modalDeleteSection.setManaged(true);
+
+        modalSaveButton.setVisible(false);
+        modalSaveButton.setManaged(false);
+        modalDeleteConfirmButton.setVisible(true);
+        modalDeleteConfirmButton.setManaged(true);
+        modalDeleteConfirmButton.setText("Apagar");
+
+        modalDeleteMessageLabel.setText("Tem a certeza que deseja apagar a viagem #" + selectedTrip.getId()
+            + "?\nRota: " + fallback(selectedTrip.getOriginAddress())
+            + " -> " + fallback(selectedTrip.getDestinationAddress())
+            + ".");
+
+        clearModalError();
+        showModal();
+    }
+
     private void persistCreateUser() {
         try {
             AdminUserCommand command = new AdminUserCommand(
@@ -1153,7 +1246,7 @@ public class AdminController {
         }
     }
 
-    private void persistCreateTrip() {
+    private void persistTrip() {
         try {
             AdminTripCommand command = new AdminTripCommand(
                     parseRequiredInteger(modalTripClientIdField.getText(), "Cliente ID"),
@@ -1166,12 +1259,21 @@ public class AdminController {
                     parseOptionalDecimal(modalTripEstimatedPriceField.getText()),
                     parseOptionalDecimal(modalTripFinalPriceField.getText()));
 
-            adminService.createTrip(command);
+            if (modalMode == ModalMode.EDIT_TRIP) {
+                if (modalTargetTrip == null || modalTargetTrip.getId() == null) {
+                    showModalError("Viagem invalida.");
+                    return;
+                }
+                adminService.updateTrip(modalTargetTrip.getId(), command);
+                showFeedback("Viagem atualizada com sucesso.", false);
+            } else {
+                adminService.createTrip(command);
+                showFeedback("Viagem criada com sucesso.", false);
+            }
             hideModal();
             refreshSectionData();
-            showFeedback("Viagem criada com sucesso.", false);
         } catch (Exception exception) {
-            showModalError("Falha ao criar viagem: " + exception.getMessage());
+            showModalError("Falha ao guardar viagem: " + exception.getMessage());
         }
     }
 
@@ -1208,6 +1310,7 @@ public class AdminController {
     private void hideModal() {
         modalMode = ModalMode.NONE;
         modalTargetUser = null;
+        modalTargetTrip = null;
         modalUserFormSection.setVisible(false);
         modalUserFormSection.setManaged(false);
         modalTripFormSection.setVisible(false);

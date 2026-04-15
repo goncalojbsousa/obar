@@ -3,11 +3,13 @@ package com.obar.bll.admin;
 import com.obar.bll.auth.PasswordService;
 import com.obar.dal.RouteRepository;
 import com.obar.dal.TripRepository;
+import com.obar.dal.TripDriverRepository;
 import com.obar.dal.UserRepository;
 import com.obar.dal.VehicleRepository;
 import com.obar.model.Route;
 import com.obar.model.Trip;
 import com.obar.model.User;
+import com.obar.model.Vehicle;
 import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
@@ -27,21 +29,35 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PasswordService passwordService;
     private final TripRepository tripRepository;
+    private final TripDriverRepository tripDriverRepository;
     private final RouteRepository routeRepository;
     private final VehicleRepository vehicleRepository;
 
     public AdminService() {
-        this(new UserRepository(), new PasswordService(), new TripRepository(), new RouteRepository(), new VehicleRepository());
+        this(
+                new UserRepository(),
+                new PasswordService(),
+                new TripRepository(),
+                new TripDriverRepository(),
+                new RouteRepository(),
+                new VehicleRepository());
     }
 
     public AdminService(UserRepository userRepository, PasswordService passwordService) {
-        this(userRepository, passwordService, new TripRepository(), new RouteRepository(), new VehicleRepository());
+        this(
+                userRepository,
+                passwordService,
+                new TripRepository(),
+                new TripDriverRepository(),
+                new RouteRepository(),
+                new VehicleRepository());
     }
 
     public AdminService(
             UserRepository userRepository,
             PasswordService passwordService,
             TripRepository tripRepository,
+            TripDriverRepository tripDriverRepository,
             RouteRepository routeRepository,
             VehicleRepository vehicleRepository) {
         if (userRepository == null) {
@@ -53,6 +69,9 @@ public class AdminService {
         if (tripRepository == null) {
             throw new IllegalArgumentException("TripRepository must not be null.");
         }
+        if (tripDriverRepository == null) {
+            throw new IllegalArgumentException("TripDriverRepository must not be null.");
+        }
         if (routeRepository == null) {
             throw new IllegalArgumentException("RouteRepository must not be null.");
         }
@@ -62,6 +81,7 @@ public class AdminService {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.tripRepository = tripRepository;
+        this.tripDriverRepository = tripDriverRepository;
         this.routeRepository = routeRepository;
         this.vehicleRepository = vehicleRepository;
     }
@@ -119,6 +139,73 @@ public class AdminService {
         }
 
         return tripRepository.save(trip);
+    }
+
+    public Trip updateTrip(Integer tripId, AdminTripCommand command) {
+        if (tripId == null) {
+            throw new IllegalArgumentException("Viagem invalida.");
+        }
+        validateTripCommand(command);
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Viagem nao encontrada."));
+
+        User client = userRepository.findById(command.clientId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente nao encontrado."));
+        if (client.getType() != UserType.CLIENT) {
+            throw new IllegalArgumentException("Utilizador selecionado para cliente e invalido.");
+        }
+
+        User driver = null;
+        if (command.driverId() != null) {
+            driver = userRepository.findById(command.driverId())
+                    .orElseThrow(() -> new IllegalArgumentException("Motorista nao encontrado."));
+            if (driver.getType() != UserType.DRIVER) {
+                throw new IllegalArgumentException("Utilizador selecionado para motorista e invalido.");
+            }
+        }
+
+        Route route = trip.getRoute();
+        if (route == null) {
+            route = new Route();
+        }
+        route.setOriginAddress(command.originAddress().trim());
+        route.setDestinationAddress(command.destinationAddress().trim());
+        if (route.getId() == null) {
+            route = routeRepository.save(route);
+        } else {
+            route = routeRepository.update(route);
+        }
+
+        trip.setClient(client);
+        trip.setDriver(driver);
+        trip.setRoute(route);
+        trip.setTripType(command.tripType() == null ? TripType.IMMEDIATE : command.tripType());
+        trip.setStatus(command.status() == null ? TripStatus.PENDING : command.status());
+        trip.setEstimatedPrice(command.estimatedPrice());
+        trip.setFinalPrice(command.finalPrice());
+        trip.setNotes(trimOrNull(command.notes()));
+
+        if (driver != null) {
+            Optional<Vehicle> vehicle = vehicleRepository.findByDriverId(driver.getId()).stream().findFirst();
+            trip.setVehicle(vehicle.orElse(null));
+        } else {
+            trip.setVehicle(null);
+        }
+
+        return tripRepository.update(trip);
+    }
+
+    public void deleteTrip(Integer tripId) {
+        if (tripId == null) {
+            throw new IllegalArgumentException("Viagem invalida.");
+        }
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Viagem nao encontrada."));
+
+        tripDriverRepository.findByTripId(tripId).forEach(tripDriverRepository::delete);
+        tripRepository.delete(trip);
     }
 
     public User createUser(AdminUserCommand command) {

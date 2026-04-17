@@ -28,7 +28,8 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
             tx.commit();
             return entity;
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             throw e;
         }
     }
@@ -57,7 +58,8 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
             tx.commit();
             return merged;
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             throw e;
         }
     }
@@ -70,7 +72,8 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
             session.remove(session.contains(entity) ? entity : session.merge(entity));
             tx.commit();
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             throw e;
         }
     }

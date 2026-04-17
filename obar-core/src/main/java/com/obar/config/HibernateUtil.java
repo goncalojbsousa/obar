@@ -14,15 +14,24 @@ public class HibernateUtil {
     private static final String DB_PASSWORD = getEnv("DB_PASSWORD", "obar_pass");
 
     private static SessionFactory sessionFactory;
+    private static final Object SESSION_FACTORY_LOCK = new Object();
+
+    public static void warmUp() {
+        getSessionFactory();
+    }
 
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null || sessionFactory.isClosed()) {
-            runMigrations();
-            Configuration configuration = new Configuration().configure("hibernate.cfg.xml");
-            configuration.setProperty("hibernate.connection.url", DB_URL);
-            configuration.setProperty("hibernate.connection.username", DB_USER);
-            configuration.setProperty("hibernate.connection.password", DB_PASSWORD);
-            sessionFactory = configuration.buildSessionFactory();
+            synchronized (SESSION_FACTORY_LOCK) {
+                if (sessionFactory == null || sessionFactory.isClosed()) {
+                    runMigrations();
+                    Configuration configuration = new Configuration().configure("hibernate.cfg.xml");
+                    configuration.setProperty("hibernate.connection.url", DB_URL);
+                    configuration.setProperty("hibernate.connection.username", DB_USER);
+                    configuration.setProperty("hibernate.connection.password", DB_PASSWORD);
+                    sessionFactory = configuration.buildSessionFactory();
+                }
+            }
         }
         return sessionFactory;
     }
@@ -41,8 +50,11 @@ public class HibernateUtil {
     }
 
     public static void shutdown() {
-        if (sessionFactory != null && !sessionFactory.isClosed()) {
-            sessionFactory.close();
+        synchronized (SESSION_FACTORY_LOCK) {
+            if (sessionFactory != null && !sessionFactory.isClosed()) {
+                sessionFactory.close();
+            }
+            sessionFactory = null;
         }
     }
 }

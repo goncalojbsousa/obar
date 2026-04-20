@@ -1,6 +1,11 @@
 package com.obar.desktop.admin;
 
 import com.obar.bll.admin.AdminService;
+import com.obar.bll.admin.AdminFinancialOverviewDTO;
+import com.obar.bll.admin.AdminFinancialPeriod;
+import com.obar.bll.admin.AdminPaymentByTripDTO;
+import com.obar.bll.admin.AdminTaxRateCommand;
+import com.obar.bll.admin.AdminTaxRateDTO;
 import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.bll.admin.AdminUserCommand;
@@ -9,6 +14,7 @@ import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
 import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.PaymentStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.model.enums.UserType;
@@ -17,13 +23,24 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * JavaFX controller for the admin desktop page.
@@ -36,6 +53,8 @@ public class AdminController {
             Locale.forLanguageTag("pt-PT"));
         private static final DateTimeFormatter TRIP_REQUESTED_AT_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
             Locale.forLanguageTag("pt-PT"));
+        private static final DateTimeFormatter PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     private enum ModalMode {
         NONE,
@@ -43,6 +62,7 @@ public class AdminController {
         EDIT,
         CREATE_TRIP,
         EDIT_TRIP,
+        EDIT_TAX_RATE,
         DELETE_TRIP_CONFIRM,
         DELETE_CONFIRM
     }
@@ -50,7 +70,8 @@ public class AdminController {
     private enum AdminSection {
         DRIVERS("Motoristas", "+ Novo Motorista", UserType.DRIVER, "Motorista"),
         CLIENTS("Clientes", "+ Novo Cliente", UserType.CLIENT, "Cliente"),
-        TRIPS("Viagens", "+ Nova Viagem", null, "Viagem");
+        TRIPS("Viagens", "+ Nova Viagem", null, "Viagem"),
+        FINANCIAL("Relatorio Financeiro", "", null, "Financeiro");
 
         private final String title;
         private final String createLabel;
@@ -70,13 +91,20 @@ public class AdminController {
     private final FilteredList<AdminUserDTO> filteredUsers = new FilteredList<>(allUsers, user -> true);
     private final ObservableList<AdminTripDTO> allTrips = FXCollections.observableArrayList();
     private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
+        private final ObservableList<AdminPaymentByTripDTO> allPayments = FXCollections.observableArrayList();
+        private final FilteredList<AdminPaymentByTripDTO> filteredPayments = new FilteredList<>(allPayments,
+            payment -> true);
+        private final ObservableList<AdminTaxRateDTO> allTaxRates = FXCollections.observableArrayList();
 
     private AdminSection currentSection = AdminSection.DRIVERS;
     private AccountStatus currentStatusFilter;
     private TripStatus currentTripStatusFilter;
+        private PaymentStatus currentPaymentStatusFilter;
+        private AdminFinancialPeriod currentFinancialPeriod = AdminFinancialPeriod.MONTH;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminUserDTO modalTargetUser;
     private AdminTripDTO modalTargetTrip;
+        private AdminFinancialOverviewDTO currentFinancialOverview;
 
     @FXML
     private Label currentSectionLabel;
@@ -181,6 +209,9 @@ public class AdminController {
     private TableView<AdminTripDTO> tripsTable;
 
     @FXML
+    private TableView<AdminPaymentByTripDTO> paymentsTable;
+
+    @FXML
     private TableColumn<AdminUserDTO, String> nameColumn;
 
     @FXML
@@ -226,6 +257,120 @@ public class AdminController {
     private TableColumn<AdminTripDTO, String> tripRequestedAtColumn;
 
     @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentIdColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentTripIdColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentClientColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentMethodColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentAmountColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentStatusColumn;
+
+    @FXML
+    private TableColumn<AdminPaymentByTripDTO, String> paymentDateColumn;
+
+    @FXML
+    private VBox financialDashboard;
+
+    @FXML
+    private HBox searchFilterRow;
+
+    @FXML
+    private HBox tableActionRow;
+
+    @FXML
+    private Button exportPdfButton;
+
+    @FXML
+    private Button exportCsvButton;
+
+    @FXML
+    private Button periodDayButton;
+
+    @FXML
+    private Button periodWeekButton;
+
+    @FXML
+    private Button periodMonthButton;
+
+    @FXML
+    private Button periodYearButton;
+
+    @FXML
+    private Button periodAllButton;
+
+    @FXML
+    private Label revenuePeriodLabel;
+
+    @FXML
+    private Label revenueTotalLabel;
+
+    @FXML
+    private Label revenueTrendLabel;
+
+    @FXML
+    private Label netRevenueValueLabel;
+
+    @FXML
+    private Label platformCommissionValueLabel;
+
+    @FXML
+    private Label billedTripsValueLabel;
+
+    @FXML
+    private Label avgTicketValueLabel;
+
+    @FXML
+    private Label processedPaymentsValueLabel;
+
+    @FXML
+    private Label refundedPaymentsValueLabel;
+
+    @FXML
+    private Label failedRateValueLabel;
+
+    @FXML
+    private Label paidDriversValueLabel;
+
+    @FXML
+    private HBox dailyBarsContainer;
+
+    @FXML
+    private Label methodOneLabel;
+
+    @FXML
+    private Label methodOnePercentLabel;
+
+    @FXML
+    private Label methodTwoLabel;
+
+    @FXML
+    private Label methodTwoPercentLabel;
+
+    @FXML
+    private Label methodThreeLabel;
+
+    @FXML
+    private Label methodThreePercentLabel;
+
+    @FXML
+    private Label methodFourLabel;
+
+    @FXML
+    private Label methodFourPercentLabel;
+
+    @FXML
+    private Label paymentsTableTitle;
+
+    @FXML
     private Button addUserButton;
 
     @FXML
@@ -242,6 +387,12 @@ public class AdminController {
 
     @FXML
     private Button viagensSectionButton;
+
+    @FXML
+    private Button financeiraSectionButton;
+
+    @FXML
+    private ComboBox<AdminFinancialPeriod> periodComboBox;
 
     @FXML
     private Button filterAllButton;
@@ -272,6 +423,9 @@ public class AdminController {
 
     @FXML
     private VBox modalTripFormSection;
+
+    @FXML
+    private VBox modalTaxRateFormSection;
 
     @FXML
     private VBox modalDeleteSection;
@@ -322,6 +476,21 @@ public class AdminController {
     private TextField modalTripNotesField;
 
     @FXML
+    private ComboBox<AdminTaxRateDTO> modalTaxRateCombo;
+
+    @FXML
+    private TextField modalTaxRateNameField;
+
+    @FXML
+    private TextField modalTaxRateValueField;
+
+    @FXML
+    private TextField modalTaxRateDescriptionField;
+
+    @FXML
+    private CheckBox modalTaxRateActiveCheck;
+
+    @FXML
     private ComboBox<AccountStatus> modalStatusCombo;
 
     @FXML
@@ -353,9 +522,11 @@ public class AdminController {
         updateSidebarUserCard();
         setupColumns();
         setupTripColumns();
+        setupPaymentColumns();
 
         usersTable.setItems(filteredUsers);
         tripsTable.setItems(filteredTrips);
+        paymentsTable.setItems(filteredPayments);
         usersTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, previous, current) -> onSelectionChanged(current));
         tripsTable.getSelectionModel().selectedItemProperty()
@@ -364,6 +535,26 @@ public class AdminController {
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
         modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
         modalTripStatusCombo.setItems(FXCollections.observableArrayList(TripStatus.values()));
+        periodComboBox.setItems(FXCollections.observableArrayList(AdminFinancialPeriod.values()));
+        periodComboBox.setValue(currentFinancialPeriod);
+        periodComboBox.setVisible(false);
+        periodComboBox.setManaged(false);
+
+        modalTaxRateCombo.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(AdminTaxRateDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatTaxRateDisplay(item));
+            }
+        });
+        modalTaxRateCombo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(AdminTaxRateDTO item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatTaxRateDisplay(item));
+            }
+        });
+        modalTaxRateCombo.valueProperty().addListener((obs, oldValue, newValue) -> populateTaxRateFields(newValue));
 
         editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
         deleteUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
@@ -391,7 +582,50 @@ public class AdminController {
     }
 
     @FXML
+    public void handleFinanceiraSection() {
+        switchSection(AdminSection.FINANCIAL);
+    }
+
+    @FXML
+    public void handlePeriodChanged() {
+        if (currentSection != AdminSection.FINANCIAL) {
+            return;
+        }
+        currentFinancialPeriod = periodComboBox.getValue() == null ? AdminFinancialPeriod.MONTH : periodComboBox.getValue();
+        refreshSectionData();
+    }
+
+    @FXML
+    public void handleFinancialPeriodDay() {
+        setFinancialPeriod(AdminFinancialPeriod.DAY);
+    }
+
+    @FXML
+    public void handleFinancialPeriodWeek() {
+        setFinancialPeriod(AdminFinancialPeriod.WEEK);
+    }
+
+    @FXML
+    public void handleFinancialPeriodMonth() {
+        setFinancialPeriod(AdminFinancialPeriod.MONTH);
+    }
+
+    @FXML
+    public void handleFinancialPeriodYear() {
+        setFinancialPeriod(AdminFinancialPeriod.YEAR);
+    }
+
+    @FXML
+    public void handleFinancialPeriodAll() {
+        setFinancialPeriod(AdminFinancialPeriod.ALL);
+    }
+
+    @FXML
     public void handleFilterAll() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setPaymentStatusFilter(null);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setTripStatusFilter(null);
             return;
@@ -401,6 +635,10 @@ public class AdminController {
 
     @FXML
     public void handleFilterActive() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setPaymentStatusFilter(PaymentStatus.PROCESSED);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setTripStatusFilter(TripStatus.ACCEPTED);
             return;
@@ -410,6 +648,10 @@ public class AdminController {
 
     @FXML
     public void handleFilterInactive() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setPaymentStatusFilter(PaymentStatus.FAILED);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setTripStatusFilter(TripStatus.IN_PROGRESS);
             return;
@@ -419,6 +661,10 @@ public class AdminController {
 
     @FXML
     public void handleFilterBlocked() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setPaymentStatusFilter(PaymentStatus.REFUNDED);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setTripStatusFilter(TripStatus.COMPLETED);
             return;
@@ -428,6 +674,10 @@ public class AdminController {
 
     @FXML
     public void handleFilterPending() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setPaymentStatusFilter(PaymentStatus.PENDING);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setTripStatusFilter(TripStatus.PENDING);
             return;
@@ -437,12 +687,23 @@ public class AdminController {
 
     @FXML
     public void handleExportSection() {
-        int filteredCount = currentSection == AdminSection.TRIPS ? filteredTrips.size() : filteredUsers.size();
+        int filteredCount;
+        if (currentSection == AdminSection.TRIPS) {
+            filteredCount = filteredTrips.size();
+        } else if (currentSection == AdminSection.FINANCIAL) {
+            filteredCount = filteredPayments.size();
+        } else {
+            filteredCount = filteredUsers.size();
+        }
         showFeedback("Exportacao ainda nao implementada. Registos filtrados: " + filteredCount, false);
     }
 
     @FXML
     public void handleAddUser() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            showFeedback("Nesta secao so e permitido editar taxas de IVA.", false);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             openTripFormModal();
             return;
@@ -452,6 +713,10 @@ public class AdminController {
 
     @FXML
     public void handleEditUser() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            openTaxRateEditModal();
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
             if (selectedTrip == null) {
@@ -477,6 +742,10 @@ public class AdminController {
 
     @FXML
     public void handleDeleteUser() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            showFeedback("Remocao de dados financeiros nao esta disponivel nesta vista.", true);
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             AdminTripDTO selectedTrip = tripsTable.getSelectionModel().getSelectedItem();
             if (selectedTrip == null) {
@@ -505,8 +774,14 @@ public class AdminController {
         if (modalMode != ModalMode.CREATE
                 && modalMode != ModalMode.EDIT
                 && modalMode != ModalMode.CREATE_TRIP
-                && modalMode != ModalMode.EDIT_TRIP) {
+                && modalMode != ModalMode.EDIT_TRIP
+                && modalMode != ModalMode.EDIT_TAX_RATE) {
             hideModal();
+            return;
+        }
+
+        if (modalMode == ModalMode.EDIT_TAX_RATE) {
+            persistTaxRateUpdate();
             return;
         }
 
@@ -680,22 +955,92 @@ public class AdminController {
         });
     }
 
+    private void setupPaymentColumns() {
+        paymentIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getPaymentId() == null ? "-" : "#" + cellData.getValue().getPaymentId()));
+        paymentTripIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getTripId() == null ? "-" : "#" + cellData.getValue().getTripId()));
+        paymentClientColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(fallback(cellData.getValue().getClientName())));
+        paymentMethodColumn.setCellValueFactory(cellData ->
+            new SimpleStringProperty(prettyPaymentMethod(cellData.getValue().getPaymentMethodType())));
+        paymentAmountColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(formatPaymentAmount(cellData.getValue())));
+        paymentDateColumn.setCellValueFactory(cellData -> {
+            LocalDateTime paymentDate = cellData.getValue().getPaymentDate();
+            return new SimpleStringProperty(paymentDate == null ? "-" : PAYMENT_DATE_FORMAT.format(paymentDate));
+        });
+
+        paymentStatusColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(prettyPaymentStatus(cellData.getValue().getStatus())));
+        paymentStatusColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll(
+                        "payment-processed",
+                        "payment-pending",
+                        "payment-failed",
+                        "payment-refunded");
+
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+
+                setText(item);
+                if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    return;
+                }
+
+                AdminPaymentByTripDTO rowPayment = getTableView().getItems().get(getIndex());
+                if (rowPayment.getStatus() == null) {
+                    return;
+                }
+
+                switch (rowPayment.getStatus()) {
+                    case PROCESSED -> getStyleClass().add("payment-processed");
+                    case PENDING -> getStyleClass().add("payment-pending");
+                    case FAILED -> getStyleClass().add("payment-failed");
+                    case REFUNDED -> getStyleClass().add("payment-refunded");
+                }
+            }
+        });
+    }
+
     private void switchSection(AdminSection section) {
         this.currentSection = section;
         currentSectionLabel.setText(section.title);
         addUserButton.setText(section.createLabel);
 
         boolean isTripsSection = section == AdminSection.TRIPS;
-        usersTable.setVisible(!isTripsSection);
-        usersTable.setManaged(!isTripsSection);
+        boolean isFinancialSection = section == AdminSection.FINANCIAL;
+        usersTable.setVisible(!isTripsSection && !isFinancialSection);
+        usersTable.setManaged(!isTripsSection && !isFinancialSection);
         tripsTable.setVisible(isTripsSection);
         tripsTable.setManaged(isTripsSection);
-        addUserButton.setVisible(true);
-        addUserButton.setManaged(true);
+        paymentsTable.setVisible(isFinancialSection);
+        paymentsTable.setManaged(isFinancialSection);
+        financialDashboard.setVisible(isFinancialSection);
+        financialDashboard.setManaged(isFinancialSection);
+        paymentsTableTitle.setVisible(isFinancialSection);
+        paymentsTableTitle.setManaged(isFinancialSection);
+        periodComboBox.setVisible(isFinancialSection);
+        periodComboBox.setManaged(isFinancialSection);
+        searchFilterRow.setVisible(!isFinancialSection);
+        searchFilterRow.setManaged(!isFinancialSection);
+        tableActionRow.setVisible(!isFinancialSection);
+        tableActionRow.setManaged(!isFinancialSection);
+        exportPdfButton.setVisible(isFinancialSection);
+        exportPdfButton.setManaged(isFinancialSection);
+        exportCsvButton.setText(isFinancialSection ? "Exportar CSV" : "Exportar");
+
+        addUserButton.setVisible(!isFinancialSection);
+        addUserButton.setManaged(!isFinancialSection);
         editUserButton.setVisible(true);
         editUserButton.setManaged(true);
-        deleteUserButton.setVisible(true);
-        deleteUserButton.setManaged(true);
+        deleteUserButton.setVisible(!isFinancialSection);
+        deleteUserButton.setManaged(!isFinancialSection);
         filterAllButton.setVisible(true);
         filterAllButton.setManaged(true);
         filterActiveButton.setVisible(true);
@@ -706,10 +1051,12 @@ public class AdminController {
         filterBlockedButton.setManaged(true);
         filterPendingButton.setVisible(true);
         filterPendingButton.setManaged(true);
+
         boolean hasUserSelection = usersTable.getSelectionModel().getSelectedItem() != null;
         boolean hasTripSelection = tripsTable.getSelectionModel().getSelectedItem() != null;
-        detailPanel.setVisible(isTripsSection ? hasTripSelection : hasUserSelection);
-        detailPanel.setManaged(isTripsSection ? hasTripSelection : hasUserSelection);
+        boolean showDetails = isTripsSection ? hasTripSelection : (!isFinancialSection && hasUserSelection);
+        detailPanel.setVisible(showDetails);
+        detailPanel.setManaged(showDetails);
 
         if (section == AdminSection.DRIVERS) {
             nameColumn.setText("Motorista");
@@ -730,7 +1077,7 @@ public class AdminController {
             editUserButton.setText("Editar");
             deleteUserButton.setText("Bloquear/Apagar");
             searchField.setPromptText("Pesquisar por nome, email, telefone, NIF...");
-        } else {
+        } else if (section == AdminSection.TRIPS) {
             editUserButton.setText("Editar");
             deleteUserButton.setText("Apagar");
             editUserButton.disableProperty().unbind();
@@ -738,9 +1085,18 @@ public class AdminController {
             editUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
             deleteUserButton.disableProperty().bind(tripsTable.getSelectionModel().selectedItemProperty().isNull());
             searchField.setPromptText("Pesquisar por ID, cliente, motorista, estado...");
+        } else {
+            editUserButton.setText("Editar IVA");
+            editUserButton.disableProperty().unbind();
+            editUserButton.setDisable(false);
+            deleteUserButton.disableProperty().unbind();
+            deleteUserButton.setDisable(true);
+            searchField.setPromptText("Pesquisar por pagamento, viagem, cliente, motorista...");
         }
 
-        if (!isTripsSection) {
+        updateFinancialPeriodButtons();
+
+        if (!isTripsSection && !isFinancialSection) {
             editUserButton.disableProperty().unbind();
             deleteUserButton.disableProperty().unbind();
             editUserButton.disableProperty().bind(usersTable.getSelectionModel().selectedItemProperty().isNull());
@@ -748,7 +1104,9 @@ public class AdminController {
         }
 
         updateSectionButtonState();
-        if (isTripsSection) {
+        if (isFinancialSection) {
+            setPaymentStatusFilter(null);
+        } else if (isTripsSection) {
             setTripStatusFilter(null);
         } else {
             setStatusFilter(null);
@@ -760,17 +1118,29 @@ public class AdminController {
     private void refreshSectionData() {
         if (currentSection == AdminSection.TRIPS) {
             allTrips.setAll(adminService.listTrips());
+        } else if (currentSection == AdminSection.FINANCIAL) {
+            allPayments.setAll(adminService.listPaymentsByTrip(currentFinancialPeriod));
+            allTaxRates.setAll(adminService.listTaxRates());
+            currentFinancialOverview = adminService.getFinancialOverview(currentFinancialPeriod);
+            updateFinancialDetailPanel();
+            updateFinancialDashboard();
         } else {
             allUsers.setAll(adminService.listUsersByType(currentSection.userType));
         }
         applyFilters();
         updateFilterLabels();
         usersTable.getSelectionModel().clearSelection();
+        tripsTable.getSelectionModel().clearSelection();
+        paymentsTable.getSelectionModel().clearSelection();
         clearDetailPanel();
+        if (currentSection == AdminSection.FINANCIAL) {
+            updateFinancialDetailPanel();
+            updateFinancialDashboard();
+        }
     }
 
     private void onSelectionChanged(AdminUserDTO selectedUser) {
-        if (currentSection == AdminSection.TRIPS) {
+        if (currentSection == AdminSection.TRIPS || currentSection == AdminSection.FINANCIAL) {
             return;
         }
 
@@ -813,10 +1183,28 @@ public class AdminController {
         applyFilters();
     }
 
+    private void setPaymentStatusFilter(PaymentStatus status) {
+        this.currentPaymentStatusFilter = status;
+        updateFilterButtonState();
+        applyFilters();
+    }
+
+    private void setFinancialPeriod(AdminFinancialPeriod period) {
+        if (currentSection != AdminSection.FINANCIAL || period == null || period == currentFinancialPeriod) {
+            return;
+        }
+
+        currentFinancialPeriod = period;
+        periodComboBox.setValue(period);
+        refreshSectionData();
+    }
+
     private void applyFilters() {
         String query = normalize(searchField.getText());
         if (currentSection == AdminSection.TRIPS) {
             filteredTrips.setPredicate(trip -> matchesTripStatus(trip) && matchesTripQuery(trip, query));
+        } else if (currentSection == AdminSection.FINANCIAL) {
+            filteredPayments.setPredicate(payment -> matchesPaymentStatus(payment) && matchesPaymentQuery(payment, query));
         } else {
             filteredUsers.setPredicate(user -> matchesStatus(user) && matchesQuery(user, query));
         }
@@ -826,6 +1214,10 @@ public class AdminController {
     private void updateListInfo() {
         if (currentSection == AdminSection.TRIPS) {
             listInfoLabel.setText("A mostrar " + filteredTrips.size() + " de " + allTrips.size() + " viagens");
+            return;
+        }
+        if (currentSection == AdminSection.FINANCIAL) {
+            listInfoLabel.setText("A mostrar " + filteredPayments.size() + " de " + allPayments.size() + " pagamentos");
             return;
         }
 
@@ -839,6 +1231,10 @@ public class AdminController {
 
     private boolean matchesTripStatus(AdminTripDTO trip) {
         return currentTripStatusFilter == null || trip.getStatus() == currentTripStatusFilter;
+    }
+
+    private boolean matchesPaymentStatus(AdminPaymentByTripDTO payment) {
+        return currentPaymentStatusFilter == null || payment.getStatus() == currentPaymentStatusFilter;
     }
 
     private boolean matchesQuery(AdminUserDTO user, String query) {
@@ -868,6 +1264,21 @@ public class AdminController {
                 || normalize(trip.getDestinationAddress()).contains(query);
     }
 
+    private boolean matchesPaymentQuery(AdminPaymentByTripDTO payment, String query) {
+        if (query.isBlank()) {
+            return true;
+        }
+
+        String paymentIdValue = payment.getPaymentId() == null ? "" : String.valueOf(payment.getPaymentId());
+        String tripIdValue = payment.getTripId() == null ? "" : String.valueOf(payment.getTripId());
+        return normalize(paymentIdValue).contains(query)
+                || normalize(tripIdValue).contains(query)
+                || normalize(payment.getClientName()).contains(query)
+                || normalize(payment.getDriverName()).contains(query)
+            || normalize(prettyPaymentMethod(payment.getPaymentMethodType())).contains(query)
+                || normalize(prettyPaymentStatus(payment.getStatus())).contains(query);
+    }
+
     private void updateSectionButtonState() {
         setButtonState(motoristasSectionButton, currentSection == AdminSection.DRIVERS, "sidebar-item",
                 "sidebar-item-active");
@@ -875,9 +1286,23 @@ public class AdminController {
                 "sidebar-item-active");
         setButtonState(viagensSectionButton, currentSection == AdminSection.TRIPS, "sidebar-item",
                 "sidebar-item-active");
+        setButtonState(financeiraSectionButton, currentSection == AdminSection.FINANCIAL, "sidebar-item",
+            "sidebar-item-active");
     }
 
     private void updateFilterButtonState() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            setButtonState(filterAllButton, currentPaymentStatusFilter == null, "filter-chip", "filter-chip-active");
+            setButtonState(filterActiveButton, currentPaymentStatusFilter == PaymentStatus.PROCESSED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterInactiveButton, currentPaymentStatusFilter == PaymentStatus.FAILED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterBlockedButton, currentPaymentStatusFilter == PaymentStatus.REFUNDED, "filter-chip",
+                "filter-chip-active");
+            setButtonState(filterPendingButton, currentPaymentStatusFilter == PaymentStatus.PENDING, "filter-chip",
+                "filter-chip-active");
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             setButtonState(filterAllButton, currentTripStatusFilter == null, "filter-chip", "filter-chip-active");
             setButtonState(filterActiveButton, currentTripStatusFilter == TripStatus.ACCEPTED, "filter-chip",
@@ -908,6 +1333,21 @@ public class AdminController {
     }
 
     private void updateFilterLabels() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            long pendingCount = allPayments.stream().filter(payment -> payment.getStatus() == PaymentStatus.PENDING).count();
+            long processedCount = allPayments.stream().filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
+                    .count();
+            long failedCount = allPayments.stream().filter(payment -> payment.getStatus() == PaymentStatus.FAILED).count();
+            long refundedCount = allPayments.stream().filter(payment -> payment.getStatus() == PaymentStatus.REFUNDED)
+                    .count();
+
+            filterAllButton.setText("Todos (" + allPayments.size() + ")");
+            filterActiveButton.setText("Processados (" + processedCount + ")");
+            filterInactiveButton.setText("Falhados (" + failedCount + ")");
+            filterBlockedButton.setText("Reembolsados (" + refundedCount + ")");
+            filterPendingButton.setText("Pendentes (" + pendingCount + ")");
+            return;
+        }
         if (currentSection == AdminSection.TRIPS) {
             long pendingCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.PENDING).count();
             long acceptedCount = allTrips.stream().filter(trip -> trip.getStatus() == TripStatus.ACCEPTED).count();
@@ -971,6 +1411,216 @@ public class AdminController {
         detailExtraThreeValueLabel.setText(trip.getEndTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getEndTime()));
     }
 
+    private void updateFinancialDetailPanel() {
+        AdminFinancialOverviewDTO overview = currentFinancialOverview;
+        if (overview == null) {
+            clearDetailPanel();
+            return;
+        }
+
+        detailTitleLabel.setText("Resumo financeiro");
+        detailInitialsLabel.setText("EUR");
+        detailNameLabel.setText("Rendimentos e pagamentos");
+        detailEmailLabel.setText("Periodo: " + prettyFinancialPeriod(currentFinancialPeriod));
+        detailStatusLabel.setText("Total");
+        detailRoleLabel.setText("Financeiro");
+        detailPhoneValueLabel.setText("Taxas IVA ativas: " + allTaxRates.stream().filter(t -> Boolean.TRUE.equals(t.getActive())).count());
+        detailCreatedValueLabel.setText("Pagamentos: " + overview.getTotalPayments());
+
+        detailCardOneTitleLabel.setText("Rend. total");
+        detailCardOneValueLabel.setText(formatCurrency(overview.getTotalIncome()));
+        detailCardTwoTitleLabel.setText("Rend. periodo");
+        detailCardTwoValueLabel.setText(formatCurrency(overview.getPeriodIncome()));
+        detailCardThreeTitleLabel.setText("Processados");
+        detailCardThreeValueLabel.setText(String.valueOf(overview.getProcessedPayments()));
+        detailCardFourTitleLabel.setText("Pendentes");
+        detailCardFourValueLabel.setText(String.valueOf(overview.getPendingPayments()));
+
+        detailReferenceTitleLabel.setText("Falhados");
+        detailReferenceValueLabel.setText(String.valueOf(overview.getFailedPayments()));
+        detailExtraOneTitleLabel.setText("Reembolsados");
+        detailExtraOneValueLabel.setText(String.valueOf(overview.getRefundedPayments()));
+        detailExtraTwoTitleLabel.setText("Top IVA");
+        detailExtraTwoValueLabel.setText(formatTopTaxRates());
+        detailExtraThreeTitleLabel.setText("Acao");
+        detailExtraThreeValueLabel.setText("Use o botao 'Editar IVA' para atualizar taxas.");
+    }
+
+    private void updateFinancialDashboard() {
+        updateFinancialPeriodButtons();
+
+        AdminFinancialOverviewDTO overview = currentFinancialOverview;
+        if (overview == null) {
+            revenuePeriodLabel.setText("Receita Total");
+            revenueTotalLabel.setText("EUR 0.00");
+            revenueTrendLabel.setText("Sem dados no periodo selecionado.");
+            netRevenueValueLabel.setText("EUR 0.00");
+            platformCommissionValueLabel.setText("EUR 0.00");
+            billedTripsValueLabel.setText("0");
+            avgTicketValueLabel.setText("EUR 0.00");
+            processedPaymentsValueLabel.setText("0");
+            refundedPaymentsValueLabel.setText("0");
+            failedRateValueLabel.setText("0.0%");
+            paidDriversValueLabel.setText("0");
+            renderDailyRevenueBars(List.of());
+            updatePaymentMethodsLegend(new HashMap<>(), 0L);
+            return;
+        }
+
+        BigDecimal periodIncome = defaultAmount(overview.getPeriodIncome());
+        BigDecimal commission = periodIncome.multiply(new BigDecimal("0.20"));
+        long processed = overview.getProcessedPayments();
+        long total = Math.max(overview.getTotalPayments(), 0);
+        long refunded = overview.getRefundedPayments();
+        long failed = overview.getFailedPayments();
+
+        BigDecimal avgTicket = processed <= 0
+                ? BigDecimal.ZERO
+                : periodIncome.divide(BigDecimal.valueOf(processed), 2, RoundingMode.HALF_UP);
+        long paidDrivers = allPayments.stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
+                .map(payment -> normalize(payment.getDriverName()))
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .count();
+
+        double processedRate = total == 0 ? 0 : (processed * 100.0) / total;
+        double failedRate = total == 0 ? 0 : (failed * 100.0) / total;
+
+        revenuePeriodLabel.setText("Receita Total - " + prettyFinancialPeriod(currentFinancialPeriod));
+        revenueTotalLabel.setText(formatCurrency(periodIncome));
+        revenueTrendLabel.setText("Taxa de sucesso: " + formatPercent(processedRate) + " | Pagamentos: " + total);
+
+        netRevenueValueLabel.setText(formatCurrency(periodIncome));
+        platformCommissionValueLabel.setText(formatCurrency(commission));
+        billedTripsValueLabel.setText(String.valueOf(processed));
+        avgTicketValueLabel.setText(formatCurrency(avgTicket));
+
+        processedPaymentsValueLabel.setText(String.valueOf(processed));
+        refundedPaymentsValueLabel.setText(String.valueOf(refunded));
+        failedRateValueLabel.setText(formatPercent(failedRate));
+        paidDriversValueLabel.setText(String.valueOf(paidDrivers));
+
+        renderDailyRevenueBars(allPayments);
+        updatePaymentMethodsLegend(groupPaymentMethods(allPayments), total);
+    }
+
+    private void updateFinancialPeriodButtons() {
+        setButtonState(periodDayButton, currentFinancialPeriod == AdminFinancialPeriod.DAY, "period-chip", "period-chip-active");
+        setButtonState(periodWeekButton, currentFinancialPeriod == AdminFinancialPeriod.WEEK, "period-chip", "period-chip-active");
+        setButtonState(periodMonthButton, currentFinancialPeriod == AdminFinancialPeriod.MONTH, "period-chip", "period-chip-active");
+        setButtonState(periodYearButton, currentFinancialPeriod == AdminFinancialPeriod.YEAR, "period-chip", "period-chip-active");
+        setButtonState(periodAllButton, currentFinancialPeriod == AdminFinancialPeriod.ALL, "period-chip", "period-chip-active");
+    }
+
+    private void renderDailyRevenueBars(List<AdminPaymentByTripDTO> payments) {
+        dailyBarsContainer.getChildren().clear();
+
+        List<AdminPaymentByTripDTO> validPayments = payments == null
+                ? List.of()
+                : payments.stream()
+                .filter(payment -> payment.getPaymentDate() != null)
+                .sorted(Comparator.comparing(AdminPaymentByTripDTO::getPaymentDate))
+                .toList();
+
+        LocalDate maxDate = validPayments.isEmpty()
+                ? LocalDate.now()
+                : validPayments.get(validPayments.size() - 1).getPaymentDate().toLocalDate();
+        LocalDate startDate = maxDate.minusDays(13);
+
+        List<BigDecimal> dailyValues = new ArrayList<>();
+        BigDecimal maxValue = BigDecimal.ZERO;
+        for (int i = 0; i < 14; i++) {
+            LocalDate day = startDate.plusDays(i);
+            BigDecimal dayValue = validPayments.stream()
+                    .filter(payment -> payment.getPaymentDate().toLocalDate().equals(day))
+                    .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
+                    .map(payment -> defaultAmount(payment.getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            dailyValues.add(dayValue);
+            if (dayValue.compareTo(maxValue) > 0) {
+                maxValue = dayValue;
+            }
+        }
+
+        if (maxValue.compareTo(BigDecimal.ZERO) == 0) {
+            dailyBarsContainer.setAlignment(Pos.CENTER_LEFT);
+            Label emptyStateLabel = new Label("Sem receita processada no periodo selecionado.");
+            emptyStateLabel.getStyleClass().add("financial-empty-state");
+            dailyBarsContainer.getChildren().add(emptyStateLabel);
+            return;
+        }
+
+        dailyBarsContainer.setAlignment(Pos.BOTTOM_LEFT);
+
+        for (int i = 0; i < 14; i++) {
+            LocalDate day = startDate.plusDays(i);
+            BigDecimal dayValue = dailyValues.get(i);
+            double ratio = dayValue.divide(maxValue, 4, RoundingMode.HALF_UP).doubleValue();
+
+            VBox column = new VBox(6.0);
+            column.setAlignment(Pos.BOTTOM_CENTER);
+            column.getStyleClass().add("financial-bar-column");
+
+            Region bar = new Region();
+            bar.getStyleClass().add("financial-bar");
+            if (ratio >= 0.75) {
+                bar.getStyleClass().add("financial-bar-strong");
+            } else if (ratio >= 0.45) {
+                bar.getStyleClass().add("financial-bar-medium");
+            }
+            bar.setPrefWidth(20);
+            bar.setMinWidth(20);
+            bar.setMaxWidth(20);
+            bar.setPrefHeight(6 + (ratio * 98));
+
+            Label dayLabel = new Label(String.valueOf(day.getDayOfMonth()));
+            dayLabel.getStyleClass().add("financial-bar-label");
+
+            column.getChildren().addAll(bar, dayLabel);
+            dailyBarsContainer.getChildren().add(column);
+        }
+    }
+
+    private void updatePaymentMethodsLegend(Map<String, Long> groupedMethods, long totalPayments) {
+        List<Map.Entry<String, Long>> sorted = groupedMethods.entrySet().stream()
+                .sorted((left, right) -> Long.compare(right.getValue(), left.getValue()))
+                .limit(4)
+                .toList();
+
+        setPaymentMethodLegendRow(sorted, 0, methodOneLabel, methodOnePercentLabel, totalPayments);
+        setPaymentMethodLegendRow(sorted, 1, methodTwoLabel, methodTwoPercentLabel, totalPayments);
+        setPaymentMethodLegendRow(sorted, 2, methodThreeLabel, methodThreePercentLabel, totalPayments);
+        setPaymentMethodLegendRow(sorted, 3, methodFourLabel, methodFourPercentLabel, totalPayments);
+    }
+
+    private void setPaymentMethodLegendRow(
+            List<Map.Entry<String, Long>> sorted,
+            int index,
+            Label methodLabel,
+            Label percentLabel,
+            long totalPayments) {
+        if (index >= sorted.size()) {
+            methodLabel.setText("-");
+            percentLabel.setText("0%");
+            return;
+        }
+
+        Map.Entry<String, Long> entry = sorted.get(index);
+        methodLabel.setText(prettyPaymentMethod(entry.getKey()));
+        double percentage = totalPayments == 0 ? 0 : (entry.getValue() * 100.0) / totalPayments;
+        percentLabel.setText(formatPercent(percentage));
+    }
+
+    private Map<String, Long> groupPaymentMethods(List<AdminPaymentByTripDTO> payments) {
+        Map<String, Long> grouped = new HashMap<>();
+        for (AdminPaymentByTripDTO payment : payments) {
+            String key = normalizePaymentMethodKey(payment.getPaymentMethodType());
+            grouped.put(key, grouped.getOrDefault(key, 0L) + 1);
+        }
+        return grouped;
+    }
+
     private void updateDetailsPanel(AdminUserDTO user) {
         if (user == null) {
             clearDetailPanel();
@@ -1013,6 +1663,34 @@ public class AdminController {
     }
 
     private void clearDetailPanel() {
+        if (currentSection == AdminSection.FINANCIAL) {
+            detailTitleLabel.setText("Resumo financeiro");
+            detailInitialsLabel.setText("EUR");
+            detailNameLabel.setText("Sem dados financeiros");
+            detailEmailLabel.setText("-");
+            detailStatusLabel.setText("-");
+            detailRoleLabel.setText(currentSection.badgeLabel);
+            detailCardOneTitleLabel.setText("Rend. total");
+            detailCardOneValueLabel.setText("-");
+            detailCardTwoTitleLabel.setText("Rend. periodo");
+            detailCardTwoValueLabel.setText("-");
+            detailCardThreeTitleLabel.setText("Processados");
+            detailCardThreeValueLabel.setText("-");
+            detailCardFourTitleLabel.setText("Pendentes");
+            detailCardFourValueLabel.setText("-");
+            detailReferenceTitleLabel.setText("Falhados");
+            detailReferenceValueLabel.setText("-");
+            detailPhoneValueLabel.setText("-");
+            detailCreatedValueLabel.setText("-");
+            detailExtraOneTitleLabel.setText("Reembolsados");
+            detailExtraOneValueLabel.setText("-");
+            detailExtraTwoTitleLabel.setText("Top IVA");
+            detailExtraTwoValueLabel.setText("-");
+            detailExtraThreeTitleLabel.setText("Acao");
+            detailExtraThreeValueLabel.setText("-");
+            return;
+        }
+
         detailTitleLabel.setText(currentSection == AdminSection.TRIPS ? "Detalhe da viagem" : "Detalhe do utilizador");
         detailInitialsLabel.setText("--");
         detailNameLabel.setText("Sem selecao");
@@ -1080,6 +1758,8 @@ public class AdminController {
         modalUserFormSection.setManaged(true);
         modalTripFormSection.setVisible(false);
         modalTripFormSection.setManaged(false);
+        modalTaxRateFormSection.setVisible(false);
+        modalTaxRateFormSection.setManaged(false);
         modalDeleteSection.setVisible(false);
         modalDeleteSection.setManaged(false);
 
@@ -1129,6 +1809,8 @@ public class AdminController {
         modalUserFormSection.setManaged(false);
         modalTripFormSection.setVisible(true);
         modalTripFormSection.setManaged(true);
+        modalTaxRateFormSection.setVisible(false);
+        modalTaxRateFormSection.setManaged(false);
         modalDeleteSection.setVisible(false);
         modalDeleteSection.setManaged(false);
 
@@ -1176,6 +1858,8 @@ public class AdminController {
         modalUserFormSection.setManaged(false);
         modalTripFormSection.setVisible(false);
         modalTripFormSection.setManaged(false);
+        modalTaxRateFormSection.setVisible(false);
+        modalTaxRateFormSection.setManaged(false);
         modalDeleteSection.setVisible(true);
         modalDeleteSection.setManaged(true);
 
@@ -1208,6 +1892,8 @@ public class AdminController {
         modalUserFormSection.setManaged(false);
         modalTripFormSection.setVisible(false);
         modalTripFormSection.setManaged(false);
+        modalTaxRateFormSection.setVisible(false);
+        modalTaxRateFormSection.setManaged(false);
         modalDeleteSection.setVisible(true);
         modalDeleteSection.setManaged(true);
 
@@ -1243,6 +1929,77 @@ public class AdminController {
             showFeedback(currentSection.badgeLabel + " criado com sucesso.", false);
         } catch (Exception exception) {
             showModalError("Falha ao criar registo: " + exception.getMessage());
+        }
+    }
+
+    private void openTaxRateEditModal() {
+        if (allTaxRates.isEmpty()) {
+            showFeedback("Nao existem taxas de IVA para editar.", true);
+            return;
+        }
+
+        modalMode = ModalMode.EDIT_TAX_RATE;
+        modalTitleLabel.setText("Editar taxa de IVA");
+
+        modalUserFormSection.setVisible(false);
+        modalUserFormSection.setManaged(false);
+        modalTripFormSection.setVisible(false);
+        modalTripFormSection.setManaged(false);
+        modalTaxRateFormSection.setVisible(true);
+        modalTaxRateFormSection.setManaged(true);
+        modalDeleteSection.setVisible(false);
+        modalDeleteSection.setManaged(false);
+
+        modalSaveButton.setVisible(true);
+        modalSaveButton.setManaged(true);
+        modalDeleteConfirmButton.setVisible(false);
+        modalDeleteConfirmButton.setManaged(false);
+
+        modalTaxRateCombo.setItems(FXCollections.observableArrayList(allTaxRates));
+        modalTaxRateCombo.getSelectionModel().selectFirst();
+        populateTaxRateFields(modalTaxRateCombo.getValue());
+
+        clearModalError();
+        showModal();
+    }
+
+    private void populateTaxRateFields(AdminTaxRateDTO taxRate) {
+        if (taxRate == null) {
+            modalTaxRateNameField.clear();
+            modalTaxRateValueField.clear();
+            modalTaxRateDescriptionField.clear();
+            modalTaxRateActiveCheck.setSelected(false);
+            return;
+        }
+
+        modalTaxRateNameField.setText(fallback(taxRate.getName()).equals("-") ? "" : taxRate.getName());
+        modalTaxRateValueField.setText(taxRate.getRate() == null ? "" : taxRate.getRate().toPlainString());
+        modalTaxRateDescriptionField
+                .setText(fallback(taxRate.getDescription()).equals("-") ? "" : taxRate.getDescription());
+        modalTaxRateActiveCheck.setSelected(Boolean.TRUE.equals(taxRate.getActive()));
+    }
+
+    private void persistTaxRateUpdate() {
+        try {
+            AdminTaxRateDTO selectedTaxRate = modalTaxRateCombo.getValue();
+            if (selectedTaxRate == null || selectedTaxRate.getId() == null) {
+                showModalError("Selecione uma taxa de IVA valida.");
+                return;
+            }
+
+            BigDecimal rate = parseRequiredDecimal(modalTaxRateValueField.getText(), "Taxa de IVA");
+            AdminTaxRateCommand command = new AdminTaxRateCommand(
+                    modalTaxRateNameField.getText(),
+                    rate,
+                    modalTaxRateDescriptionField.getText(),
+                    modalTaxRateActiveCheck.isSelected());
+
+            adminService.updateTaxRate(selectedTaxRate.getId(), command);
+            hideModal();
+            refreshSectionData();
+            showFeedback("Taxa de IVA atualizada com sucesso.", false);
+        } catch (Exception exception) {
+            showModalError("Falha ao atualizar taxa de IVA: " + exception.getMessage());
         }
     }
 
@@ -1315,6 +2072,8 @@ public class AdminController {
         modalUserFormSection.setManaged(false);
         modalTripFormSection.setVisible(false);
         modalTripFormSection.setManaged(false);
+        modalTaxRateFormSection.setVisible(false);
+        modalTaxRateFormSection.setManaged(false);
         modalDeleteSection.setVisible(false);
         modalDeleteSection.setManaged(false);
         modalOverlay.setVisible(false);
@@ -1385,12 +2144,107 @@ public class AdminController {
         };
     }
 
+    private String prettyPaymentStatus(PaymentStatus status) {
+        if (status == null) {
+            return "-";
+        }
+
+        return switch (status) {
+            case PENDING -> "Pendente";
+            case PROCESSED -> "Processado";
+            case FAILED -> "Falhado";
+            case REFUNDED -> "Reembolsado";
+        };
+    }
+
+    private String prettyPaymentMethod(String rawType) {
+        String normalized = normalize(rawType);
+        if (normalized.isBlank() || normalized.equals("-")) {
+            return "Outros";
+        }
+        if (normalized.contains("mb")) {
+            return "MB Way";
+        }
+        if (normalized.contains("paypal")) {
+            return "PayPal";
+        }
+        if (normalized.contains("visa")) {
+            return "Visa";
+        }
+        if (normalized.contains("master")) {
+            return "Mastercard";
+        }
+        if (normalized.contains("cartao") || normalized.contains("card") || normalized.contains("credito")) {
+            return "Cartao";
+        }
+        return rawType.trim();
+    }
+
+    private String normalizePaymentMethodKey(String rawType) {
+        return normalize(prettyPaymentMethod(rawType));
+    }
+
+    private String prettyFinancialPeriod(AdminFinancialPeriod period) {
+        if (period == null) {
+            return "-";
+        }
+        return switch (period) {
+            case DAY -> "Ultimo dia";
+            case WEEK -> "Ultima semana";
+            case MONTH -> "Ultimo mes";
+            case YEAR -> "Ultimo ano";
+            case ALL -> "Todo o historico";
+        };
+    }
+
     private String formatTripPrice(AdminTripDTO trip) {
-        java.math.BigDecimal amount = trip.getFinalPrice() != null ? trip.getFinalPrice() : trip.getEstimatedPrice();
+        BigDecimal amount = trip.getFinalPrice() != null ? trip.getFinalPrice() : trip.getEstimatedPrice();
         if (amount == null) {
             return "-";
         }
         return "EUR " + amount;
+    }
+
+    private String formatPaymentAmount(AdminPaymentByTripDTO payment) {
+        if (payment.getAmount() == null) {
+            return "-";
+        }
+        return payment.getCurrencyCode() + " " + payment.getAmount();
+    }
+
+    private String formatCurrency(BigDecimal value) {
+        if (value == null) {
+            return "EUR 0.00";
+        }
+        return "EUR " + value;
+    }
+
+    private String formatPercent(double value) {
+        return String.format(Locale.US, "%.1f%%", value);
+    }
+
+    private BigDecimal defaultAmount(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private String formatTopTaxRates() {
+        if (allTaxRates.isEmpty()) {
+            return "-";
+        }
+
+        return allTaxRates.stream()
+                .filter(rate -> Boolean.TRUE.equals(rate.getActive()))
+                .limit(3)
+                .map(this::formatTaxRateDisplay)
+                .reduce((left, right) -> left + " | " + right)
+                .orElse("-");
+    }
+
+    private String formatTaxRateDisplay(AdminTaxRateDTO taxRate) {
+        if (taxRate == null) {
+            return "-";
+        }
+        return fallback(taxRate.getName()) + " (" + taxRate.getRate() + ")";
     }
 
     private String starRating(Float rating) {
@@ -1451,13 +2305,21 @@ public class AdminController {
         }
     }
 
-    private java.math.BigDecimal parseOptionalDecimal(String rawValue) {
+    private BigDecimal parseRequiredDecimal(String rawValue, String fieldName) {
+        BigDecimal parsed = parseOptionalDecimal(rawValue);
+        if (parsed == null) {
+            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
+        }
+        return parsed;
+    }
+
+    private BigDecimal parseOptionalDecimal(String rawValue) {
         String safe = rawValue == null ? "" : rawValue.trim();
         if (safe.isBlank()) {
             return null;
         }
         try {
-            return new java.math.BigDecimal(safe);
+            return new BigDecimal(safe);
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Valor monetario invalido: " + safe);
         }

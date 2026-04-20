@@ -271,6 +271,22 @@
     -fx-text-fill: #ff8f8f;
 }
 
+.users-table .table-cell.payment-processed {
+    -fx-text-fill: #56e39a;
+}
+
+.users-table .table-cell.payment-pending {
+    -fx-text-fill: #ffd379;
+}
+
+.users-table .table-cell.payment-failed {
+    -fx-text-fill: #ff8f8f;
+}
+
+.users-table .table-cell.payment-refunded {
+    -fx-text-fill: #7fb6ff;
+}
+
 .detail-panel {
     -fx-background-color: #111113;
     -fx-border-color: #232326;
@@ -385,6 +401,10 @@
     -fx-pref-height: 40;
 }
 
+.modal-card .check-box {
+    -fx-text-fill: #dbe3f4;
+}
+
 .modal-title {
     -fx-text-fill: #f6f9ff;
     -fx-font-size: 20px;
@@ -418,5 +438,194 @@
     -fx-background-color: rgba(184, 34, 34, 0.26);
     -fx-text-fill: #ff9a9a;
     -fx-border-color: rgba(184, 34, 34, 0.45);
+}
+
+.period-chip,
+.period-chip-active {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 6 12;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+
+.period-chip {
+    -fx-background-color: #111113;
+    -fx-text-fill: #808aa0;
+    -fx-border-color: #232326;
+}
+
+.period-chip-active {
+    -fx-background-color: rgba(255, 106, 47, 0.23);
+    -fx-text-fill: #ff8b5e;
+    -fx-border-color: rgba(255, 106, 47, 0.5);
+}
+
+.financial-hero-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 18;
+}
+
+.financial-hero-caption {
+    -fx-text-fill: #76819a;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-hero-value {
+    -fx-text-fill: #f6f9ff;
+    -fx-font-size: 52px;
+    -fx-font-weight: 900;
+}
+
+.financial-positive-trend {
+    -fx-text-fill: #4cdc8e;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.financial-side-metric {
+    -fx-padding: 0 0 0 4;
+}
+
+.financial-side-label {
+    -fx-text-fill: #6c768d;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.financial-side-value,
+.financial-side-value-positive,
+.financial-side-value-warning {
+    -fx-font-size: 29px;
+    -fx-font-weight: 800;
+}
+
+.financial-side-value {
+    -fx-text-fill: #f0f4ff;
+}
+
+.financial-side-value-positive {
+    -fx-text-fill: #2ad178;
+}
+
+.financial-side-value-warning {
+    -fx-text-fill: #ff7d45;
+}
+
+.financial-mini-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12 14;
+}
+
+.financial-mini-title {
+    -fx-text-fill: #7b859e;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.financial-mini-value {
+    -fx-text-fill: #f2f6ff;
+    -fx-font-size: 32px;
+    -fx-font-weight: 820;
+}
+
+.financial-mini-note {
+    -fx-text-fill: #2fd985;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.financial-chart-card,
+.financial-methods-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14;
+}
+
+.financial-chart-title {
+    -fx-text-fill: #eef3ff;
+    -fx-font-size: 18px;
+    -fx-font-weight: 750;
+}
+
+.financial-bar-column {
+    -fx-min-width: 20;
+}
+
+.financial-bar {
+    -fx-background-color: linear-gradient(to top, #8f3617, #c35422);
+    -fx-background-radius: 4;
+}
+
+.financial-bar-medium {
+    -fx-background-color: linear-gradient(to top, #c64f1d, #ea6528);
+}
+
+.financial-bar-strong {
+    -fx-background-color: linear-gradient(to top, #ea6223, #ff762f);
+}
+
+.financial-bar-label {
+    -fx-text-fill: #55607a;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.financial-empty-state {
+    -fx-text-fill: #6f7990;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-method-name {
+    -fx-text-fill: #a4aec3;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-method-percent {
+    -fx-text-fill: #f2f6ff;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.method-dot {
+    -fx-min-width: 8;
+    -fx-min-height: 8;
+    -fx-max-width: 8;
+    -fx-max-height: 8;
+    -fx-background-radius: 8;
+}
+
+.method-dot-one {
+    -fx-background-color: #ff6f2b;
+}
+
+.method-dot-two {
+    -fx-background-color: #2e9fff;
+}
+
+.method-dot-three {
+    -fx-background-color: #a17bff;
+}
+
+.method-dot-four {
+    -fx-background-color: #6a748f;
+}
+
+.financial-table-title {
+    -fx-text-fill: #eef3ff;
+    -fx-font-size: 22px;
+    -fx-font-weight: 780;
+    -fx-padding: 4 0 0 2;
 }
 

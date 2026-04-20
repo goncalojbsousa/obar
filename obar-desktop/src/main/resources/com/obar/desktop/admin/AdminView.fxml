@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
@@ -49,6 +50,9 @@
                 <Button fx:id="viagensSectionButton" text="Viagens"
                     onAction="#handleViagensSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
+                <Button fx:id="financeiraSectionButton" text="Financeiro"
+                    onAction="#handleFinanceiraSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
 
                 <Label text="SISTEMA" styleClass="sidebar-group-title" />
                 <Button text="Back to Dashboard" onAction="#handleBackToDashboard"
@@ -83,14 +87,19 @@
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <Label fx:id="currentSectionLabel" text="Motoristas" styleClass="title-2" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button text="Exportar" onAction="#handleExportSection" styleClass="flat" />
+                    <Button fx:id="exportPdfButton" text="Exportar PDF" onAction="#handleExportSection"
+                        styleClass="flat" visible="false" managed="false" />
+                    <Button fx:id="exportCsvButton" text="Exportar" onAction="#handleExportSection"
+                        styleClass="flat" />
                     <Button fx:id="addUserButton" text="+ Novo Motorista" onAction="#handleAddUser"
                         styleClass="accent" />
                 </HBox>
 
-                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                <HBox fx:id="searchFilterRow" alignment="CENTER_LEFT" spacing="8.0">
                     <TextField fx:id="searchField"
                         promptText="Pesquisar por nome, email, telefone..." HBox.hgrow="ALWAYS" />
+                    <ComboBox fx:id="periodComboBox" onAction="#handlePeriodChanged"
+                        prefWidth="170.0" visible="false" managed="false" />
                     <Button fx:id="filterAllButton" text="Todos" onAction="#handleFilterAll"
                         styleClass="filter-chip-active" />
                     <Button fx:id="filterActiveButton" text="Ativos" onAction="#handleFilterActive"
@@ -103,7 +112,7 @@
                         onAction="#handleFilterPending" styleClass="filter-chip" />
                 </HBox>
 
-                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                <HBox fx:id="tableActionRow" alignment="CENTER_LEFT" spacing="8.0">
                     <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
                     <Button fx:id="deleteUserButton" text="Bloquear/Apagar"
                         onAction="#handleDeleteUser" styleClass="danger" />
@@ -111,6 +120,109 @@
                     <Label fx:id="listInfoLabel" text="A mostrar 0 utilizadores"
                         styleClass="admin-subtitle" />
                 </HBox>
+
+                <VBox fx:id="financialDashboard" spacing="12.0" visible="false" managed="false">
+                    <HBox spacing="8.0" styleClass="financial-period-row" alignment="CENTER_LEFT">
+                        <Button fx:id="periodDayButton" text="Hoje" onAction="#handleFinancialPeriodDay"
+                            styleClass="period-chip" />
+                        <Button fx:id="periodWeekButton" text="7 dias" onAction="#handleFinancialPeriodWeek"
+                            styleClass="period-chip" />
+                        <Button fx:id="periodMonthButton" text="Este mes" onAction="#handleFinancialPeriodMonth"
+                            styleClass="period-chip" />
+                        <Button fx:id="periodYearButton" text="Este ano" onAction="#handleFinancialPeriodYear"
+                            styleClass="period-chip" />
+                        <Button fx:id="periodAllButton" text="Todo historico" onAction="#handleFinancialPeriodAll"
+                            styleClass="period-chip" />
+                    </HBox>
+
+                    <HBox spacing="22.0" styleClass="financial-hero-card" alignment="CENTER_LEFT">
+                        <VBox spacing="8.0" HBox.hgrow="ALWAYS">
+                            <Label fx:id="revenuePeriodLabel" text="Receita Total" styleClass="financial-hero-caption" />
+                            <Label fx:id="revenueTotalLabel" text="EUR 0.00" styleClass="financial-hero-value" />
+                            <Label fx:id="revenueTrendLabel" text="-" styleClass="financial-positive-trend" />
+                        </VBox>
+
+                        <HBox spacing="24.0" alignment="CENTER_LEFT">
+                            <VBox spacing="4.0" styleClass="financial-side-metric">
+                                <Label text="RECEITA LIQUIDA" styleClass="financial-side-label" />
+                                <Label fx:id="netRevenueValueLabel" text="EUR 0.00" styleClass="financial-side-value-positive" />
+                            </VBox>
+                            <VBox spacing="4.0" styleClass="financial-side-metric">
+                                <Label text="COMISSAO PLATAFORMA (20%)" styleClass="financial-side-label" />
+                                <Label fx:id="platformCommissionValueLabel" text="EUR 0.00" styleClass="financial-side-value-warning" />
+                            </VBox>
+                            <VBox spacing="4.0" styleClass="financial-side-metric">
+                                <Label text="VIAGENS FATURADAS" styleClass="financial-side-label" />
+                                <Label fx:id="billedTripsValueLabel" text="0" styleClass="financial-side-value" />
+                            </VBox>
+                            <VBox spacing="4.0" styleClass="financial-side-metric">
+                                <Label text="TICKET MEDIO" styleClass="financial-side-label" />
+                                <Label fx:id="avgTicketValueLabel" text="EUR 0.00" styleClass="financial-side-value" />
+                            </VBox>
+                        </HBox>
+                    </HBox>
+
+                    <HBox spacing="10.0" alignment="CENTER_LEFT">
+                        <VBox HBox.hgrow="ALWAYS" spacing="3.0" styleClass="financial-mini-card">
+                            <Label text="Pagamentos Processados" styleClass="financial-mini-title" />
+                            <Label fx:id="processedPaymentsValueLabel" text="0" styleClass="financial-mini-value" />
+                            <Label text="total no periodo" styleClass="financial-mini-note" />
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" spacing="3.0" styleClass="financial-mini-card">
+                            <Label text="Reembolsos" styleClass="financial-mini-title" />
+                            <Label fx:id="refundedPaymentsValueLabel" text="0" styleClass="financial-mini-value" />
+                            <Label text="pagamentos reembolsados" styleClass="financial-mini-note" />
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" spacing="3.0" styleClass="financial-mini-card">
+                            <Label text="Tx. Pagamentos Falhados" styleClass="financial-mini-title" />
+                            <Label fx:id="failedRateValueLabel" text="0%" styleClass="financial-mini-value" />
+                            <Label text="sobre total de pagamentos" styleClass="financial-mini-note" />
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" spacing="3.0" styleClass="financial-mini-card">
+                            <Label text="Motoristas Pagos" styleClass="financial-mini-title" />
+                            <Label fx:id="paidDriversValueLabel" text="0" styleClass="financial-mini-value" />
+                            <Label text="com pagamentos processados" styleClass="financial-mini-note" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10.0">
+                        <VBox HBox.hgrow="ALWAYS" spacing="10.0" styleClass="financial-chart-card">
+                            <Label text="Receita diaria" styleClass="financial-chart-title" />
+                            <HBox fx:id="dailyBarsContainer" spacing="8.0" alignment="BOTTOM_LEFT" />
+                        </VBox>
+
+                        <VBox prefWidth="290.0" spacing="10.0" styleClass="financial-methods-card">
+                            <Label text="Metodos de Pagamento" styleClass="financial-chart-title" />
+
+                            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                <Label text="" styleClass="method-dot method-dot-one" />
+                                <Label fx:id="methodOneLabel" text="-" styleClass="financial-method-name" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="methodOnePercentLabel" text="0%" styleClass="financial-method-percent" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                <Label text="" styleClass="method-dot method-dot-two" />
+                                <Label fx:id="methodTwoLabel" text="-" styleClass="financial-method-name" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="methodTwoPercentLabel" text="0%" styleClass="financial-method-percent" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                <Label text="" styleClass="method-dot method-dot-three" />
+                                <Label fx:id="methodThreeLabel" text="-" styleClass="financial-method-name" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="methodThreePercentLabel" text="0%" styleClass="financial-method-percent" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                <Label text="" styleClass="method-dot method-dot-four" />
+                                <Label fx:id="methodFourLabel" text="-" styleClass="financial-method-name" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="methodFourPercentLabel" text="0%" styleClass="financial-method-percent" />
+                            </HBox>
+                        </VBox>
+                    </HBox>
+
+                    <Label fx:id="paymentsTableTitle" text="Ultimos Pagamentos" styleClass="financial-table-title" />
+                </VBox>
 
                 <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="users-table">
                     <columns>
@@ -135,6 +247,19 @@
                         <TableColumn fx:id="tripTypeColumn" text="Tipo" prefWidth="110.0" />
                         <TableColumn fx:id="tripPriceColumn" text="Valor" prefWidth="100.0" />
                         <TableColumn fx:id="tripRequestedAtColumn" text="Pedido em" prefWidth="160.0" />
+                    </columns>
+                </TableView>
+
+                <TableView fx:id="paymentsTable" VBox.vgrow="ALWAYS" styleClass="users-table"
+                    visible="false" managed="false">
+                    <columns>
+                        <TableColumn fx:id="paymentIdColumn" text="Pagamento" prefWidth="92.0" />
+                        <TableColumn fx:id="paymentTripIdColumn" text="Viagem" prefWidth="78.0" />
+                        <TableColumn fx:id="paymentClientColumn" text="Cliente" prefWidth="170.0" />
+                        <TableColumn fx:id="paymentMethodColumn" text="Metodo" prefWidth="170.0" />
+                        <TableColumn fx:id="paymentAmountColumn" text="Valor" prefWidth="130.0" />
+                        <TableColumn fx:id="paymentStatusColumn" text="Estado" prefWidth="120.0" />
+                        <TableColumn fx:id="paymentDateColumn" text="Data" prefWidth="170.0" />
                     </columns>
                 </TableView>
 
@@ -317,6 +442,31 @@
                     <Label text="Notas" styleClass="meta-title" />
                     <TextField fx:id="modalTripNotesField" promptText="Notas opcionais" />
                 </VBox>
+            </VBox>
+
+            <VBox fx:id="modalTaxRateFormSection" spacing="10.0" visible="false" managed="false">
+                <VBox spacing="4.0">
+                    <Label text="Taxa de IVA" styleClass="meta-title" />
+                    <ComboBox fx:id="modalTaxRateCombo" maxWidth="1.7976931348623157E308" />
+                </VBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Nome" styleClass="meta-title" />
+                        <TextField fx:id="modalTaxRateNameField" promptText="Nome da taxa" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Valor (0-1)" styleClass="meta-title" />
+                        <TextField fx:id="modalTaxRateValueField" promptText="ex: 0.2300" />
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="4.0">
+                    <Label text="Descricao" styleClass="meta-title" />
+                    <TextField fx:id="modalTaxRateDescriptionField" promptText="Descricao opcional" />
+                </VBox>
+
+                <CheckBox fx:id="modalTaxRateActiveCheck" text="Taxa ativa" selected="true" />
             </VBox>
 
             <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">

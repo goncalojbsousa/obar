@@ -580,6 +580,12 @@
     -fx-font-weight: 700;
 }
 
+.financial-bar-value {
+    -fx-text-fill: #d3ddf4;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+}
+
 .financial-empty-state {
     -fx-text-fill: #6f7990;
     -fx-font-size: 12px;

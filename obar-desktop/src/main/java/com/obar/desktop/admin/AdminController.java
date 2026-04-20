@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,6 +56,13 @@ public class AdminController {
             Locale.forLanguageTag("pt-PT"));
         private static final DateTimeFormatter PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
             Locale.forLanguageTag("pt-PT"));
+        private static final DateTimeFormatter DAY_LABEL_FORMAT = DateTimeFormatter.ofPattern("dd/MM",
+            Locale.forLanguageTag("pt-PT"));
+        private static final DateTimeFormatter MONTH_LABEL_FORMAT = DateTimeFormatter.ofPattern("MMM",
+            Locale.forLanguageTag("pt-PT"));
+
+        private record RevenueBucket(String label, String tooltip, BigDecimal value) {
+        }
 
     private enum ModalMode {
         NONE,
@@ -1516,32 +1524,10 @@ public class AdminController {
     private void renderDailyRevenueBars(List<AdminPaymentByTripDTO> payments) {
         dailyBarsContainer.getChildren().clear();
 
-        List<AdminPaymentByTripDTO> validPayments = payments == null
-                ? List.of()
-                : payments.stream()
-                .filter(payment -> payment.getPaymentDate() != null)
-                .sorted(Comparator.comparing(AdminPaymentByTripDTO::getPaymentDate))
-                .toList();
-
-        LocalDate maxDate = validPayments.isEmpty()
-                ? LocalDate.now()
-                : validPayments.get(validPayments.size() - 1).getPaymentDate().toLocalDate();
-        LocalDate startDate = maxDate.minusDays(13);
-
-        List<BigDecimal> dailyValues = new ArrayList<>();
-        BigDecimal maxValue = BigDecimal.ZERO;
-        for (int i = 0; i < 14; i++) {
-            LocalDate day = startDate.plusDays(i);
-            BigDecimal dayValue = validPayments.stream()
-                    .filter(payment -> payment.getPaymentDate().toLocalDate().equals(day))
-                    .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
-                    .map(payment -> defaultAmount(payment.getAmount()))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            dailyValues.add(dayValue);
-            if (dayValue.compareTo(maxValue) > 0) {
-                maxValue = dayValue;
-            }
-        }
+        List<RevenueBucket> buckets = buildRevenueBuckets(payments);
+        BigDecimal maxValue = buckets.stream()
+                .map(RevenueBucket::value)
+                .reduce(BigDecimal.ZERO, BigDecimal::max);
 
         if (maxValue.compareTo(BigDecimal.ZERO) == 0) {
             dailyBarsContainer.setAlignment(Pos.CENTER_LEFT);
@@ -1553,14 +1539,23 @@ public class AdminController {
 
         dailyBarsContainer.setAlignment(Pos.BOTTOM_LEFT);
 
-        for (int i = 0; i < 14; i++) {
-            LocalDate day = startDate.plusDays(i);
-            BigDecimal dayValue = dailyValues.get(i);
-            double ratio = dayValue.divide(maxValue, 4, RoundingMode.HALF_UP).doubleValue();
+        double barWidth = buckets.size() <= 8
+            ? 26
+            : buckets.size() <= 12
+            ? 20
+            : buckets.size() <= 20
+            ? 14
+            : 9;
 
-            VBox column = new VBox(6.0);
+        for (RevenueBucket bucket : buckets) {
+            double ratio = bucket.value().divide(maxValue, 4, RoundingMode.HALF_UP).doubleValue();
+
+            VBox column = new VBox(4.0);
             column.setAlignment(Pos.BOTTOM_CENTER);
             column.getStyleClass().add("financial-bar-column");
+
+            Label valueLabel = new Label(formatCompactCurrency(bucket.value()));
+            valueLabel.getStyleClass().add("financial-bar-value");
 
             Region bar = new Region();
             bar.getStyleClass().add("financial-bar");
@@ -1569,17 +1564,147 @@ public class AdminController {
             } else if (ratio >= 0.45) {
                 bar.getStyleClass().add("financial-bar-medium");
             }
-            bar.setPrefWidth(20);
-            bar.setMinWidth(20);
-            bar.setMaxWidth(20);
-            bar.setPrefHeight(6 + (ratio * 98));
+            bar.setPrefWidth(barWidth);
+            bar.setMinWidth(barWidth);
+            bar.setMaxWidth(barWidth);
+            bar.setPrefHeight(6 + (ratio * 88));
 
-            Label dayLabel = new Label(String.valueOf(day.getDayOfMonth()));
-            dayLabel.getStyleClass().add("financial-bar-label");
+            Label bucketLabel = new Label(bucket.label());
+            bucketLabel.getStyleClass().add("financial-bar-label");
 
-            column.getChildren().addAll(bar, dayLabel);
+            Tooltip.install(bar, new Tooltip(bucket.tooltip() + " | " + formatCurrency(bucket.value())));
+
+            column.getChildren().addAll(valueLabel, bar, bucketLabel);
             dailyBarsContainer.getChildren().add(column);
         }
+    }
+
+    private List<RevenueBucket> buildRevenueBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<AdminPaymentByTripDTO> processedPayments = payments == null
+                ? List.of()
+                : payments.stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
+                .filter(payment -> payment.getPaymentDate() != null)
+                .sorted(Comparator.comparing(AdminPaymentByTripDTO::getPaymentDate))
+                .toList();
+
+        return switch (currentFinancialPeriod) {
+            case DAY -> buildDayBuckets(processedPayments);
+            case WEEK -> buildWeekBuckets(processedPayments);
+            case MONTH -> buildMonthBuckets(processedPayments);
+            case YEAR -> buildYearBuckets(processedPayments);
+            case ALL -> buildAllBuckets(processedPayments);
+        };
+    }
+
+    private List<RevenueBucket> buildDayBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<RevenueBucket> buckets = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        int bucketHours = 3;
+        int bucketCount = 8;
+
+        for (int i = bucketCount - 1; i >= 0; i--) {
+            LocalDateTime start = now.minusHours((long) (i + 1) * bucketHours);
+            LocalDateTime end = now.minusHours((long) i * bucketHours);
+            BigDecimal value = sumPaymentsBetween(payments, start, end);
+            String label = String.format(Locale.ROOT, "%02dh", start.getHour());
+            String tooltip = start.format(PAYMENT_DATE_FORMAT) + " - " + end.format(PAYMENT_DATE_FORMAT);
+            buckets.add(new RevenueBucket(label, tooltip, value));
+        }
+        return buckets;
+    }
+
+    private List<RevenueBucket> buildWeekBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<RevenueBucket> buckets = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (int i = 6; i >= 0; i--) {
+            LocalDate day = today.minusDays(i);
+            BigDecimal value = sumPaymentsForDay(payments, day);
+            String label = day.format(DAY_LABEL_FORMAT);
+            String tooltip = "Dia " + label;
+            buckets.add(new RevenueBucket(label, tooltip, value));
+        }
+        return buckets;
+    }
+
+    private List<RevenueBucket> buildMonthBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<RevenueBucket> buckets = new ArrayList<>();
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(29);
+
+        for (int i = 0; i < 30; i++) {
+            LocalDate day = start.plusDays(i);
+            BigDecimal value = sumPaymentsForDay(payments, day);
+            String label = String.valueOf(day.getDayOfMonth());
+            String tooltip = "Dia " + day.format(DAY_LABEL_FORMAT);
+            buckets.add(new RevenueBucket(label, tooltip, value));
+        }
+        return buckets;
+    }
+
+    private List<RevenueBucket> buildYearBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<RevenueBucket> buckets = new ArrayList<>();
+        YearMonth current = YearMonth.now();
+
+        for (int i = 11; i >= 0; i--) {
+            YearMonth month = current.minusMonths(i);
+            LocalDateTime start = month.atDay(1).atStartOfDay();
+            LocalDateTime end = month.plusMonths(1).atDay(1).atStartOfDay();
+            BigDecimal value = sumPaymentsBetween(payments, start, end);
+            String label = month.format(MONTH_LABEL_FORMAT);
+            String tooltip = month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.forLanguageTag("pt-PT")));
+            buckets.add(new RevenueBucket(label, tooltip, value));
+        }
+        return buckets;
+    }
+
+    private List<RevenueBucket> buildAllBuckets(List<AdminPaymentByTripDTO> payments) {
+        List<RevenueBucket> buckets = new ArrayList<>();
+        int currentYear = LocalDate.now().getYear();
+        int minYear = payments.stream()
+                .mapToInt(payment -> payment.getPaymentDate().getYear())
+                .min()
+                .orElse(currentYear - 4);
+        int startYear = Math.min(minYear, currentYear - 4);
+
+        for (int year = startYear; year <= currentYear; year++) {
+            LocalDateTime start = LocalDate.of(year, 1, 1).atStartOfDay();
+            LocalDateTime end = LocalDate.of(year + 1, 1, 1).atStartOfDay();
+            BigDecimal value = sumPaymentsBetween(payments, start, end);
+            String label = String.valueOf(year);
+            String tooltip = "Ano " + year;
+            buckets.add(new RevenueBucket(label, tooltip, value));
+        }
+
+        return buckets;
+    }
+
+    private BigDecimal sumPaymentsForDay(List<AdminPaymentByTripDTO> payments, LocalDate day) {
+        return payments.stream()
+                .filter(payment -> payment.getPaymentDate().toLocalDate().equals(day))
+                .map(payment -> defaultAmount(payment.getAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal sumPaymentsBetween(List<AdminPaymentByTripDTO> payments, LocalDateTime start, LocalDateTime end) {
+        return payments.stream()
+                .filter(payment -> !payment.getPaymentDate().isBefore(start))
+                .filter(payment -> payment.getPaymentDate().isBefore(end))
+                .map(payment -> defaultAmount(payment.getAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String formatCompactCurrency(BigDecimal value) {
+        BigDecimal safeValue = defaultAmount(value);
+        if (safeValue.compareTo(BigDecimal.ZERO) == 0) {
+            return "EUR 0";
+        }
+        if (safeValue.compareTo(new BigDecimal("1000")) >= 0) {
+            BigDecimal compact = safeValue.divide(new BigDecimal("1000"), 1, RoundingMode.HALF_UP);
+            return "EUR " + compact + "k";
+        }
+        return "EUR " + safeValue.setScale(0, RoundingMode.HALF_UP);
     }
 
     private void updatePaymentMethodsLegend(Map<String, Long> groupedMethods, long totalPayments) {

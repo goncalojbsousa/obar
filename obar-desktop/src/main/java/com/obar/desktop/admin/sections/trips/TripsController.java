@@ -38,6 +38,7 @@ public class TripsController implements AdminSectionController {
     private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
 
     private AdminService adminService;
+    private TripStatus currentStatusFilter;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminTripDTO modalTargetTrip;
 
@@ -57,6 +58,11 @@ public class TripsController implements AdminSectionController {
     @FXML private Button addUserButton;
     @FXML private Button editUserButton;
     @FXML private Button deleteUserButton;
+    @FXML private Button filterAllButton;
+    @FXML private Button filterActiveButton;
+    @FXML private Button filterInactiveButton;
+    @FXML private Button filterBlockedButton;
+    @FXML private Button filterPendingButton;
 
     @FXML private Label detailInitialsLabel;
     @FXML private Label detailTitleLabel;
@@ -123,6 +129,31 @@ public class TripsController implements AdminSectionController {
     }
 
     @FXML
+    public void handleFilterAll() {
+        setStatusFilter(null);
+    }
+
+    @FXML
+    public void handleFilterActive() {
+        setStatusFilter(TripStatus.ACCEPTED);
+    }
+
+    @FXML
+    public void handleFilterInactive() {
+        setStatusFilter(TripStatus.IN_PROGRESS);
+    }
+
+    @FXML
+    public void handleFilterBlocked() {
+        setStatusFilter(TripStatus.COMPLETED);
+    }
+
+    @FXML
+    public void handleFilterPending() {
+        setStatusFilter(TripStatus.PENDING);
+    }
+
+    @FXML
     public void handleAddUser() {
         openTripFormModal(null);
     }
@@ -181,6 +212,12 @@ public class TripsController implements AdminSectionController {
         }
     }
 
+    private void setStatusFilter(TripStatus status) {
+        currentStatusFilter = status;
+        updateFilterChipState();
+        applyFilters();
+    }
+
     private void refresh() {
         if (adminService == null) {
             return;
@@ -217,8 +254,12 @@ public class TripsController implements AdminSectionController {
 
     private void applyFilters() {
         String query = AdminFormatUtils.normalize(searchField.getText());
-        filteredTrips.setPredicate(trip -> matchesTripQuery(trip, query));
+        filteredTrips.setPredicate(trip -> matchesStatus(trip) && matchesTripQuery(trip, query));
         updateFilterLabels();
+    }
+
+    private boolean matchesStatus(AdminTripDTO trip) {
+        return currentStatusFilter == null || trip.getStatus() == currentStatusFilter;
     }
 
     private boolean matchesTripQuery(AdminTripDTO trip, String query) {
@@ -432,7 +473,32 @@ public class TripsController implements AdminSectionController {
     }
 
     private void updateFilterLabels() {
+        long acceptedCount = allTrips.stream().filter(t -> t.getStatus() == TripStatus.ACCEPTED).count();
+        long inProgressCount = allTrips.stream().filter(t -> t.getStatus() == TripStatus.IN_PROGRESS).count();
+        long completedCount = allTrips.stream().filter(t -> t.getStatus() == TripStatus.COMPLETED).count();
+        long pendingCount = allTrips.stream().filter(t -> t.getStatus() == TripStatus.PENDING).count();
+
+        if (filterAllButton != null)      filterAllButton.setText("Todos (" + allTrips.size() + ")");
+        if (filterActiveButton != null)   filterActiveButton.setText("Aceites (" + acceptedCount + ")");
+        if (filterInactiveButton != null) filterInactiveButton.setText("Em progresso (" + inProgressCount + ")");
+        if (filterBlockedButton != null)  filterBlockedButton.setText("Concluidas (" + completedCount + ")");
+        if (filterPendingButton != null)  filterPendingButton.setText("Pendentes (" + pendingCount + ")");
+
         listInfoLabel.setText("A mostrar " + filteredTrips.size() + " de " + allTrips.size() + " viagens");
+    }
+
+    private void updateFilterChipState() {
+        setChipState(filterAllButton, currentStatusFilter == null);
+        setChipState(filterActiveButton, currentStatusFilter == TripStatus.ACCEPTED);
+        setChipState(filterInactiveButton, currentStatusFilter == TripStatus.IN_PROGRESS);
+        setChipState(filterBlockedButton, currentStatusFilter == TripStatus.COMPLETED);
+        setChipState(filterPendingButton, currentStatusFilter == TripStatus.PENDING);
+    }
+
+    private void setChipState(Button button, boolean active) {
+        if (button == null) return;
+        button.getStyleClass().removeAll("filter-chip", "filter-chip-active");
+        button.getStyleClass().add(active ? "filter-chip-active" : "filter-chip");
     }
 
     private Integer parseRequiredInteger(String rawValue, String fieldName) {

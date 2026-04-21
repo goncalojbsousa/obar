@@ -31,6 +31,7 @@ public abstract class AbstractUsersController implements AdminSectionController 
 
     protected final ObservableList<AdminUserDTO> allUsers = FXCollections.observableArrayList();
     protected final FilteredList<AdminUserDTO> filteredUsers = new FilteredList<>(allUsers, user -> true);
+    private AccountStatus currentStatusFilter;
 
     private AdminService adminService;
 
@@ -91,6 +92,12 @@ public abstract class AbstractUsersController implements AdminSectionController 
     @FXML protected Button editUserButton;
     @FXML protected Button deleteUserButton;
 
+    @FXML protected Button filterAllButton;
+    @FXML protected Button filterActiveButton;
+    @FXML protected Button filterInactiveButton;
+    @FXML protected Button filterBlockedButton;
+    @FXML protected Button filterPendingButton;
+
     protected abstract UserType supportedType();
     protected abstract String sectionTitle();
     protected abstract String createLabel();
@@ -134,6 +141,31 @@ public abstract class AbstractUsersController implements AdminSectionController 
     @Override
     public void onSectionActivated() {
         refresh();
+    }
+
+    @FXML
+    public void handleFilterAll() {
+        setStatusFilter(null);
+    }
+
+    @FXML
+    public void handleFilterActive() {
+        setStatusFilter(AccountStatus.ACTIVE);
+    }
+
+    @FXML
+    public void handleFilterInactive() {
+        setStatusFilter(AccountStatus.INACTIVE);
+    }
+
+    @FXML
+    public void handleFilterBlocked() {
+        setStatusFilter(AccountStatus.BLOCKED);
+    }
+
+    @FXML
+    public void handleFilterPending() {
+        setStatusFilter(AccountStatus.PENDING);
     }
 
     @FXML
@@ -211,6 +243,12 @@ public abstract class AbstractUsersController implements AdminSectionController 
         }
     }
 
+    protected void setStatusFilter(AccountStatus status) {
+        currentStatusFilter = status;
+        updateFilterChipState();
+        applyFilters();
+    }
+
     protected void refresh() {
         if (adminService == null) {
             return;
@@ -238,19 +276,34 @@ public abstract class AbstractUsersController implements AdminSectionController 
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
+                getStyleClass().removeAll("status-online", "status-offline", "status-blocked", "status-pending");
                 if (empty || item == null) {
                     setText(null);
                     return;
                 }
                 setText(item);
+                if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    return;
+                }
+                AdminUserDTO row = getTableView().getItems().get(getIndex());
+                switch (row.getStatus()) {
+                    case ACTIVE   -> getStyleClass().add("status-online");
+                    case INACTIVE -> getStyleClass().add("status-offline");
+                    case BLOCKED  -> getStyleClass().add("status-blocked");
+                    case PENDING  -> getStyleClass().add("status-pending");
+                }
             }
         });
     }
 
     protected void applyFilters() {
         String query = AdminFormatUtils.normalize(searchField.getText());
-        filteredUsers.setPredicate(user -> matchesQuery(user, query));
+        filteredUsers.setPredicate(user -> matchesStatus(user) && matchesQuery(user, query));
         updateFilterLabels();
+    }
+
+    private boolean matchesStatus(AdminUserDTO user) {
+        return currentStatusFilter == null || user.getStatus() == currentStatusFilter;
     }
 
     protected boolean matchesQuery(AdminUserDTO user, String query) {
@@ -294,12 +347,12 @@ public abstract class AbstractUsersController implements AdminSectionController 
         detailCardFourValueLabel.setText(cardFourValue(user));
         detailReferenceTitleLabel.setText(referenceTitle());
         detailReferenceValueLabel.setText(referenceValue(user));
-        detailExtraOneTitleLabel.setText("");
-        detailExtraOneValueLabel.setText("");
-        detailExtraTwoTitleLabel.setText("");
-        detailExtraTwoValueLabel.setText("");
-        detailExtraThreeTitleLabel.setText("");
-        detailExtraThreeValueLabel.setText("");
+        setLabelText(detailExtraOneTitleLabel, "");
+        setLabelText(detailExtraOneValueLabel, "");
+        setLabelText(detailExtraTwoTitleLabel, "");
+        setLabelText(detailExtraTwoValueLabel, "");
+        setLabelText(detailExtraThreeTitleLabel, "");
+        setLabelText(detailExtraThreeValueLabel, "");
     }
 
     protected void clearDetails() {
@@ -321,12 +374,12 @@ public abstract class AbstractUsersController implements AdminSectionController 
         detailCardFourValueLabel.setText("-");
         detailReferenceTitleLabel.setText(referenceTitle());
         detailReferenceValueLabel.setText("-");
-        detailExtraOneTitleLabel.setText("");
-        detailExtraOneValueLabel.setText("-");
-        detailExtraTwoTitleLabel.setText("");
-        detailExtraTwoValueLabel.setText("-");
-        detailExtraThreeTitleLabel.setText("");
-        detailExtraThreeValueLabel.setText("-");
+        setLabelText(detailExtraOneTitleLabel, "");
+        setLabelText(detailExtraOneValueLabel, "-");
+        setLabelText(detailExtraTwoTitleLabel, "");
+        setLabelText(detailExtraTwoValueLabel, "-");
+        setLabelText(detailExtraThreeTitleLabel, "");
+        setLabelText(detailExtraThreeValueLabel, "-");
     }
 
     protected void setDetailsVisible(boolean visible) {
@@ -356,8 +409,39 @@ public abstract class AbstractUsersController implements AdminSectionController 
         return null;
     }
 
+    private void setLabelText(Label label, String value) {
+        if (label != null) {
+            label.setText(value);
+        }
+    }
+
     protected void updateFilterLabels() {
+        long activeCount = allUsers.stream().filter(u -> u.getStatus() == AccountStatus.ACTIVE).count();
+        long inactiveCount = allUsers.stream().filter(u -> u.getStatus() == AccountStatus.INACTIVE).count();
+        long blockedCount = allUsers.stream().filter(u -> u.getStatus() == AccountStatus.BLOCKED).count();
+        long pendingCount = allUsers.stream().filter(u -> u.getStatus() == AccountStatus.PENDING).count();
+
+        if (filterAllButton != null)     filterAllButton.setText("Todos (" + allUsers.size() + ")");
+        if (filterActiveButton != null)  filterActiveButton.setText("Ativos (" + activeCount + ")");
+        if (filterInactiveButton != null) filterInactiveButton.setText("Offline (" + inactiveCount + ")");
+        if (filterBlockedButton != null) filterBlockedButton.setText("Bloqueados (" + blockedCount + ")");
+        if (filterPendingButton != null) filterPendingButton.setText("Pendentes (" + pendingCount + ")");
+
         listInfoLabel.setText("A mostrar " + filteredUsers.size() + " de " + allUsers.size() + " " + sectionTitle().toLowerCase(Locale.ROOT));
+    }
+
+    protected void updateFilterChipState() {
+        setChipState(filterAllButton, currentStatusFilter == null);
+        setChipState(filterActiveButton, currentStatusFilter == AccountStatus.ACTIVE);
+        setChipState(filterInactiveButton, currentStatusFilter == AccountStatus.INACTIVE);
+        setChipState(filterBlockedButton, currentStatusFilter == AccountStatus.BLOCKED);
+        setChipState(filterPendingButton, currentStatusFilter == AccountStatus.PENDING);
+    }
+
+    private void setChipState(Button button, boolean active) {
+        if (button == null) return;
+        button.getStyleClass().removeAll("filter-chip", "filter-chip-active");
+        button.getStyleClass().add(active ? "filter-chip-active" : "filter-chip");
     }
 
     protected void updateSectionLabels() {

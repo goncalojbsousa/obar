@@ -130,6 +130,9 @@
             </VBox>
 
             <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox.margin>
+                    <Insets top="-24.0" right="-26.0" bottom="-24.0" left="0.0" />
+                </HBox.margin>
                 <HBox alignment="CENTER_LEFT" spacing="8.0">
                     <Label fx:id="detailTitleLabel" text="Resumo financeiro" styleClass="detail-title" />
                     <Region HBox.hgrow="ALWAYS" />

@@ -88,7 +88,7 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-padding: 10 14;
-    -fx-max-width: 1.7976931348623157E308;
+    -fx-max-width: 1000000;
 }
 
 .sidebar-user-avatar {
@@ -121,7 +121,7 @@
 
 .admin-content .title-2 {
     -fx-font-size: 24px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
     -fx-text-fill: #f6f9ff;
 }
 
@@ -470,7 +470,7 @@
 .modal-title {
     -fx-text-fill: #f6f9ff;
     -fx-font-size: 20px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
 }
 
 .modal-card .text-field,
@@ -595,7 +595,7 @@
 .financial-mini-value {
     -fx-text-fill: #f2f6ff;
     -fx-font-size: 32px;
-    -fx-font-weight: 820;
+    -fx-font-weight: 800;
 }
 
 .financial-mini-note {
@@ -616,7 +616,7 @@
 .financial-chart-title {
     -fx-text-fill: #eef3ff;
     -fx-font-size: 18px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
 }
 
 .financial-bar-column {
@@ -693,7 +693,7 @@
 .financial-table-title {
     -fx-text-fill: #eef3ff;
     -fx-font-size: 22px;
-    -fx-font-weight: 780;
+    -fx-font-weight: 700;
     -fx-padding: 4 0 0 2;
 }
 

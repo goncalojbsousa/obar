@@ -27,8 +27,13 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Button fx:id="addUserButton" text="+ Novo Cliente" onAction="#handleAddUser" styleClass="accent" />
                 </HBox>
-                <HBox spacing="8.0">
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
                     <TextField fx:id="searchField" promptText="Pesquisar por nome, email, telefone, NIF..." HBox.hgrow="ALWAYS" />
+                    <Button fx:id="filterAllButton" text="Todos" onAction="#handleFilterAll" styleClass="filter-chip-active" />
+                    <Button fx:id="filterActiveButton" text="Ativos" onAction="#handleFilterActive" styleClass="filter-chip" />
+                    <Button fx:id="filterInactiveButton" text="Offline" onAction="#handleFilterInactive" styleClass="filter-chip" />
+                    <Button fx:id="filterBlockedButton" text="Bloqueados" onAction="#handleFilterBlocked" styleClass="filter-chip" />
+                    <Button fx:id="filterPendingButton" text="Pendentes" onAction="#handleFilterPending" styleClass="filter-chip" />
                 </HBox>
                 <HBox spacing="8.0">
                     <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
@@ -53,6 +58,9 @@
             </VBox>
 
             <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox.margin>
+                    <Insets top="-24.0" right="-26.0" bottom="-24.0" left="0.0" />
+                </HBox.margin>
                 <HBox alignment="CENTER_LEFT" spacing="8.0">
                     <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title" />
                     <Region HBox.hgrow="ALWAYS" />

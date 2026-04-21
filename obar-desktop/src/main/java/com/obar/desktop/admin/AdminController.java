@@ -75,9 +75,6 @@ public class AdminController {
     private StackPane financialSection;
 
     @FXML
-    private VBox detailPanel;
-
-    @FXML
     private DriversController driversSectionController;
 
     @FXML
@@ -140,27 +137,18 @@ public class AdminController {
     }
 
     @FXML
-    public void handleCloseDetailPanel() {
-        if (detailPanel == null) {
-            return;
-        }
-        detailPanel.setVisible(false);
-        detailPanel.setManaged(false);
-    }
-
-    @FXML
     public void handleModalCancel() {
-        // Legacy modal actions kept in AdminView.fxml; section controllers own active modals.
+        // Delegated to section controllers.
     }
 
     @FXML
     public void handleModalSave() {
-        // Legacy modal actions kept in AdminView.fxml; section controllers own active modals.
+        // Delegated to section controllers.
     }
 
     @FXML
     public void handleModalConfirmDelete() {
-        // Legacy modal actions kept in AdminView.fxml; section controllers own active modals.
+        // Delegated to section controllers.
     }
 
     private void configureSectionControllers() {

@@ -26,8 +26,13 @@
                     <Button fx:id="addUserButton" text="+ Nova Viagem" onAction="#handleAddUser" styleClass="accent" />
                 </HBox>
 
-                <HBox spacing="8.0">
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
                     <TextField fx:id="searchField" promptText="Pesquisar por ID, cliente, motorista, estado..." HBox.hgrow="ALWAYS" />
+                    <Button fx:id="filterAllButton" text="Todos" onAction="#handleFilterAll" styleClass="filter-chip-active" />
+                    <Button fx:id="filterActiveButton" text="Aceites" onAction="#handleFilterActive" styleClass="filter-chip" />
+                    <Button fx:id="filterInactiveButton" text="Em progresso" onAction="#handleFilterInactive" styleClass="filter-chip" />
+                    <Button fx:id="filterBlockedButton" text="Concluidas" onAction="#handleFilterBlocked" styleClass="filter-chip" />
+                    <Button fx:id="filterPendingButton" text="Pendentes" onAction="#handleFilterPending" styleClass="filter-chip" />
                 </HBox>
 
                 <HBox spacing="8.0">
@@ -53,6 +58,9 @@
             </VBox>
 
             <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox.margin>
+                    <Insets top="-24.0" right="-26.0" bottom="-24.0" left="0.0" />
+                </HBox.margin>
                 <HBox alignment="CENTER_LEFT" spacing="8.0">
                     <Label fx:id="detailTitleLabel" text="Detalhe da viagem" styleClass="detail-title" />
                     <Region HBox.hgrow="ALWAYS" />

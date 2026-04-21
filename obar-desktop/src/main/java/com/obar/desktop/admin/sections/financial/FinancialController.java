@@ -9,6 +9,8 @@ import com.obar.bll.admin.AdminTaxRateCommand;
 import com.obar.bll.admin.AdminTaxRateDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminModalController;
+import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.model.enums.PaymentStatus;
 import javafx.event.ActionEvent;
 import javafx.beans.property.SimpleStringProperty;
@@ -72,6 +74,7 @@ public class FinancialController implements AdminSectionController {
     private AdminFinancialOverviewDTO currentFinancialOverview;
     private PaymentStatus currentPaymentStatusFilter;
     private RevenueBucketType revenueBucketType = RevenueBucketType.MONTH;
+    private AdminModalController modalController;
 
     @FXML private VBox root;
     @FXML private TextField searchField;
@@ -85,6 +88,7 @@ public class FinancialController implements AdminSectionController {
     @FXML private TableColumn<AdminPaymentByTripDTO, String> paymentDateColumn;
     @FXML private Label paymentsTableTitle;
     @FXML private Label feedbackLabel;
+    @FXML private AdminModalIncludeController sharedModalController;
     @FXML private Button exportPdfButton;
     @FXML private Button exportCsvButton;
     @FXML private Button periodDayButton;
@@ -138,11 +142,7 @@ public class FinancialController implements AdminSectionController {
     @FXML private Label detailExtraThreeTitleLabel;
     @FXML private Label detailExtraThreeValueLabel;
     @FXML private VBox detailPanel;
-    @FXML private StackPane modalOverlay;
-    @FXML private Label modalTitleLabel;
-    @FXML private Label modalErrorLabel;
     @FXML private VBox modalTaxRateFormSection;
-    @FXML private VBox modalDeleteSection;
     @FXML private Label modalDeleteMessageLabel;
     @FXML private ComboBox<AdminFinancialPeriod> periodComboBox;
     @FXML private ComboBox<AdminTaxRateDTO> modalTaxRateCombo;
@@ -150,8 +150,6 @@ public class FinancialController implements AdminSectionController {
     @FXML private TextField modalTaxRateValueField;
     @FXML private TextField modalTaxRateDescriptionField;
     @FXML private CheckBox modalTaxRateActiveCheck;
-    @FXML private Button modalSaveButton;
-    @FXML private Button modalDeleteConfirmButton;
 
     @Override
     public void setAdminService(AdminService adminService) {
@@ -160,6 +158,9 @@ public class FinancialController implements AdminSectionController {
 
     @FXML
     public void initialize() {
+        bindModalFields();
+        modalController = sharedModalController.createModalController();
+        sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave, this::handleModalConfirmDelete);
         paymentsTable.setItems(filteredPayments);
         periodComboBox.setItems(FXCollections.observableArrayList(AdminFinancialPeriod.values()));
         periodComboBox.setValue(currentFinancialPeriod);
@@ -182,6 +183,19 @@ public class FinancialController implements AdminSectionController {
         paymentsTable.getSelectionModel().selectedItemProperty().addListener((obs, previous, current) -> updatePaymentDetailsPanel(current));
         setupColumns();
         refreshSectionData();
+    }
+
+    private void bindModalFields() {
+        if (sharedModalController == null) {
+            throw new IllegalStateException("Shared modal controller was not injected.");
+        }
+        modalTaxRateFormSection = sharedModalController.getModalTaxRateFormSection();
+        modalDeleteMessageLabel = sharedModalController.getModalDeleteMessageLabel();
+        modalTaxRateCombo = sharedModalController.getModalTaxRateCombo();
+        modalTaxRateNameField = sharedModalController.getModalTaxRateNameField();
+        modalTaxRateValueField = sharedModalController.getModalTaxRateValueField();
+        modalTaxRateDescriptionField = sharedModalController.getModalTaxRateDescriptionField();
+        modalTaxRateActiveCheck = sharedModalController.getModalTaxRateActiveCheck();
     }
 
     @Override
@@ -635,26 +649,19 @@ public class FinancialController implements AdminSectionController {
     }
 
     private void showModal() {
-        modalOverlay.setVisible(true);
-        modalOverlay.setManaged(true);
+        modalController.show();
     }
 
     private void hideModal() {
-        modalOverlay.setVisible(false);
-        modalOverlay.setManaged(false);
-        clearModalError();
+        modalController.hide();
     }
 
     private void clearModalError() {
-        modalErrorLabel.setText("");
-        modalErrorLabel.setVisible(false);
-        modalErrorLabel.setManaged(false);
+        modalController.clearError();
     }
 
     private void showModalError(String message) {
-        modalErrorLabel.setText(message);
-        modalErrorLabel.setVisible(true);
-        modalErrorLabel.setManaged(true);
+        modalController.showError(message);
     }
 
     private void clearDetails() {
@@ -771,19 +778,11 @@ public class FinancialController implements AdminSectionController {
             return;
         }
 
-        modalTitleLabel.setText("Editar taxa de IVA");
+        modalController.prepareForForm("Editar taxa de IVA");
         modalTaxRateFormSection.setVisible(true);
         modalTaxRateFormSection.setManaged(true);
-        modalDeleteSection.setVisible(false);
-        modalDeleteSection.setManaged(false);
-        modalSaveButton.setVisible(true);
-        modalSaveButton.setManaged(true);
-        modalDeleteConfirmButton.setVisible(false);
-        modalDeleteConfirmButton.setManaged(false);
         modalTaxRateCombo.setItems(FXCollections.observableArrayList(allTaxRates));
         modalTaxRateCombo.getSelectionModel().selectFirst();
         populateTaxRateFields(modalTaxRateCombo.getValue());
-        clearModalError();
-        showModal();
     }
 }

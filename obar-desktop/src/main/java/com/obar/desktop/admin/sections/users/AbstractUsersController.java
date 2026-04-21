@@ -5,6 +5,8 @@ import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminModalController;
+import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.UserType;
 import javafx.beans.property.SimpleStringProperty;
@@ -73,10 +75,8 @@ public abstract class AbstractUsersController implements AdminSectionController 
     @FXML protected Label detailExtraThreeTitleLabel;
     @FXML protected Label detailExtraThreeValueLabel;
     @FXML protected Label feedbackLabel;
-    @FXML protected StackPane modalOverlay;
-    @FXML protected Label modalTitleLabel;
-    @FXML protected Label modalErrorLabel;
-    @FXML protected VBox modalDeleteSection;
+    @FXML protected AdminModalIncludeController sharedModalController;
+    @FXML protected VBox modalUsersFormSection;
     @FXML protected Label modalDeleteMessageLabel;
     @FXML protected ComboBox<AccountStatus> modalStatusCombo;
     @FXML protected TextField modalNameField;
@@ -86,8 +86,6 @@ public abstract class AbstractUsersController implements AdminSectionController 
     @FXML protected PasswordField modalPasswordField;
     @FXML protected PasswordField modalConfirmPasswordField;
     @FXML protected Label modalReferenceLabel;
-    @FXML protected Button modalSaveButton;
-    @FXML protected Button modalDeleteConfirmButton;
     @FXML protected Button addUserButton;
     @FXML protected Button editUserButton;
     @FXML protected Button deleteUserButton;
@@ -121,6 +119,7 @@ public abstract class AbstractUsersController implements AdminSectionController 
 
     private ModalMode modalMode = ModalMode.NONE;
     private AdminUserDTO modalTargetUser;
+    private AdminModalController modalController;
 
     @Override
     public void setAdminService(AdminService adminService) {
@@ -129,6 +128,9 @@ public abstract class AbstractUsersController implements AdminSectionController 
 
     @FXML
     public void initialize() {
+        bindModalFields();
+        modalController = sharedModalController.createModalController();
+        sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave, this::handleModalConfirmDelete);
         usersTable.setItems(filteredUsers);
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
@@ -136,6 +138,22 @@ public abstract class AbstractUsersController implements AdminSectionController 
         setupColumns();
         setDetailsVisible(false);
         refresh();
+    }
+
+    private void bindModalFields() {
+        if (sharedModalController == null) {
+            throw new IllegalStateException("Shared modal controller was not injected.");
+        }
+        modalUsersFormSection = sharedModalController.getModalUsersFormSection();
+        modalDeleteMessageLabel = sharedModalController.getModalDeleteMessageLabel();
+        modalStatusCombo = sharedModalController.getModalStatusCombo();
+        modalNameField = sharedModalController.getModalNameField();
+        modalEmailField = sharedModalController.getModalEmailField();
+        modalPhoneField = sharedModalController.getModalPhoneField();
+        modalReferenceField = sharedModalController.getModalReferenceField();
+        modalPasswordField = sharedModalController.getModalPasswordField();
+        modalConfirmPasswordField = sharedModalController.getModalConfirmPasswordField();
+        modalReferenceLabel = sharedModalController.getModalReferenceLabel();
     }
 
     @Override
@@ -456,14 +474,9 @@ public abstract class AbstractUsersController implements AdminSectionController 
     protected void openUserFormModal(AdminUserDTO editingUser) {
         modalMode = editingUser == null ? ModalMode.CREATE : ModalMode.EDIT;
         modalTargetUser = editingUser;
-        modalTitleLabel.setText(editingUser == null ? "Novo " + badgeLabel().toLowerCase(Locale.ROOT) : "Editar " + badgeLabel().toLowerCase(Locale.ROOT));
+        modalController.prepareForForm(editingUser == null ? "Novo " + badgeLabel().toLowerCase(Locale.ROOT) : "Editar " + badgeLabel().toLowerCase(Locale.ROOT));
+        AdminModalController.toggle(modalUsersFormSection, true);
         modalReferenceLabel.setText(referenceTitle());
-        modalDeleteSection.setVisible(false);
-        modalDeleteSection.setManaged(false);
-        modalSaveButton.setVisible(true);
-        modalSaveButton.setManaged(true);
-        modalDeleteConfirmButton.setVisible(false);
-        modalDeleteConfirmButton.setManaged(false);
 
         if (editingUser == null) {
             modalNameField.clear();
@@ -481,25 +494,16 @@ public abstract class AbstractUsersController implements AdminSectionController 
 
         modalPasswordField.clear();
         modalConfirmPasswordField.clear();
-        clearModalError();
-        showModal();
     }
 
     protected void openDeleteConfirmModal(AdminUserDTO selectedUser) {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTargetUser = selectedUser;
-        modalTitleLabel.setText(selectedUser.getStatus() == AccountStatus.BLOCKED ? "Apagar registo" : "Bloquear conta");
-        modalDeleteSection.setVisible(true);
-        modalDeleteSection.setManaged(true);
-        modalSaveButton.setVisible(false);
-        modalSaveButton.setManaged(false);
-        modalDeleteConfirmButton.setVisible(true);
-        modalDeleteConfirmButton.setManaged(true);
+        modalController.prepareForDeleteConfirm(selectedUser.getStatus() == AccountStatus.BLOCKED ? "Apagar registo" : "Bloquear conta");
+        AdminModalController.toggle(modalUsersFormSection, false);
         modalDeleteMessageLabel.setText(selectedUser.getStatus() == AccountStatus.BLOCKED
                 ? "Apagar " + AdminFormatUtils.fallback(selectedUser.getName()) + "? Esta acao e permanente."
                 : "Bloquear " + AdminFormatUtils.fallback(selectedUser.getName()) + "? A conta sera marcada como bloqueada.");
-        clearModalError();
-        showModal();
     }
 
     protected void persistCreateUser() {
@@ -544,28 +548,21 @@ public abstract class AbstractUsersController implements AdminSectionController 
     }
 
     protected void showModal() {
-        modalOverlay.setVisible(true);
-        modalOverlay.setManaged(true);
+        modalController.show();
     }
 
     protected void hideModal() {
         modalMode = ModalMode.NONE;
         modalTargetUser = null;
-        modalOverlay.setVisible(false);
-        modalOverlay.setManaged(false);
-        clearModalError();
+        modalController.hide();
     }
 
     protected void clearModalError() {
-        modalErrorLabel.setText("");
-        modalErrorLabel.setVisible(false);
-        modalErrorLabel.setManaged(false);
+        modalController.clearError();
     }
 
     protected void showModalError(String message) {
-        modalErrorLabel.setText(message);
-        modalErrorLabel.setVisible(true);
-        modalErrorLabel.setManaged(true);
+        modalController.showError(message);
     }
 
     protected void showFeedback(String message, boolean isError) {

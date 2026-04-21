@@ -5,6 +5,8 @@ import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminModalController;
+import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import javafx.beans.property.SimpleStringProperty;
@@ -41,6 +43,7 @@ public class TripsController implements AdminSectionController {
     private TripStatus currentStatusFilter;
     private ModalMode modalMode = ModalMode.NONE;
     private AdminTripDTO modalTargetTrip;
+    private AdminModalController modalController;
 
     @FXML private VBox root;
     @FXML private TextField searchField;
@@ -54,6 +57,7 @@ public class TripsController implements AdminSectionController {
     @FXML private TableColumn<AdminTripDTO, String> tripRequestedAtColumn;
     @FXML private Label listInfoLabel;
     @FXML private Label feedbackLabel;
+    @FXML private AdminModalIncludeController sharedModalController;
     @FXML private VBox detailPanel;
     @FXML private Button addUserButton;
     @FXML private Button editUserButton;
@@ -89,10 +93,7 @@ public class TripsController implements AdminSectionController {
     @FXML private Label detailExtraThreeTitleLabel;
     @FXML private Label detailExtraThreeValueLabel;
 
-    @FXML private StackPane modalOverlay;
-    @FXML private Label modalTitleLabel;
-    @FXML private Label modalErrorLabel;
-    @FXML private VBox modalDeleteSection;
+    @FXML private VBox modalTripsFormSection;
     @FXML private Label modalDeleteMessageLabel;
     @FXML private TextField modalTripClientIdField;
     @FXML private TextField modalTripDriverIdField;
@@ -103,8 +104,6 @@ public class TripsController implements AdminSectionController {
     @FXML private TextField modalTripEstimatedPriceField;
     @FXML private TextField modalTripFinalPriceField;
     @FXML private TextField modalTripNotesField;
-    @FXML private Button modalSaveButton;
-    @FXML private Button modalDeleteConfirmButton;
 
     @Override
     public void setAdminService(AdminService adminService) {
@@ -113,6 +112,9 @@ public class TripsController implements AdminSectionController {
 
     @FXML
     public void initialize() {
+        bindModalFields();
+        modalController = sharedModalController.createModalController();
+        sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave, this::handleModalConfirmDelete);
         tripsTable.setItems(filteredTrips);
         modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
         modalTripStatusCombo.setItems(FXCollections.observableArrayList(TripStatus.values()));
@@ -121,6 +123,23 @@ public class TripsController implements AdminSectionController {
         setupColumns();
         setDetailsVisible(false);
         refresh();
+    }
+
+    private void bindModalFields() {
+        if (sharedModalController == null) {
+            throw new IllegalStateException("Shared modal controller was not injected.");
+        }
+        modalTripsFormSection = sharedModalController.getModalTripsFormSection();
+        modalDeleteMessageLabel = sharedModalController.getModalDeleteMessageLabel();
+        modalTripClientIdField = sharedModalController.getModalTripClientIdField();
+        modalTripDriverIdField = sharedModalController.getModalTripDriverIdField();
+        modalTripTypeCombo = sharedModalController.getModalTripTypeCombo();
+        modalTripStatusCombo = sharedModalController.getModalTripStatusCombo();
+        modalTripOriginField = sharedModalController.getModalTripOriginField();
+        modalTripDestinationField = sharedModalController.getModalTripDestinationField();
+        modalTripEstimatedPriceField = sharedModalController.getModalTripEstimatedPriceField();
+        modalTripFinalPriceField = sharedModalController.getModalTripFinalPriceField();
+        modalTripNotesField = sharedModalController.getModalTripNotesField();
     }
 
     @Override
@@ -359,13 +378,8 @@ public class TripsController implements AdminSectionController {
         boolean editing = editingTrip != null;
         modalMode = editing ? ModalMode.EDIT : ModalMode.CREATE;
         modalTargetTrip = editingTrip;
-        modalTitleLabel.setText(editing ? "Editar viagem" : "Nova viagem");
-        modalDeleteSection.setVisible(false);
-        modalDeleteSection.setManaged(false);
-        modalSaveButton.setVisible(true);
-        modalSaveButton.setManaged(true);
-        modalDeleteConfirmButton.setVisible(false);
-        modalDeleteConfirmButton.setManaged(false);
+        modalController.prepareForForm(editing ? "Editar viagem" : "Nova viagem");
+        AdminModalController.toggle(modalTripsFormSection, true);
 
         if (editing) {
             modalTripClientIdField.setText(editingTrip.getClientId() == null ? "" : String.valueOf(editingTrip.getClientId()));
@@ -389,25 +403,16 @@ public class TripsController implements AdminSectionController {
             modalTripNotesField.clear();
         }
 
-        clearModalError();
-        showModal();
     }
 
     private void openDeleteTripConfirmModal(AdminTripDTO selectedTrip) {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTargetTrip = selectedTrip;
-        modalTitleLabel.setText("Apagar viagem");
-        modalDeleteSection.setVisible(true);
-        modalDeleteSection.setManaged(true);
-        modalSaveButton.setVisible(false);
-        modalSaveButton.setManaged(false);
-        modalDeleteConfirmButton.setVisible(true);
-        modalDeleteConfirmButton.setManaged(true);
+        modalController.prepareForDeleteConfirm("Apagar viagem");
+        AdminModalController.toggle(modalTripsFormSection, false);
         modalDeleteMessageLabel.setText("Tem a certeza que deseja apagar a viagem #" + selectedTrip.getId()
             + "?\nRota: " + AdminFormatUtils.fallback(selectedTrip.getOriginAddress())
             + " -> " + AdminFormatUtils.fallback(selectedTrip.getDestinationAddress()) + ".");
-        clearModalError();
-        showModal();
     }
 
     private void persistTrip() {
@@ -442,28 +447,21 @@ public class TripsController implements AdminSectionController {
     }
 
     private void showModal() {
-        modalOverlay.setVisible(true);
-        modalOverlay.setManaged(true);
+        modalController.show();
     }
 
     private void hideModal() {
         modalMode = ModalMode.NONE;
         modalTargetTrip = null;
-        modalOverlay.setVisible(false);
-        modalOverlay.setManaged(false);
-        clearModalError();
+        modalController.hide();
     }
 
     private void clearModalError() {
-        modalErrorLabel.setText("");
-        modalErrorLabel.setVisible(false);
-        modalErrorLabel.setManaged(false);
+        modalController.clearError();
     }
 
     private void showModalError(String message) {
-        modalErrorLabel.setText(message);
-        modalErrorLabel.setVisible(true);
-        modalErrorLabel.setManaged(true);
+        modalController.showError(message);
     }
 
     private void showFeedback(String message, boolean isError) {

@@ -108,54 +108,5 @@
         </HBox>
     </VBox>
 
-    <StackPane fx:id="modalOverlay" visible="false" managed="false">
-        <VBox spacing="12.0" styleClass="modal-card">
-            <Label fx:id="modalTitleLabel" text="" styleClass="modal-title" />
-            <Label fx:id="modalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
-            <VBox spacing="10.0">
-                <HBox spacing="8.0">
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label text="Nome" styleClass="meta-title" />
-                        <TextField fx:id="modalNameField" promptText="Nome" />
-                    </VBox>
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label text="Email" styleClass="meta-title" />
-                        <TextField fx:id="modalEmailField" promptText="Email" />
-                    </VBox>
-                </HBox>
-                <HBox spacing="8.0">
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label text="Telefone" styleClass="meta-title" />
-                        <TextField fx:id="modalPhoneField" promptText="Telefone" />
-                    </VBox>
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label fx:id="modalReferenceLabel" text="NIF" styleClass="meta-title" />
-                        <TextField fx:id="modalReferenceField" promptText="Referencia" />
-                    </VBox>
-                </HBox>
-                <VBox spacing="4.0">
-                    <Label text="Estado" styleClass="meta-title" />
-                    <ComboBox fx:id="modalStatusCombo" maxWidth="1.7976931348623157E308" />
-                </VBox>
-                <HBox spacing="8.0">
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label text="Password" styleClass="meta-title" />
-                        <PasswordField fx:id="modalPasswordField" promptText="Password" />
-                    </VBox>
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
-                        <Label text="Confirmar password" styleClass="meta-title" />
-                        <PasswordField fx:id="modalConfirmPasswordField" promptText="Confirmar" />
-                    </VBox>
-                </HBox>
-            </VBox>
-            <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">
-                <Label fx:id="modalDeleteMessageLabel" text="" styleClass="meta-value" wrapText="true" />
-            </VBox>
-            <HBox alignment="CENTER_RIGHT" spacing="8.0">
-                <Button text="Cancelar" onAction="#handleModalCancel" styleClass="flat" />
-                <Button fx:id="modalSaveButton" text="Guardar" onAction="#handleModalSave" styleClass="accent" />
-                <Button fx:id="modalDeleteConfirmButton" text="Confirmar" onAction="#handleModalConfirmDelete" styleClass="danger" visible="false" managed="false" />
-            </HBox>
-        </VBox>
-    </StackPane>
+    <fx:include fx:id="sharedModal" source="../../shared/admin-modal.fxml" />
 </StackPane>

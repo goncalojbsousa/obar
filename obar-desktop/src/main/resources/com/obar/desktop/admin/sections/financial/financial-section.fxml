@@ -170,25 +170,5 @@
         </HBox>
     </VBox>
 
-    <StackPane fx:id="modalOverlay" visible="false" managed="false">
-        <VBox spacing="12.0" styleClass="modal-card">
-            <Label fx:id="modalTitleLabel" text="Editar taxa de IVA" styleClass="modal-title" />
-            <Label fx:id="modalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
-            <VBox fx:id="modalTaxRateFormSection" spacing="10.0">
-                <VBox spacing="4.0"><Label text="Taxa de IVA" styleClass="meta-title" /><ComboBox fx:id="modalTaxRateCombo" maxWidth="1.7976931348623157E308" /></VBox>
-                <HBox spacing="8.0">
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0"><Label text="Nome" styleClass="meta-title" /><TextField fx:id="modalTaxRateNameField" promptText="Nome da taxa" /></VBox>
-                    <VBox HBox.hgrow="ALWAYS" spacing="4.0"><Label text="Valor (0-1)" styleClass="meta-title" /><TextField fx:id="modalTaxRateValueField" promptText="ex: 0.2300" /></VBox>
-                </HBox>
-                <VBox spacing="4.0"><Label text="Descricao" styleClass="meta-title" /><TextField fx:id="modalTaxRateDescriptionField" promptText="Descricao opcional" /></VBox>
-                <CheckBox fx:id="modalTaxRateActiveCheck" text="Taxa ativa" selected="true" />
-            </VBox>
-            <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false"><Label fx:id="modalDeleteMessageLabel" text="" styleClass="meta-value" wrapText="true" /></VBox>
-            <HBox alignment="CENTER_RIGHT" spacing="8.0">
-                <Button text="Cancelar" onAction="#handleModalCancel" styleClass="flat" />
-                <Button fx:id="modalSaveButton" text="Guardar" onAction="#handleModalSave" styleClass="accent" />
-                <Button fx:id="modalDeleteConfirmButton" text="Confirmar" onAction="#handleModalConfirmDelete" styleClass="danger" visible="false" managed="false" />
-            </HBox>
-        </VBox>
-    </StackPane>
+    <fx:include fx:id="sharedModal" source="../../shared/admin-modal.fxml" />
 </StackPane>

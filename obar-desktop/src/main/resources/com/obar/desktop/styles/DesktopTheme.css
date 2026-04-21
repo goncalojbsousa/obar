@@ -440,6 +440,8 @@
 
 .modal-overlay {
     -fx-background-color: rgba(2, 5, 10, 0.72);
+    -fx-alignment: center;
+    -fx-padding: 28 44 28 44;
 }
 
 .modal-card {
@@ -447,6 +449,9 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
+    -fx-padding: 18 20 18 20;
+    -fx-pref-width: 820;
+    -fx-max-width: 820;
 }
 
 .modal-card .label {

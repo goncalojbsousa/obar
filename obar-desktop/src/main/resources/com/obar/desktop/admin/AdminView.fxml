@@ -274,8 +274,12 @@
                     <Insets top="24.0" right="18.0" bottom="24.0" left="18.0" />
                 </padding>
 
-                <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title"
-                    wrapText="true" maxWidth="300.0" />
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title"
+                        wrapText="true" maxWidth="260.0" HBox.hgrow="ALWAYS" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="x" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
+                </HBox>
                 <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
                 <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name"
                     wrapText="true" maxWidth="300.0" />

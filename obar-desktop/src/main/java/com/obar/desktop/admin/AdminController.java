@@ -539,6 +539,8 @@ public class AdminController {
                 .addListener((obs, previous, current) -> onSelectionChanged(current));
         tripsTable.getSelectionModel().selectedItemProperty()
             .addListener((obs, previous, current) -> onTripSelectionChanged(current));
+        paymentsTable.getSelectionModel().selectedItemProperty()
+            .addListener((obs, previous, current) -> onPaymentSelectionChanged(current));
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         modalStatusCombo.setItems(FXCollections.observableArrayList(AccountStatus.values()));
         modalTripTypeCombo.setItems(FXCollections.observableArrayList(TripType.values()));
@@ -852,6 +854,20 @@ public class AdminController {
     }
 
     @FXML
+    public void handleCloseDetailPanel() {
+        if (currentSection == AdminSection.TRIPS) {
+            tripsTable.getSelectionModel().clearSelection();
+        } else if (currentSection == AdminSection.FINANCIAL) {
+            paymentsTable.getSelectionModel().clearSelection();
+        } else {
+            usersTable.getSelectionModel().clearSelection();
+        }
+
+        detailPanel.setVisible(false);
+        detailPanel.setManaged(false);
+    }
+
+    @FXML
     public void handleLogout() {
         SessionManager.logout();
         NavigationManager.navigateToLogin();
@@ -1062,7 +1078,8 @@ public class AdminController {
 
         boolean hasUserSelection = usersTable.getSelectionModel().getSelectedItem() != null;
         boolean hasTripSelection = tripsTable.getSelectionModel().getSelectedItem() != null;
-        boolean showDetails = isTripsSection ? hasTripSelection : (!isFinancialSection && hasUserSelection);
+        boolean hasPaymentSelection = paymentsTable.getSelectionModel().getSelectedItem() != null;
+        boolean showDetails = isFinancialSection ? hasPaymentSelection : (isTripsSection ? hasTripSelection : hasUserSelection);
         detailPanel.setVisible(showDetails);
         detailPanel.setManaged(showDetails);
 
@@ -1174,6 +1191,22 @@ public class AdminController {
 
         if (hasSelection) {
             updateTripDetailsPanel(selectedTrip);
+        } else {
+            clearDetailPanel();
+        }
+    }
+
+    private void onPaymentSelectionChanged(AdminPaymentByTripDTO selectedPayment) {
+        if (currentSection != AdminSection.FINANCIAL) {
+            return;
+        }
+
+        boolean hasSelection = selectedPayment != null;
+        detailPanel.setVisible(hasSelection);
+        detailPanel.setManaged(hasSelection);
+
+        if (hasSelection) {
+            updatePaymentDetailsPanel(selectedPayment);
         } else {
             clearDetailPanel();
         }
@@ -1417,6 +1450,38 @@ public class AdminController {
         detailExtraTwoValueLabel.setText(trip.getStartTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getStartTime()));
         detailExtraThreeTitleLabel.setText("Fim");
         detailExtraThreeValueLabel.setText(trip.getEndTime() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(trip.getEndTime()));
+    }
+
+    private void updatePaymentDetailsPanel(AdminPaymentByTripDTO payment) {
+        detailTitleLabel.setText("Detalhe do pagamento");
+        detailInitialsLabel.setText(payment.getPaymentId() == null ? "--" : "#" + payment.getPaymentId());
+        detailNameLabel.setText(formatPaymentAmount(payment));
+        detailEmailLabel.setText("Cliente: " + fallback(payment.getClientName()));
+        detailStatusLabel.setText(prettyPaymentStatus(payment.getStatus()));
+        detailRoleLabel.setText(prettyPaymentMethod(payment.getPaymentMethodType()));
+        detailPhoneValueLabel.setText("Metodo: " + prettyPaymentMethod(payment.getPaymentMethodType()));
+        detailCreatedValueLabel.setText(payment.getPaymentDate() == null ? "-" : DETAIL_CREATED_AT_FORMAT.format(payment.getPaymentDate()));
+
+        detailCardOneTitleLabel.setText("ID Viagem");
+        detailCardOneValueLabel.setText(payment.getTripId() == null ? "-" : "#" + payment.getTripId());
+        detailCardTwoTitleLabel.setText("Valor");
+        detailCardTwoValueLabel.setText(formatPaymentAmount(payment));
+        detailCardThreeTitleLabel.setText("Estado");
+        detailCardThreeValueLabel.setText(prettyPaymentStatus(payment.getStatus()));
+        detailCardFourTitleLabel.setText("Moeda");
+        detailCardFourValueLabel.setText(fallback(payment.getCurrencyCode()));
+
+        detailReferenceTitleLabel.setText("Taxa aplicada");
+        detailReferenceValueLabel.setText(payment.getTaxRateApplied() == null
+                ? "-"
+                : (payment.getTaxRateApplied().multiply(new BigDecimal("100"))).setScale(2, RoundingMode.HALF_UP) + "%");
+
+        detailExtraOneTitleLabel.setText("Motorista");
+        detailExtraOneValueLabel.setText(fallback(payment.getDriverName()));
+        detailExtraTwoTitleLabel.setText("Data pagamento");
+        detailExtraTwoValueLabel.setText(payment.getPaymentDate() == null ? "-" : PAYMENT_DATE_FORMAT.format(payment.getPaymentDate()));
+        detailExtraThreeTitleLabel.setText("Periodo");
+        detailExtraThreeValueLabel.setText(prettyFinancialPeriod(currentFinancialPeriod));
     }
 
     private void updateFinancialDetailPanel() {

@@ -299,6 +299,22 @@
     -fx-font-weight: 700;
 }
 
+.detail-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8f98ad;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-border-color: #2d3240;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 2 8;
+}
+
+.detail-close:hover {
+    -fx-background-color: #1a1d25;
+    -fx-text-fill: #e4eaf8;
+}
+
 .detail-avatar {
     -fx-alignment: center;
     -fx-text-fill: #eef2ff;

@@ -1,22 +1,29 @@
 package com.obar.bll.admin;
 
 import com.obar.bll.auth.PasswordService;
+import com.obar.dal.PaymentRepository;
 import com.obar.dal.RouteRepository;
+import com.obar.dal.TaxRateRepository;
 import com.obar.dal.TripRepository;
 import com.obar.dal.TripDriverRepository;
 import com.obar.dal.UserRepository;
 import com.obar.dal.VehicleRepository;
 import com.obar.model.Route;
+import com.obar.model.TaxRate;
 import com.obar.model.Trip;
 import com.obar.model.User;
 import com.obar.model.Vehicle;
 import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.PaymentStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.model.enums.UserType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -32,6 +39,8 @@ public class AdminService {
     private final TripDriverRepository tripDriverRepository;
     private final RouteRepository routeRepository;
     private final VehicleRepository vehicleRepository;
+    private final PaymentRepository paymentRepository;
+    private final TaxRateRepository taxRateRepository;
 
     public AdminService() {
         this(
@@ -40,7 +49,9 @@ public class AdminService {
                 new TripRepository(),
                 new TripDriverRepository(),
                 new RouteRepository(),
-                new VehicleRepository());
+                new VehicleRepository(),
+                new PaymentRepository(),
+                new TaxRateRepository());
     }
 
     public AdminService(UserRepository userRepository, PasswordService passwordService) {
@@ -50,7 +61,9 @@ public class AdminService {
                 new TripRepository(),
                 new TripDriverRepository(),
                 new RouteRepository(),
-                new VehicleRepository());
+                new VehicleRepository(),
+                new PaymentRepository(),
+                new TaxRateRepository());
     }
 
     public AdminService(
@@ -60,6 +73,26 @@ public class AdminService {
             TripDriverRepository tripDriverRepository,
             RouteRepository routeRepository,
             VehicleRepository vehicleRepository) {
+        this(
+                userRepository,
+                passwordService,
+                tripRepository,
+                tripDriverRepository,
+                routeRepository,
+                vehicleRepository,
+                new PaymentRepository(),
+                new TaxRateRepository());
+    }
+
+    public AdminService(
+            UserRepository userRepository,
+            PasswordService passwordService,
+            TripRepository tripRepository,
+            TripDriverRepository tripDriverRepository,
+            RouteRepository routeRepository,
+            VehicleRepository vehicleRepository,
+            PaymentRepository paymentRepository,
+            TaxRateRepository taxRateRepository) {
         if (userRepository == null) {
             throw new IllegalArgumentException("UserRepository must not be null.");
         }
@@ -78,12 +111,20 @@ public class AdminService {
         if (vehicleRepository == null) {
             throw new IllegalArgumentException("VehicleRepository must not be null.");
         }
+        if (paymentRepository == null) {
+            throw new IllegalArgumentException("PaymentRepository must not be null.");
+        }
+        if (taxRateRepository == null) {
+            throw new IllegalArgumentException("TaxRateRepository must not be null.");
+        }
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.tripRepository = tripRepository;
         this.tripDriverRepository = tripDriverRepository;
         this.routeRepository = routeRepository;
         this.vehicleRepository = vehicleRepository;
+        this.paymentRepository = paymentRepository;
+        this.taxRateRepository = taxRateRepository;
     }
 
     public List<AdminUserDTO> listUsersByType(UserType type) {
@@ -99,6 +140,89 @@ public class AdminService {
         return tripRepository.findAllForAdminDashboard().stream()
                 .map(AdminTripDTO::from)
                 .toList();
+    }
+
+    public AdminFinancialOverviewDTO getFinancialOverview(AdminFinancialPeriod period) {
+        AdminFinancialPeriod safePeriod = period == null ? AdminFinancialPeriod.ALL : period;
+
+        LocalDateTime start = resolvePeriodStart(safePeriod);
+        LocalDateTime end = resolvePeriodEnd(safePeriod);
+
+        BigDecimal totalIncome = paymentRepository.sumAmountByStatus(PaymentStatus.PROCESSED, null, null);
+        BigDecimal periodIncome = paymentRepository.sumAmountByStatus(PaymentStatus.PROCESSED, start, end);
+
+        Map<PaymentStatus, Long> countsByStatus = new EnumMap<>(PaymentStatus.class);
+        for (PaymentStatus status : PaymentStatus.values()) {
+            countsByStatus.put(status, 0L);
+        }
+
+        for (Object[] row : paymentRepository.countByStatus(start, end)) {
+            PaymentStatus status = (PaymentStatus) row[0];
+            long count = ((Number) row[1]).longValue();
+            countsByStatus.put(status, count);
+        }
+
+        List<AdminPaymentStatusSummaryDTO> statusSummaries = List.of(
+                new AdminPaymentStatusSummaryDTO(PaymentStatus.PENDING, countsByStatus.get(PaymentStatus.PENDING)),
+                new AdminPaymentStatusSummaryDTO(PaymentStatus.PROCESSED, countsByStatus.get(PaymentStatus.PROCESSED)),
+                new AdminPaymentStatusSummaryDTO(PaymentStatus.FAILED, countsByStatus.get(PaymentStatus.FAILED)),
+                new AdminPaymentStatusSummaryDTO(PaymentStatus.REFUNDED, countsByStatus.get(PaymentStatus.REFUNDED)));
+
+        long totalPayments = statusSummaries.stream().mapToLong(AdminPaymentStatusSummaryDTO::getTotal).sum();
+        return new AdminFinancialOverviewDTO(
+                totalIncome,
+                periodIncome,
+                totalPayments,
+                countsByStatus.get(PaymentStatus.PENDING),
+                countsByStatus.get(PaymentStatus.PROCESSED),
+                countsByStatus.get(PaymentStatus.FAILED),
+                countsByStatus.get(PaymentStatus.REFUNDED),
+                statusSummaries);
+    }
+
+    public List<AdminPaymentByTripDTO> listPaymentsByTrip(AdminFinancialPeriod period) {
+        AdminFinancialPeriod safePeriod = period == null ? AdminFinancialPeriod.ALL : period;
+        LocalDateTime start = resolvePeriodStart(safePeriod);
+        LocalDateTime end = resolvePeriodEnd(safePeriod);
+
+        return paymentRepository.findAllForAdmin(start, end).stream()
+                .map(AdminPaymentByTripDTO::from)
+                .toList();
+    }
+
+    public List<AdminTaxRateDTO> listTaxRates() {
+        return taxRateRepository.findAllOrderedForAdmin().stream()
+                .map(AdminTaxRateDTO::from)
+                .toList();
+    }
+
+    public AdminTaxRateDTO updateTaxRate(Integer taxRateId, AdminTaxRateCommand command) {
+        if (taxRateId == null) {
+            throw new IllegalArgumentException("Taxa de IVA invalida.");
+        }
+        if (command == null) {
+            throw new IllegalArgumentException("Dados de taxa invalidos.");
+        }
+        if (command.rate() == null) {
+            throw new IllegalArgumentException("Percentagem de IVA obrigatoria.");
+        }
+        if (command.rate().compareTo(BigDecimal.ZERO) < 0 || command.rate().compareTo(BigDecimal.ONE) > 0) {
+            throw new IllegalArgumentException("Taxa de IVA deve estar entre 0.0000 e 1.0000.");
+        }
+        if (safe(command.name()).isBlank()) {
+            throw new IllegalArgumentException("Nome da taxa e obrigatorio.");
+        }
+
+        TaxRate taxRate = taxRateRepository.findById(taxRateId)
+                .orElseThrow(() -> new IllegalArgumentException("Taxa de IVA nao encontrada."));
+
+        taxRate.setName(command.name().trim());
+        taxRate.setRate(command.rate());
+        taxRate.setDescription(trimOrNull(command.description()));
+        taxRate.setActive(command.active() == null || command.active());
+
+        TaxRate updated = taxRateRepository.update(taxRate);
+        return AdminTaxRateDTO.from(updated);
     }
 
     public Trip createTrip(AdminTripCommand command) {
@@ -398,5 +522,23 @@ public class AdminService {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private LocalDateTime resolvePeriodStart(AdminFinancialPeriod period) {
+        LocalDateTime now = LocalDateTime.now();
+        return switch (period) {
+            case DAY -> now.minusDays(1);
+            case WEEK -> now.minusWeeks(1);
+            case MONTH -> now.minusMonths(1);
+            case YEAR -> now.minusYears(1);
+            case ALL -> null;
+        };
+    }
+
+    private LocalDateTime resolvePeriodEnd(AdminFinancialPeriod period) {
+        if (period == AdminFinancialPeriod.ALL) {
+            return null;
+        }
+        return LocalDateTime.now();
     }
 }

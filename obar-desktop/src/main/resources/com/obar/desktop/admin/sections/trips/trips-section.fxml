@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.obar.desktop.admin.sections.trips.TripsController">
+    <VBox fx:id="root" spacing="14.0" styleClass="admin-content">
+        <padding>
+            <Insets top="24.0" right="26.0" bottom="24.0" left="26.0" />
+        </padding>
+        <HBox spacing="16.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label text="Viagens" styleClass="title-2" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="addUserButton" text="+ Nova Viagem" onAction="#handleAddUser" styleClass="accent" />
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <TextField fx:id="searchField" promptText="Pesquisar por ID, cliente, motorista, estado..." HBox.hgrow="ALWAYS" />
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
+                    <Button fx:id="deleteUserButton" text="Apagar" onAction="#handleDeleteUser" styleClass="danger" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="listInfoLabel" text="A mostrar 0 viagens" styleClass="admin-subtitle" />
+                </HBox>
+
+                <TableView fx:id="tripsTable" VBox.vgrow="ALWAYS" styleClass="users-table">
+                    <columns>
+                        <TableColumn fx:id="tripIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="tripClientColumn" text="Cliente" prefWidth="180.0" />
+                        <TableColumn fx:id="tripDriverColumn" text="Motorista" prefWidth="180.0" />
+                        <TableColumn fx:id="tripStatusColumn" text="Estado" prefWidth="120.0" />
+                        <TableColumn fx:id="tripTypeColumn" text="Tipo" prefWidth="110.0" />
+                        <TableColumn fx:id="tripPriceColumn" text="Valor" prefWidth="100.0" />
+                        <TableColumn fx:id="tripRequestedAtColumn" text="Pedido em" prefWidth="160.0" />
+                    </columns>
+                </TableView>
+
+                <Label fx:id="feedbackLabel" text="Ready." styleClass="feedback-success" />
+            </VBox>
+
+            <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="detailTitleLabel" text="Detalhe da viagem" styleClass="detail-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="x" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
+                </HBox>
+                <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
+                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name" />
+                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" />
+                <HBox spacing="6.0">
+                    <Label fx:id="detailStatusLabel" text="-" styleClass="status-pill" />
+                    <Label fx:id="detailRoleLabel" text="-" styleClass="role-pill" />
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardOneValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardOneTitleLabel" text="ID Cliente" styleClass="metric-title" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardTwoValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardTwoTitleLabel" text="ID Motorista" styleClass="metric-title" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardThreeValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardThreeTitleLabel" text="Veiculo" styleClass="metric-title" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardFourValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardFourTitleLabel" text="Distancia" styleClass="metric-title" />
+                    </VBox>
+                </HBox>
+
+                <Label fx:id="detailReferenceTitleLabel" text="Preco estimado" styleClass="meta-title" />
+                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value" />
+                <Label text="Motorista" styleClass="meta-title" />
+                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" />
+                <Label text="Pedido em" styleClass="meta-title" />
+                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" />
+                <Label fx:id="detailExtraOneTitleLabel" text="Preco final" styleClass="meta-title" />
+                <Label fx:id="detailExtraOneValueLabel" text="-" styleClass="meta-value" />
+                <Label fx:id="detailExtraTwoTitleLabel" text="Inicio" styleClass="meta-title" />
+                <Label fx:id="detailExtraTwoValueLabel" text="-" styleClass="meta-value" />
+                <Label fx:id="detailExtraThreeTitleLabel" text="Fim" styleClass="meta-title" />
+                <Label fx:id="detailExtraThreeValueLabel" text="-" styleClass="meta-value" />
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <StackPane fx:id="modalOverlay" visible="false" managed="false">
+        <VBox spacing="12.0" styleClass="modal-card">
+            <Label fx:id="modalTitleLabel" text="" styleClass="modal-title" />
+            <Label fx:id="modalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
+
+            <VBox spacing="10.0">
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Cliente ID" styleClass="meta-title" />
+                        <TextField fx:id="modalTripClientIdField" promptText="ID do cliente" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Motorista ID (opcional)" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDriverIdField" promptText="ID do motorista" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Tipo" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripTypeCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Estado" styleClass="meta-title" />
+                        <ComboBox fx:id="modalTripStatusCombo" maxWidth="1.7976931348623157E308" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Origem" styleClass="meta-title" />
+                        <TextField fx:id="modalTripOriginField" promptText="Morada de origem" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Destino" styleClass="meta-title" />
+                        <TextField fx:id="modalTripDestinationField" promptText="Morada de destino" />
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco estimado" styleClass="meta-title" />
+                        <TextField fx:id="modalTripEstimatedPriceField" promptText="ex: 12.50" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Preco final" styleClass="meta-title" />
+                        <TextField fx:id="modalTripFinalPriceField" promptText="ex: 13.80" />
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="4.0">
+                    <Label text="Notas" styleClass="meta-title" />
+                    <TextField fx:id="modalTripNotesField" promptText="Notas opcionais" />
+                </VBox>
+            </VBox>
+
+            <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">
+                <Label fx:id="modalDeleteMessageLabel" text="" styleClass="meta-value" wrapText="true" />
+            </VBox>
+
+            <HBox alignment="CENTER_RIGHT" spacing="8.0">
+                <Button text="Cancelar" onAction="#handleModalCancel" styleClass="flat" />
+                <Button fx:id="modalSaveButton" text="Guardar" onAction="#handleModalSave" styleClass="accent" />
+                <Button fx:id="modalDeleteConfirmButton" text="Confirmar" onAction="#handleModalConfirmDelete" styleClass="danger" visible="false" managed="false" />
+            </HBox>
+        </VBox>
+    </StackPane>
+</StackPane>

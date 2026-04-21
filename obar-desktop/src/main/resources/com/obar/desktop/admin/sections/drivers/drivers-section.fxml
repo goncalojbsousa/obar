@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.obar.desktop.admin.sections.drivers.DriversController">
+    <VBox fx:id="root" spacing="14.0" styleClass="admin-content">
+        <padding>
+            <Insets top="24.0" right="26.0" bottom="24.0" left="26.0" />
+        </padding>
+        <HBox spacing="16.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label text="Motoristas" styleClass="title-2" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="addUserButton" text="+ Novo Motorista" onAction="#handleAddUser" styleClass="accent" />
+                </HBox>
+                <HBox spacing="8.0">
+                    <TextField fx:id="searchField" promptText="Pesquisar por nome, email, telefone, licenca..." HBox.hgrow="ALWAYS" />
+                </HBox>
+                <HBox spacing="8.0">
+                    <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
+                    <Button fx:id="deleteUserButton" text="Bloquear/Apagar" onAction="#handleDeleteUser" styleClass="danger" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="listInfoLabel" text="A mostrar 0 motoristas" styleClass="admin-subtitle" />
+                </HBox>
+                <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="users-table">
+                    <columns>
+                        <TableColumn fx:id="userIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="nameColumn" text="Motorista" prefWidth="200.0" />
+                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="220.0" />
+                        <TableColumn fx:id="statusColumn" text="Estado" prefWidth="105.0" />
+                        <TableColumn fx:id="metricColumn" text="Avaliacao" prefWidth="105.0" />
+                        <TableColumn fx:id="volumeColumn" text="Viagens" prefWidth="95.0" />
+                        <TableColumn fx:id="referenceColumn" text="Licenca" prefWidth="120.0" />
+                        <TableColumn fx:id="createdAtColumn" text="Registado em" prefWidth="140.0" />
+                    </columns>
+                </TableView>
+
+                <Label fx:id="feedbackLabel" text="Ready." styleClass="feedback-success" />
+            </VBox>
+
+            <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="detailTitleLabel" text="Detalhe do utilizador" styleClass="detail-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="X" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
+                </HBox>
+                <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
+                <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name" />
+                <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" />
+                <HBox spacing="6.0">
+                    <Label fx:id="detailStatusLabel" text="-" styleClass="status-pill" />
+                    <Label fx:id="detailRoleLabel" text="-" styleClass="role-pill" />
+                </HBox>
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardOneValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardOneTitleLabel" text="Avaliacao" styleClass="metric-title" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardTwoValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardTwoTitleLabel" text="Viagens" styleClass="metric-title" />
+                    </VBox>
+                </HBox>
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardThreeValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardThreeTitleLabel" text="Disponivel" styleClass="metric-title" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailCardFourValueLabel" text="-" styleClass="metric-value" />
+                        <Label fx:id="detailCardFourTitleLabel" text="Estado" styleClass="metric-title" />
+                    </VBox>
+                </HBox>
+                <Label fx:id="detailReferenceTitleLabel" text="Licenca" styleClass="meta-title" />
+                <Label fx:id="detailReferenceValueLabel" text="-" styleClass="meta-value" />
+                <Label text="Telefone" styleClass="meta-title" />
+                <Label fx:id="detailPhoneValueLabel" text="-" styleClass="meta-value" />
+                <Label text="Registado em" styleClass="meta-title" />
+                <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" />
+                <VBox spacing="8.0" styleClass="detail-actions">
+                    <Button text="Editar dados" onAction="#handleEditUser" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button text="Bloquear conta" onAction="#handleDeleteUser" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                </VBox>
+                <Region VBox.vgrow="ALWAYS" />
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <StackPane fx:id="modalOverlay" visible="false" managed="false">
+        <VBox spacing="12.0" styleClass="modal-card">
+            <Label fx:id="modalTitleLabel" text="" styleClass="modal-title" />
+            <Label fx:id="modalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
+            <VBox spacing="10.0">
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Nome" styleClass="meta-title" />
+                        <TextField fx:id="modalNameField" promptText="Nome" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Email" styleClass="meta-title" />
+                        <TextField fx:id="modalEmailField" promptText="Email" />
+                    </VBox>
+                </HBox>
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Telefone" styleClass="meta-title" />
+                        <TextField fx:id="modalPhoneField" promptText="Telefone" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label fx:id="modalReferenceLabel" text="Licenca" styleClass="meta-title" />
+                        <TextField fx:id="modalReferenceField" promptText="Referencia" />
+                    </VBox>
+                </HBox>
+                <VBox spacing="4.0">
+                    <Label text="Estado" styleClass="meta-title" />
+                    <ComboBox fx:id="modalStatusCombo" maxWidth="1.7976931348623157E308" />
+                </VBox>
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Password" styleClass="meta-title" />
+                        <PasswordField fx:id="modalPasswordField" promptText="Password" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                        <Label text="Confirmar password" styleClass="meta-title" />
+                        <PasswordField fx:id="modalConfirmPasswordField" promptText="Confirmar" />
+                    </VBox>
+                </HBox>
+            </VBox>
+            <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">
+                <Label fx:id="modalDeleteMessageLabel" text="" styleClass="meta-value" wrapText="true" />
+            </VBox>
+            <HBox alignment="CENTER_RIGHT" spacing="8.0">
+                <Button text="Cancelar" onAction="#handleModalCancel" styleClass="flat" />
+                <Button fx:id="modalSaveButton" text="Guardar" onAction="#handleModalSave" styleClass="accent" />
+                <Button fx:id="modalDeleteConfirmButton" text="Confirmar" onAction="#handleModalConfirmDelete" styleClass="danger" visible="false" managed="false" />
+            </HBox>
+        </VBox>
+    </StackPane>
+</StackPane>

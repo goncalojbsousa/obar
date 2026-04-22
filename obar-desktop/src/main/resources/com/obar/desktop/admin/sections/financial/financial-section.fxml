@@ -37,7 +37,6 @@
                     <Button fx:id="periodMonthButton" text="Este mes" onAction="#handleFinancialPeriodMonth" styleClass="period-chip" />
                     <Button fx:id="periodYearButton" text="Este ano" onAction="#handleFinancialPeriodYear" styleClass="period-chip" />
                     <Button fx:id="periodAllButton" text="Todo historico" onAction="#handleFinancialPeriodAll" styleClass="period-chip" />
-                    <ComboBox fx:id="periodComboBox" onAction="#handlePeriodChanged" prefWidth="170.0" />
                 </HBox>
 
                 <HBox spacing="8.0">

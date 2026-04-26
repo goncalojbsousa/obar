@@ -533,7 +533,7 @@
     -fx-border-color: #232326;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
-    -fx-padding: 18;
+    -fx-padding: 14 18;
 }
 
 .financial-hero-caption {
@@ -544,7 +544,7 @@
 
 .financial-hero-value {
     -fx-text-fill: #f6f9ff;
-    -fx-font-size: 52px;
+    -fx-font-size: 28px;
     -fx-font-weight: 900;
 }
 
@@ -555,7 +555,9 @@
 }
 
 .financial-side-metric {
-    -fx-padding: 0 0 0 4;
+    -fx-padding: 0 12 0 12;
+    -fx-border-color: transparent transparent transparent #232326;
+    -fx-border-width: 0 0 0 1;
 }
 
 .financial-side-label {
@@ -567,7 +569,7 @@
 .financial-side-value,
 .financial-side-value-positive,
 .financial-side-value-warning {
-    -fx-font-size: 29px;
+    -fx-font-size: 17px;
     -fx-font-weight: 800;
 }
 
@@ -588,7 +590,7 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
-    -fx-padding: 12 14;
+    -fx-padding: 9 12;
 }
 
 .financial-mini-title {
@@ -599,7 +601,7 @@
 
 .financial-mini-value {
     -fx-text-fill: #f2f6ff;
-    -fx-font-size: 32px;
+    -fx-font-size: 20px;
     -fx-font-weight: 800;
 }
 
@@ -615,17 +617,18 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
-    -fx-padding: 14;
+    -fx-padding: 10 12;
 }
 
 .financial-chart-title {
     -fx-text-fill: #eef3ff;
-    -fx-font-size: 18px;
+    -fx-font-size: 13px;
     -fx-font-weight: 700;
 }
 
 .financial-bar-column {
-    -fx-min-width: 20;
+    -fx-min-width: 14;
+    -fx-max-width: 30;
 }
 
 .financial-bar {
@@ -643,14 +646,16 @@
 
 .financial-bar-label {
     -fx-text-fill: #55607a;
-    -fx-font-size: 10px;
+    -fx-font-size: 9px;
     -fx-font-weight: 700;
+    -fx-max-width: 38;
 }
 
 .financial-bar-value {
     -fx-text-fill: #d3ddf4;
-    -fx-font-size: 9px;
+    -fx-font-size: 8px;
     -fx-font-weight: 700;
+    -fx-max-width: 38;
 }
 
 .financial-empty-state {

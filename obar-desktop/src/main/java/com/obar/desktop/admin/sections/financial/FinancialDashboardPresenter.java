@@ -180,7 +180,7 @@ public final class FinancialDashboardPresenter {
             bar.setPrefWidth(barWidth);
             bar.setMinWidth(barWidth);
             bar.setMaxWidth(barWidth);
-            bar.setPrefHeight(6 + (ratio * 88));
+            bar.setPrefHeight(4 + (ratio * 68));
 
             Label bucketLabel = new Label(bucket.label());
             bucketLabel.getStyleClass().add("financial-bar-label");

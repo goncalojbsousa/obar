@@ -238,9 +238,6 @@ public class FinancialController implements AdminSectionController {
         viewModel.getAllPayments()
                 .addListener((javafx.collections.ListChangeListener<AdminPaymentByTripDTO>) change -> {
                     refreshUiState();
-                    if (paymentsTable.getSelectionModel().getSelectedItem() == null) {
-                        detailBinder.bind(PaymentDetailMapper.fromOverview(viewModel));
-                    }
                 });
         viewModel.activePaymentStatusFilterProperty().addListener((obs, oldValue, newValue) -> refreshUiState());
         viewModel.activePeriodProperty().addListener((obs, oldValue, newValue) -> refreshUiState());
@@ -254,7 +251,7 @@ public class FinancialController implements AdminSectionController {
         if (viewModel != null) {
             viewModel.reload();
             refreshUiState();
-            detailBinder.bind(PaymentDetailMapper.fromOverview(viewModel));
+            detailBinder.setVisible(false);
         }
     }
 
@@ -378,14 +375,14 @@ public class FinancialController implements AdminSectionController {
     @FXML
     public void handleCloseDetailPanel() {
         paymentsTable.getSelectionModel().clearSelection();
-        detailBinder.bind(PaymentDetailMapper.fromOverview(viewModel));
+        detailBinder.setVisible(false);
     }
 
     // - private helpers -
 
     private void onPaymentSelectionChanged(AdminPaymentByTripDTO payment) {
         if (payment == null) {
-            detailBinder.bind(PaymentDetailMapper.fromOverview(viewModel));
+            detailBinder.setVisible(false);
             return;
         }
         detailBinder.bind(PaymentDetailMapper.fromPayment(payment, viewModel));

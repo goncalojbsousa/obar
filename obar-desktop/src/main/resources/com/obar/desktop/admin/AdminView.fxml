@@ -79,18 +79,12 @@
         </left>
 
         <center>
-            <VBox spacing="14.0" styleClass="admin-content">
-                <padding>
-                    <Insets top="0.0" right="0.0" bottom="0.0" left="0.0" />
-                </padding>
-
-                <StackPane fx:id="contentArea" VBox.vgrow="ALWAYS">
-                    <fx:include fx:id="driversSection" source="sections/drivers/drivers-section.fxml" />
-                    <fx:include fx:id="clientsSection" source="sections/clients/clients-section.fxml" />
-                    <fx:include fx:id="tripsSection" source="sections/trips/trips-section.fxml" />
-                    <fx:include fx:id="financialSection" source="sections/financial/financial-section.fxml" />
-                </StackPane>
-            </VBox>
+            <StackPane fx:id="contentArea">
+                <fx:include fx:id="driversSection" source="sections/drivers/drivers-section.fxml" />
+                <fx:include fx:id="clientsSection" source="sections/clients/clients-section.fxml" />
+                <fx:include fx:id="tripsSection" source="sections/trips/trips-section.fxml" />
+                <fx:include fx:id="financialSection" source="sections/financial/financial-section.fxml" />
+            </StackPane>
         </center>
 
     </BorderPane>

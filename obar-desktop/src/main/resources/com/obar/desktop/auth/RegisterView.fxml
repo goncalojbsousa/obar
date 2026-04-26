@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.Separator?>
@@ -20,8 +21,10 @@
             stylesheets="@../styles/RegisterView.css"
             styleClass="register-root">
     <center>
-        <HBox>
-            <AnchorPane HBox.hgrow="ALWAYS" styleClass="register-hero">
+        <StackPane>
+            <children>
+                <HBox>
+                    <AnchorPane HBox.hgrow="ALWAYS" styleClass="register-hero">
                 <children>
                     <Region layoutX="42.0" layoutY="22.0" styleClass="register-glow-top" />
                     <Region layoutX="385.0" layoutY="468.0" styleClass="register-glow-bottom" />
@@ -75,11 +78,11 @@
                         </children>
                     </HBox>
                 </children>
-            </AnchorPane>
+                    </AnchorPane>
 
-            <StackPane HBox.hgrow="ALWAYS" alignment="CENTER" styleClass="register-panel">
-                <children>
-                    <VBox spacing="16.0" styleClass="register-card">
+                    <StackPane HBox.hgrow="ALWAYS" alignment="CENTER" styleClass="register-panel">
+                        <children>
+                            <VBox spacing="12.0" styleClass="register-card">
                         <children>
                             <HBox spacing="0.0" styleClass="register-segment">
                                 <children>
@@ -108,6 +111,14 @@
                                 <children>
                                     <Label text="EMAIL" styleClass="field-label" />
                                     <TextField fx:id="emailField" promptText="o.teu@email.com" />
+                                </children>
+                            </VBox>
+
+                            <VBox spacing="8.0">
+                                <children>
+                                    <Label text="TIPO DE CONTA" styleClass="field-label" />
+                                    <ComboBox fx:id="accountTypeComboBox" promptText="Seleciona o tipo"
+                                              maxWidth="1.7976931348623157E308" />
                                 </children>
                             </VBox>
 
@@ -145,11 +156,43 @@
                                    styleClass="register-message" />
                         </children>
                         <padding>
-                            <Insets top="28.0" right="28.0" bottom="28.0" left="28.0" />
+                            <Insets top="22.0" right="24.0" bottom="20.0" left="24.0" />
                         </padding>
                     </VBox>
-                </children>
-            </StackPane>
-        </HBox>
+                        </children>
+                    </StackPane>
+                </HBox>
+
+                <StackPane fx:id="driverPendingOverlay" visible="false" managed="false" alignment="CENTER" styleClass="pending-overlay">
+                    <children>
+                        <VBox spacing="8.0" styleClass="pending-card"
+                              prefWidth="300.0" maxWidth="300.0"
+                              prefHeight="198.0" maxHeight="198.0"
+                              alignment="TOP_LEFT"
+                              StackPane.alignment="CENTER">
+                            <children>
+                                <Label text="⏳" styleClass="pending-emoji" />
+                                <Label text="Registo enviado" styleClass="pending-title" />
+                                <Label fx:id="driverPendingMessageLabel"
+                                       text="A tua conta de motorista foi criada e está pendente de validação por um admin."
+                                       styleClass="pending-text" wrapText="true" maxWidth="256.0" />
+                                <HBox alignment="CENTER" spacing="10.0">
+                                    <VBox.margin>
+                                        <Insets top="4.0" />
+                                    </VBox.margin>
+                                    <children>
+                                        <Button text="Voltar ao login" onAction="#handlePendingGoToLogin"
+                                                styleClass="pending-button-primary" />
+                                    </children>
+                                </HBox>
+                            </children>
+                            <padding>
+                                <Insets top="14.0" right="14.0" bottom="14.0" left="14.0" />
+                            </padding>
+                        </VBox>
+                    </children>
+                </StackPane>
+            </children>
+        </StackPane>
     </center>
 </BorderPane>

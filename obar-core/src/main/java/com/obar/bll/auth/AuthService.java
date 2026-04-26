@@ -66,7 +66,7 @@ public class AuthService {
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordService.hash(plainPassword));
         user.setType(type);
-        user.setStatus(AccountStatus.ACTIVE);
+        user.setStatus(type == UserType.DRIVER ? AccountStatus.PENDING : AccountStatus.ACTIVE);
 
         User saved = userRepository.save(user);
         return AuthenticatedUserDto.from(saved);

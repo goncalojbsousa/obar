@@ -128,6 +128,29 @@ public final class DetailPanelBinder {
         this.extra3ValueLabel = extra3ValueLabel;
     }
 
+    /**
+     * Populates all labels WITHOUT changing panel visibility.
+     * Use this for overview/summary binds that should not open the panel.
+     */
+    public void bindSilent(DetailViewModel vm) {
+        set(initialsLabel, vm.initials());
+        set(titleLabel,    vm.title());
+        set(nameLabel,     vm.name());
+        set(emailLabel,    vm.email());
+        set(statusLabel,   vm.status());
+        set(roleLabel,     vm.role());
+        set(phoneLabel,    vm.phone());
+        set(createdLabel,  vm.created());
+        set(card1TitleLabel, vm.card1Title()); set(card1ValueLabel, vm.card1Value());
+        set(card2TitleLabel, vm.card2Title()); set(card2ValueLabel, vm.card2Value());
+        set(card3TitleLabel, vm.card3Title()); set(card3ValueLabel, vm.card3Value());
+        set(card4TitleLabel, vm.card4Title()); set(card4ValueLabel, vm.card4Value());
+        set(refTitleLabel,   vm.refTitle());   set(refValueLabel,   vm.refValue());
+        set(extra1TitleLabel, vm.extra1Title()); set(extra1ValueLabel, vm.extra1Value());
+        set(extra2TitleLabel, vm.extra2Title()); set(extra2ValueLabel, vm.extra2Value());
+        set(extra3TitleLabel, vm.extra3Title()); set(extra3ValueLabel, vm.extra3Value());
+    }
+
     /** Populates all labels and makes the panel visible. */
     public void bind(DetailViewModel vm) {
         set(initialsLabel, vm.initials());

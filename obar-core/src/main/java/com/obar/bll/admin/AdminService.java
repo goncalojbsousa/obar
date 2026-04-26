@@ -127,6 +127,12 @@ public class AdminService {
         this.taxRateRepository = taxRateRepository;
     }
 
+    public List<AdminUserDTO> listPendingDrivers() {
+        return userRepository.findPendingDrivers().stream()
+                .map(AdminUserDTO::from)
+                .toList();
+    }
+
     public List<AdminUserDTO> listUsersByType(UserType type) {
         if (type == null) {
             throw new IllegalArgumentException("User type is required.");
@@ -391,6 +397,54 @@ public class AdminService {
         }
 
         return userRepository.update(user);
+    }
+
+    /**
+     * Approves a pending driver account, setting status to ACTIVE.
+     *
+     * @param userId     id of the driver to approve
+     * @param approvalNote optional internal note (may be null)
+     * @throws IllegalArgumentException when user not found, not a driver, or not in PENDING status
+     */
+    public void approveDriver(Integer userId, String approvalNote) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Registo invalido.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Motorista nao encontrado."));
+        if (user.getType() != UserType.DRIVER) {
+            throw new IllegalArgumentException("O utilizador nao e um motorista.");
+        }
+        if (user.getStatus() != AccountStatus.PENDING) {
+            throw new IllegalArgumentException("Apenas contas pendentes podem ser aprovadas.");
+        }
+        user.setStatus(AccountStatus.ACTIVE);
+        user.setApprovalNote(approvalNote != null ? approvalNote.trim() : null);
+        userRepository.update(user);
+    }
+
+    /**
+     * Rejects a pending driver account, setting status to BLOCKED with an optional note.
+     *
+     * @param userId     id of the driver to reject
+     * @param rejectionNote optional reason shown internally (may be null)
+     * @throws IllegalArgumentException when user not found, not a driver, or not in PENDING status
+     */
+    public void rejectDriver(Integer userId, String rejectionNote) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Registo invalido.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Motorista nao encontrado."));
+        if (user.getType() != UserType.DRIVER) {
+            throw new IllegalArgumentException("O utilizador nao e um motorista.");
+        }
+        if (user.getStatus() != AccountStatus.PENDING) {
+            throw new IllegalArgumentException("Apenas contas pendentes podem ser rejeitadas.");
+        }
+        user.setStatus(AccountStatus.BLOCKED);
+        user.setApprovalNote(rejectionNote != null ? rejectionNote.trim() : null);
+        userRepository.update(user);
     }
 
     /**

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.obar.desktop.admin.shared.AdminModalIncludeController"
+           fx:id="modalOverlay" styleClass="modal-overlay" visible="false" managed="false">
+    <VBox spacing="12.0" styleClass="modal-card" maxHeight="-Infinity">
+        <Label fx:id="modalTitleLabel" text="" styleClass="modal-title" />
+        <Label fx:id="modalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
+
+        <VBox fx:id="modalUsersFormSection" spacing="10.0" visible="false" managed="false">
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Nome" styleClass="meta-title" />
+                    <TextField fx:id="modalNameField" promptText="Nome" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Email" styleClass="meta-title" />
+                    <TextField fx:id="modalEmailField" promptText="Email" />
+                </VBox>
+            </HBox>
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Telefone" styleClass="meta-title" />
+                    <TextField fx:id="modalPhoneField" promptText="Telefone" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label fx:id="modalReferenceLabel" text="Referencia" styleClass="meta-title" />
+                    <TextField fx:id="modalReferenceField" promptText="Referencia" />
+                </VBox>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label text="Estado" styleClass="meta-title" />
+                <ComboBox fx:id="modalStatusCombo" maxWidth="1.7976931348623157E308" />
+            </VBox>
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Password" styleClass="meta-title" />
+                    <PasswordField fx:id="modalPasswordField" promptText="Password" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Confirmar password" styleClass="meta-title" />
+                    <PasswordField fx:id="modalConfirmPasswordField" promptText="Confirmar" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <VBox fx:id="modalTripsFormSection" spacing="10.0" visible="false" managed="false">
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Cliente ID" styleClass="meta-title" />
+                    <TextField fx:id="modalTripClientIdField" promptText="ID do cliente" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Motorista ID (opcional)" styleClass="meta-title" />
+                    <TextField fx:id="modalTripDriverIdField" promptText="ID do motorista" />
+                </VBox>
+            </HBox>
+
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Tipo" styleClass="meta-title" />
+                    <ComboBox fx:id="modalTripTypeCombo" maxWidth="1.7976931348623157E308" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Estado" styleClass="meta-title" />
+                    <ComboBox fx:id="modalTripStatusCombo" maxWidth="1.7976931348623157E308" />
+                </VBox>
+            </HBox>
+
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Origem" styleClass="meta-title" />
+                    <TextField fx:id="modalTripOriginField" promptText="Morada de origem" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Destino" styleClass="meta-title" />
+                    <TextField fx:id="modalTripDestinationField" promptText="Morada de destino" />
+                </VBox>
+            </HBox>
+
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Preco estimado" styleClass="meta-title" />
+                    <TextField fx:id="modalTripEstimatedPriceField" promptText="ex: 12.50" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Preco final" styleClass="meta-title" />
+                    <TextField fx:id="modalTripFinalPriceField" promptText="ex: 13.80" />
+                </VBox>
+            </HBox>
+
+            <VBox spacing="4.0">
+                <Label text="Notas" styleClass="meta-title" />
+                <TextField fx:id="modalTripNotesField" promptText="Notas opcionais" />
+            </VBox>
+        </VBox>
+
+        <VBox fx:id="modalTaxRateFormSection" spacing="10.0" visible="false" managed="false">
+            <VBox spacing="4.0">
+                <Label text="Taxa de IVA" styleClass="meta-title" />
+                <ComboBox fx:id="modalTaxRateCombo" maxWidth="1.7976931348623157E308" />
+            </VBox>
+            <HBox spacing="8.0">
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Nome" styleClass="meta-title" />
+                    <TextField fx:id="modalTaxRateNameField" promptText="Nome da taxa" />
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Valor (0-1)" styleClass="meta-title" />
+                    <TextField fx:id="modalTaxRateValueField" promptText="ex: 0.2300" />
+                </VBox>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label text="Descricao" styleClass="meta-title" />
+                <TextField fx:id="modalTaxRateDescriptionField" promptText="Descricao opcional" />
+            </VBox>
+            <CheckBox fx:id="modalTaxRateActiveCheck" text="Taxa ativa" selected="true" />
+        </VBox>
+
+        <VBox fx:id="modalDeleteSection" spacing="8.0" visible="false" managed="false">
+            <Label fx:id="modalDeleteMessageLabel" text="" styleClass="meta-value" wrapText="true" />
+        </VBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="8.0">
+            <Button fx:id="modalCancelButton" text="Cancelar" styleClass="flat" />
+            <Button fx:id="modalSaveButton" text="Guardar" styleClass="accent" />
+            <Button fx:id="modalDeleteConfirmButton" text="Confirmar" styleClass="danger" visible="false" managed="false" />
+        </HBox>
+    </VBox>
+</StackPane>

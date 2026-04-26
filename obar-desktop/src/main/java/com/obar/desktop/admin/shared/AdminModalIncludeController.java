@@ -1,8 +1,6 @@
 package com.obar.desktop.admin.shared;
 
 import javafx.fxml.FXML;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;

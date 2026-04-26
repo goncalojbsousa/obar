@@ -29,7 +29,8 @@ import java.util.Map;
 
 final class FinancialExportService {
 
-    private static final DateTimeFormatter EXPORT_READABLE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-PT"));
+    private static final DateTimeFormatter EXPORT_READABLE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     void exportCsv(FinancialExportSnapshot snapshot, Path exportPath) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(exportPath, StandardCharsets.UTF_8)) {
@@ -41,9 +42,11 @@ final class FinancialExportService {
             writer.newLine();
 
             AdminFinancialOverviewDTO overview = snapshot.overview();
-            writer.write(csvLine("RESUMO", "Receita total", AdminFormatUtils.formatCurrency(overview.getTotalIncome())));
+            writer.write(
+                    csvLine("RESUMO", "Receita total", AdminFormatUtils.formatCurrency(overview.getTotalIncome())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Receita periodo", AdminFormatUtils.formatCurrency(overview.getPeriodIncome())));
+            writer.write(
+                    csvLine("RESUMO", "Receita periodo", AdminFormatUtils.formatCurrency(overview.getPeriodIncome())));
             writer.newLine();
             writer.write(csvLine("RESUMO", "Pagamentos totais", String.valueOf(overview.getTotalPayments())));
             writer.newLine();
@@ -60,7 +63,8 @@ final class FinancialExportService {
             writer.write("Estado,Total");
             writer.newLine();
             for (var status : overview.getPaymentStatuses()) {
-                writer.write(csvLine(AdminFormatUtils.prettyPaymentStatus(status.getStatus()), String.valueOf(status.getTotal())));
+                writer.write(csvLine(AdminFormatUtils.prettyPaymentStatus(status.getStatus()),
+                        String.valueOf(status.getTotal())));
                 writer.newLine();
             }
 
@@ -72,7 +76,8 @@ final class FinancialExportService {
                     .sorted((left, right) -> Long.compare(right.getValue(), left.getValue()))
                     .toList()) {
                 double pct = paymentCount == 0 ? 0 : (method.getValue() * 100.0) / paymentCount;
-                writer.write(csvLine(AdminFormatUtils.prettyPaymentMethod(method.getKey()), String.valueOf(method.getValue()), AdminFormatUtils.formatPercent(pct)));
+                writer.write(csvLine(AdminFormatUtils.prettyPaymentMethod(method.getKey()),
+                        String.valueOf(method.getValue()), AdminFormatUtils.formatPercent(pct)));
                 writer.newLine();
             }
 
@@ -102,7 +107,8 @@ final class FinancialExportService {
                         payment.getAmount() == null ? "0.00" : payment.getAmount().toPlainString(),
                         AdminFormatUtils.fallback(payment.getCurrencyCode()),
                         AdminFormatUtils.prettyPaymentStatus(payment.getStatus()),
-                        payment.getPaymentDate() == null ? "-" : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()),
+                        payment.getPaymentDate() == null ? "-"
+                                : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()),
                         payment.getTaxRateApplied() == null ? "-" : payment.getTaxRateApplied().toPlainString()));
                 writer.newLine();
             }
@@ -172,7 +178,8 @@ final class FinancialExportService {
         Paragraph paymentsSectionTitle = new Paragraph("Pagamentos", sectionFont);
         paymentsSectionTitle.setSpacingAfter(8f);
         document.add(paymentsSectionTitle);
-        PdfPTable paymentsTablePdf = new PdfPTable(new float[] { 1.1f, 1.1f, 2.1f, 2.1f, 1.6f, 1.3f, 0.9f, 1.2f, 1.6f, 1.1f });
+        PdfPTable paymentsTablePdf = new PdfPTable(
+                new float[] { 1.1f, 1.1f, 2.1f, 2.1f, 1.6f, 1.3f, 0.9f, 1.2f, 1.6f, 1.1f });
         paymentsTablePdf.setWidthPercentage(100f);
         addPdfHeader(paymentsTablePdf, "Pagamento");
         addPdfHeader(paymentsTablePdf, "Viagem");
@@ -194,8 +201,10 @@ final class FinancialExportService {
             addPdfCell(paymentsTablePdf, payment.getAmount() == null ? "0.00" : payment.getAmount().toPlainString());
             addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.getCurrencyCode()));
             addPdfCell(paymentsTablePdf, AdminFormatUtils.prettyPaymentStatus(payment.getStatus()));
-            addPdfCell(paymentsTablePdf, payment.getPaymentDate() == null ? "-" : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()));
-            addPdfCell(paymentsTablePdf, payment.getTaxRateApplied() == null ? "-" : payment.getTaxRateApplied().toPlainString());
+            addPdfCell(paymentsTablePdf,
+                    payment.getPaymentDate() == null ? "-" : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()));
+            addPdfCell(paymentsTablePdf,
+                    payment.getTaxRateApplied() == null ? "-" : payment.getTaxRateApplied().toPlainString());
         }
         document.add(paymentsTablePdf);
 
@@ -230,7 +239,8 @@ final class FinancialExportService {
     }
 
     private void addPdfCell(PdfPTable table, String value) {
-        PdfPCell cell = new PdfPCell(new Phrase(value == null ? "-" : value, FontFactory.getFont(FontFactory.HELVETICA, 9)));
+        PdfPCell cell = new PdfPCell(
+                new Phrase(value == null ? "-" : value, FontFactory.getFont(FontFactory.HELVETICA, 9)));
         cell.setPadding(5f);
         table.addCell(cell);
     }

@@ -55,12 +55,16 @@
                     styleClass="sidebar-item" />
 
                 <Label text="SISTEMA" styleClass="sidebar-group-title" />
+                <Button fx:id="pendingDriversSectionButton" text="Aprovações"
+                    onAction="#handlePendingDriversSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
                 <Button text="Back to Dashboard" onAction="#handleBackToDashboard"
                     maxWidth="1.7976931348623157E308" styleClass="sidebar-item" />
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <VBox spacing="10.0" maxWidth="1.7976931348623157E308" styleClass="sidebar-user-card">
+                    <VBox spacing="10.0" maxWidth="1.7976931348623157E308" styleClass="sidebar-user-card"
+                        onMouseClicked="#handleLogout">
                     <children>
                         <HBox spacing="10.0" alignment="CENTER_LEFT">
                             <children>
@@ -71,6 +75,7 @@
                                         <Label fx:id="sidebarUserRoleLabel" text="Administrador" styleClass="sidebar-user-role" />
                                     </children>
                                 </VBox>
+                                <Label text="↪" styleClass="sidebar-logout-icon" />
                             </children>
                         </HBox>
                     </children>
@@ -81,6 +86,7 @@
         <center>
             <StackPane fx:id="contentArea">
                 <fx:include fx:id="driversSection" source="sections/drivers/drivers-section.fxml" />
+                <fx:include fx:id="pendingDriversSection" source="sections/drivers/pending-drivers-section.fxml" />
                 <fx:include fx:id="clientsSection" source="sections/clients/clients-section.fxml" />
                 <fx:include fx:id="tripsSection" source="sections/trips/trips-section.fxml" />
                 <fx:include fx:id="financialSection" source="sections/financial/financial-section.fxml" />

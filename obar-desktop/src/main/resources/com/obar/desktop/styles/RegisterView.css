@@ -98,9 +98,9 @@
     -fx-border-color: transparent;
     -fx-border-radius: 14;
     -fx-max-width: 460;
-    -fx-min-width: 390;
-    -fx-pref-width: 430;
-    -fx-translate-y: 34;
+    -fx-min-width: 372;
+    -fx-pref-width: 420;
+    -fx-translate-y: 12;
 }
 
 .register-segment {
@@ -132,13 +132,13 @@
 
 .register-title {
     -fx-text-fill: #eff2f8;
-    -fx-font-size: 36px;
+    -fx-font-size: 32px;
     -fx-font-weight: 700;
 }
 
 .register-subtitle {
     -fx-text-fill: #616a7e;
-    -fx-font-size: 16px;
+    -fx-font-size: 14px;
 }
 
 .field-label {
@@ -148,7 +148,8 @@
 }
 
 .register-card .text-field,
-.register-card .password-field {
+.register-card .password-field,
+.register-card .combo-box {
     -fx-background-color: #090c14;
     -fx-text-fill: #e5eaf7;
     -fx-prompt-text-fill: #515a6f;
@@ -156,7 +157,69 @@
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-font-size: 14px;
-    -fx-padding: 11 12;
+    -fx-padding: 10 12;
+}
+
+.pending-overlay {
+    -fx-background-color: rgba(7, 10, 16, 0.62);
+}
+
+.pending-card {
+    -fx-background-color: linear-gradient(to bottom right, #121a2b, #0d1424);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255, 113, 58, 0.55);
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 20, 0.2, 0, 6);
+}
+
+.pending-emoji {
+    -fx-font-size: 20px;
+    -fx-text-fill: #ffd3be;
+}
+
+.pending-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #f4f7ff;
+}
+
+.pending-text {
+    -fx-font-size: 12px;
+    -fx-line-spacing: 1px;
+    -fx-text-fill: #aeb8cc;
+}
+
+.pending-button-primary {
+    -fx-background-color: linear-gradient(to right, #ff6a2f, #ff5317);
+    -fx-text-fill: #fff6f1;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 9;
+    -fx-padding: 7 12;
+}
+
+.pending-button-primary:hover {
+    -fx-background-color: linear-gradient(to right, #ff7a43, #ff6332);
+}
+
+.register-card .combo-box .list-cell {
+    -fx-text-fill: #e5eaf7;
+    -fx-background-color: transparent;
+}
+
+.register-card .combo-box-popup .list-view {
+    -fx-background-color: #0f1320;
+    -fx-border-color: #232a3c;
+}
+
+.register-card .combo-box-popup .list-cell {
+    -fx-background-color: #0f1320;
+    -fx-text-fill: #e5eaf7;
+}
+
+.register-card .combo-box-popup .list-cell:hover,
+.register-card .combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #1a2236;
 }
 
 .register-submit {

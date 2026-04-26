@@ -76,4 +76,7 @@ public class User {
 
     @Column(name = "total_trips")
     private Integer totalTrips = 0;
+
+    @Column(name = "approval_note")
+    private String approvalNote;
 }

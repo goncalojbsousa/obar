@@ -115,6 +115,22 @@
     -fx-font-size: 10px;
 }
 
+.sidebar-user-card:hover {
+    -fx-background-color: #1a1a1e;
+    -fx-border-color: #3a3a3e;
+    -fx-cursor: hand;
+}
+
+.sidebar-logout-icon {
+    -fx-text-fill: #55607a;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.sidebar-user-card:hover .sidebar-logout-icon {
+    -fx-text-fill: #ff7a4b;
+}
+
 .admin-content {
     -fx-background-color: #09090B;
 }
@@ -705,5 +721,72 @@
     -fx-font-size: 22px;
     -fx-font-weight: 700;
     -fx-padding: 4 0 0 2;
+}
+
+/* ─── Botão de aprovação ──────────────────────────────────── */
+.approve-button {
+    -fx-background-color: rgba(33, 170, 93, 0.22);
+    -fx-text-fill: #3fe68a;
+    -fx-border-color: rgba(33, 170, 93, 0.5);
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-font-weight: 700;
+}
+
+.approve-button:hover {
+    -fx-background-color: rgba(33, 170, 93, 0.34);
+}
+
+/* ─── Sidebar — botão Aprovações ─────────────────────────── */
+.pending-sidebar-item {
+    -fx-background-color: rgba(255, 186, 0, 0.08);
+    -fx-text-fill: #d4a800;
+    -fx-font-weight: 600;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-border-color: rgba(255, 186, 0, 0.22);
+    -fx-border-radius: 10;
+}
+
+.pending-sidebar-item:hover,
+.pending-sidebar-item-active:hover {
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+}
+
+.pending-sidebar-item-active {
+    -fx-background-color: rgba(255, 186, 0, 0.24);
+    -fx-text-fill: #ffc107;
+    -fx-font-weight: 700;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-border-color: rgba(255, 186, 0, 0.5);
+    -fx-border-radius: 10;
+}
+
+/* ─── Banner de aviso na secção de pendentes ─────────────── */
+.pending-banner {
+    -fx-background-color: rgba(255, 186, 0, 0.09);
+    -fx-border-color: rgba(255, 186, 0, 0.30);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.pending-banner-icon {
+    -fx-text-fill: #f5c500;
+    -fx-font-size: 16px;
+}
+
+.pending-banner-text {
+    -fx-text-fill: #c9a600;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+/* ─── Pill de estado pendente no detalhe ─────────────────── */
+.pending-pill {
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+    -fx-text-fill: #ffc107;
 }
 

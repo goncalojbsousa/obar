@@ -55,6 +55,7 @@ public class PendingDriversController implements AdminSectionController {
     @FXML private Label detailPhoneLabel;
     @FXML private Label detailLicenseLabel;
     @FXML private Label detailRegisteredLabel;
+    @FXML private javafx.scene.control.TextArea noteField;
     @FXML private Button detailApproveButton;
     @FXML private Button detailRejectButton;
 
@@ -140,14 +141,16 @@ public class PendingDriversController implements AdminSectionController {
 
     private void doApprove(AdminUserDTO driver) {
         if (approvalPresenter == null) { showFeedback("Serviço não disponível.", true); return; }
-        DriverApprovalPresenter.PersistResult result = approvalPresenter.approve(driver, null);
+        String note = noteField != null ? noteField.getText() : null;
+        DriverApprovalPresenter.PersistResult result = approvalPresenter.approve(driver, note);
         showFeedback(result.message(), !result.success());
         if (result.success()) { pendingTable.getSelectionModel().clearSelection(); reload(); }
     }
 
     private void doReject(AdminUserDTO driver) {
         if (approvalPresenter == null) { showFeedback("Serviço não disponível.", true); return; }
-        DriverApprovalPresenter.PersistResult result = approvalPresenter.reject(driver, null);
+        String note = noteField != null ? noteField.getText() : null;
+        DriverApprovalPresenter.PersistResult result = approvalPresenter.reject(driver, note);
         showFeedback(result.message(), !result.success());
         if (result.success()) { pendingTable.getSelectionModel().clearSelection(); reload(); }
     }
@@ -217,6 +220,9 @@ public class PendingDriversController implements AdminSectionController {
         if (detailPanel != null) {
             detailPanel.setVisible(visible);
             detailPanel.setManaged(visible);
+        }
+        if (!visible && noteField != null) {
+            noteField.clear();
         }
     }
 

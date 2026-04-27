@@ -158,6 +158,16 @@
     -fx-background-radius: 8;
     -fx-font-size: 14px;
     -fx-padding: 10 12;
+    -fx-pref-height: 42;
+    -fx-min-height: 42;
+}
+
+.register-card .combo-box .combo-box-base {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #e5eaf7;
+    -fx-padding: 0;
+    -fx-pref-height: 42;
 }
 
 .pending-overlay {
@@ -202,9 +212,19 @@
     -fx-background-color: linear-gradient(to right, #ff7a43, #ff6332);
 }
 
-.register-card .combo-box .list-cell {
+.register-card .combo-box .list-cell,
+.register-card .combo-box .button-cell {
     -fx-text-fill: #e5eaf7;
     -fx-background-color: transparent;
+    -fx-padding: 0 4;
+}
+
+.register-card .combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.register-card .combo-box .arrow {
+    -fx-background-color: #7a849a;
 }
 
 .register-card .combo-box-popup .list-view {

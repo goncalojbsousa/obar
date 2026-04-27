@@ -179,7 +179,7 @@
     -fx-background-radius: 14;
     -fx-border-color: rgba(255, 113, 58, 0.55);
     -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 20, 0.2, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 32, 0.3, 0, 8);
 }
 
 .pending-emoji {

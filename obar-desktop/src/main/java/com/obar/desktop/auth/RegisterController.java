@@ -108,7 +108,7 @@ public class RegisterController {
             }
 
             SessionManager.login(user);
-            NavigationManager.navigateToDashboard();
+            NavigationManager.navigateToLogin();
 
         } catch (IllegalArgumentException | AuthenticationException e) {
             showMessage(e.getMessage());

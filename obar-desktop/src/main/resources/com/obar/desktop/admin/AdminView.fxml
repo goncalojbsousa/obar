@@ -58,8 +58,6 @@
                 <Button fx:id="pendingDriversSectionButton" text="Aprovações"
                     onAction="#handlePendingDriversSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
-                <Button text="Back to Dashboard" onAction="#handleBackToDashboard"
-                    maxWidth="1.7976931348623157E308" styleClass="sidebar-item" />
 
                 <Region VBox.vgrow="ALWAYS" />
 

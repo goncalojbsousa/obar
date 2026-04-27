@@ -4,7 +4,6 @@ import com.obar.bll.admin.AdminService;
 import com.obar.bll.auth.AuthService;
 import com.obar.desktop.admin.AdminController;
 import com.obar.desktop.auth.ChangePasswordController;
-import com.obar.desktop.auth.DashboardController;
 import com.obar.desktop.auth.LoginController;
 import com.obar.desktop.auth.RegisterController;
 import javafx.fxml.FXMLLoader;
@@ -55,10 +54,6 @@ public final class NavigationManager {
         setScene("/com/obar/desktop/auth/LoginView.fxml");
     }
 
-    public static void navigateToDashboard() {
-        setScene("/com/obar/desktop/auth/DashboardView.fxml");
-    }
-
     public static void navigateToChangePassword() {
         setScene("/com/obar/desktop/auth/ChangePasswordView.fxml");
     }
@@ -80,9 +75,6 @@ public final class NavigationManager {
         loader.setControllerFactory(type -> {
             if (type == LoginController.class) {
                 return new LoginController(AUTH_SERVICE);
-            }
-            if (type == DashboardController.class) {
-                return new DashboardController(AUTH_SERVICE);
             }
             if (type == ChangePasswordController.class) {
                 return new ChangePasswordController(AUTH_SERVICE);

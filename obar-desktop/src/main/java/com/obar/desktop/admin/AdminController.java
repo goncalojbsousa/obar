@@ -72,7 +72,7 @@ public class AdminController {
     @FXML
     public void initialize() {
         if (!SessionManager.hasRole(UserType.ADMIN)) {
-            NavigationManager.navigateToDashboard();
+            NavigationManager.navigateToLogin();
             return;
         }
 
@@ -89,7 +89,6 @@ public class AdminController {
     @FXML public void handleViagensSection()       { switchSection(AdminSection.TRIPS); }
     @FXML public void handleFinanceiraSection()    { switchSection(AdminSection.FINANCIAL); }
 
-    @FXML public void handleBackToDashboard() { NavigationManager.navigateToDashboard(); }
     @FXML public void handleLogout()          { SessionManager.logout(); NavigationManager.navigateToLogin(); }
 
     @FXML public void handleModalCancel()        { /* delegado */ }

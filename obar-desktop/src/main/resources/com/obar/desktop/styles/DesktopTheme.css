@@ -417,31 +417,52 @@
 
 .detail-action,
 .detail-action-danger {
-    -fx-pref-height: 34;
+    -fx-pref-height: 38;
     -fx-font-size: 12px;
     -fx-font-weight: 700;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
 }
 
 .detail-action {
-    -fx-background-color: #151922;
+    -fx-background-color: #16191f;
     -fx-border-color: #2a2f3e;
-    -fx-text-fill: #dbe5f7;
+    -fx-text-fill: #c8d4ec;
 }
 
 .detail-action:hover {
-    -fx-background-color: #1a1f2c;
+    -fx-background-color: rgba(255, 106, 47, 0.10);
+    -fx-border-color: rgba(255, 106, 47, 0.35);
+    -fx-text-fill: #ff9565;
 }
 
 .detail-action-danger {
-    -fx-background-color: rgba(141, 30, 30, 0.26);
-    -fx-border-color: #5b2525;
+    -fx-background-color: rgba(141, 30, 30, 0.22);
+    -fx-border-color: rgba(184, 50, 50, 0.40);
     -fx-text-fill: #ff8f8f;
 }
 
 .detail-action-danger:hover {
-    -fx-background-color: rgba(166, 42, 42, 0.32);
+    -fx-background-color: rgba(184, 42, 42, 0.36);
+    -fx-border-color: rgba(220, 60, 60, 0.55);
+    -fx-text-fill: #ffaaaa;
+}
+
+/* Approve button inside detail panel — slightly taller */
+.detail-actions .approve-button {
+    -fx-pref-height: 38;
+    -fx-font-size: 12px;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-background-color: rgba(33, 170, 93, 0.20);
+    -fx-border-color: rgba(33, 170, 93, 0.45);
+    -fx-text-fill: #3fe68a;
+}
+
+.detail-actions .approve-button:hover {
+    -fx-background-color: rgba(33, 170, 93, 0.32);
+    -fx-border-color: rgba(33, 170, 93, 0.65);
 }
 
 .feedback-success {
@@ -788,5 +809,19 @@
 .pending-pill {
     -fx-background-color: rgba(255, 186, 0, 0.20);
     -fx-text-fill: #ffc107;
+}
+
+.note-field {
+    -fx-background-color: #18181b;
+    -fx-border-color: #2a2a2e;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1e0;
+    -fx-prompt-text-fill: #45505e;
+    -fx-font-size: 12px;
+}
+
+.note-field:focused {
+    -fx-border-color: #e8642a;
 }
 

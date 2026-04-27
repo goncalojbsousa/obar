@@ -44,8 +44,18 @@ public class AuthService {
      *                                 already registered
      */
     public AuthenticatedUserDto register(String name, String email, String plainPassword, UserType type) {
-        String safeName = name == null ? "" : name.trim();
+        return register(name, email, plainPassword, type, null, null);
+    }
+
+    /**
+     * Registers a new user with phone and reference (NIF or license number).
+     */
+    public AuthenticatedUserDto register(String name, String email, String plainPassword,
+                                         UserType type, String phone, String reference) {
+        String safeName  = name  == null ? "" : name.trim();
         String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        String safePhone = phone == null ? null : phone.trim();
+        String safeRef   = reference == null ? null : reference.trim();
 
         if (safeName.isBlank()) {
             throw new AuthenticationException("Name must not be blank.");
@@ -66,7 +76,13 @@ public class AuthService {
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordService.hash(plainPassword));
         user.setType(type);
+        user.setPhone(safePhone != null && !safePhone.isBlank() ? safePhone : null);
         user.setStatus(type == UserType.DRIVER ? AccountStatus.PENDING : AccountStatus.ACTIVE);
+        if (type == UserType.DRIVER) {
+            user.setLicenseNumber(safeRef != null && !safeRef.isBlank() ? safeRef : null);
+        } else {
+            user.setTaxNumber(safeRef != null && !safeRef.isBlank() ? safeRef : null);
+        }
 
         User saved = userRepository.save(user);
         return AuthenticatedUserDto.from(saved);

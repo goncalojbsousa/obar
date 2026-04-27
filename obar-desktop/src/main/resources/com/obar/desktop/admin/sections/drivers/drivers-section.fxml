@@ -59,7 +59,7 @@
                 <Label fx:id="feedbackLabel" text="Ready." styleClass="feedback-success" />
             </VBox>
 
-            <VBox fx:id="detailPanel" spacing="12.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+            <VBox fx:id="detailPanel" spacing="6.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
                 <HBox.margin>
                     <Insets top="-24.0" right="-26.0" bottom="-24.0" left="0.0" />
                 </HBox.margin>
@@ -103,10 +103,6 @@
                 <Label fx:id="detailCreatedValueLabel" text="-" styleClass="meta-value" />
                 <Label fx:id="detailExtraOneTitleLabel" text="Nota de aprovacao" styleClass="meta-title" />
                 <Label fx:id="detailExtraOneValueLabel" text="-" styleClass="meta-value" />
-                <Label fx:id="detailExtraTwoTitleLabel" text="" styleClass="meta-title" />
-                <Label fx:id="detailExtraTwoValueLabel" text="" styleClass="meta-value" />
-                <Label fx:id="detailExtraThreeTitleLabel" text="" styleClass="meta-title" />
-                <Label fx:id="detailExtraThreeValueLabel" text="" styleClass="meta-value" />
                 <VBox spacing="8.0" styleClass="detail-actions">
                     <Button text="Editar dados" onAction="#handleEditUser" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
                     <Button fx:id="detailApproveButton" text="✓ Aprovar motorista" onAction="#handleApproveDriver" styleClass="approve-button" maxWidth="1.7976931348623157E308" />

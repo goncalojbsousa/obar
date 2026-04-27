@@ -15,35 +15,23 @@ import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
 
 /**
- * JavaFX controller for the desktop registration screen
+ * JavaFX controller for the desktop registration screen.
  */
 public class RegisterController {
 
     private final AuthService authService;
 
-    @FXML
-    private TextField nameField;
-
-    @FXML
-    private TextField emailField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private PasswordField confirmPasswordField;
-
-    @FXML
-    private ComboBox<UserType> accountTypeComboBox;
-
-    @FXML
-    private Label messageLabel;
-
-    @FXML
-    private StackPane driverPendingOverlay;
-
-    @FXML
-    private Label driverPendingMessageLabel;
+    @FXML private TextField     nameField;
+    @FXML private TextField     emailField;
+    @FXML private TextField     phoneField;
+    @FXML private TextField     referenceField;
+    @FXML private Label         referenceLabel;
+    @FXML private PasswordField passwordField;
+    @FXML private PasswordField confirmPasswordField;
+    @FXML private ComboBox<UserType> accountTypeComboBox;
+    @FXML private Label         messageLabel;
+    @FXML private StackPane     driverPendingOverlay;
+    @FXML private Label         driverPendingMessageLabel;
 
     public RegisterController(AuthService authService) {
         if (authService == null) {
@@ -58,21 +46,19 @@ public class RegisterController {
         accountTypeComboBox.setValue(UserType.CLIENT);
         accountTypeComboBox.setConverter(new StringConverter<>() {
             @Override
-            public String toString(UserType userType) {
-                if (userType == null) {
-                    return "";
-                }
-                return userType == UserType.DRIVER ? "Motorista" : "Cliente";
+            public String toString(UserType type) {
+                if (type == null) return "";
+                return type == UserType.DRIVER ? "Motorista" : "Cliente";
             }
 
             @Override
             public UserType fromString(String value) {
-                if (value == null) {
-                    return UserType.CLIENT;
-                }
+                if (value == null) return UserType.CLIENT;
                 return "Motorista".equalsIgnoreCase(value.trim()) ? UserType.DRIVER : UserType.CLIENT;
             }
         });
+
+        updateReferenceLabel(UserType.CLIENT);
 
         if (driverPendingOverlay != null) {
             driverPendingOverlay.setVisible(false);
@@ -81,21 +67,28 @@ public class RegisterController {
     }
 
     @FXML
+    public void handleAccountTypeChanged() {
+        updateReferenceLabel(accountTypeComboBox.getValue());
+    }
+
+    @FXML
     public void handleRegister() {
         hideMessage();
 
-        String name = safe(nameField.getText());
-        String email = safe(emailField.getText());
-        String password = passwordField.getText();
-        String confirmPassword = confirmPasswordField.getText();
+        String name      = safe(nameField.getText());
+        String email     = safe(emailField.getText());
+        String phone     = safe(phoneField.getText());
+        String reference = safe(referenceField.getText());
+        String password  = passwordField.getText();
+        String confirm   = confirmPasswordField.getText();
 
         if (name.isBlank() || email.isBlank() || password == null || password.isBlank()) {
-            showMessage("Name, email and password are required.");
+            showMessage("Nome, email e palavra-passe são obrigatórios.");
             return;
         }
 
-        if (!password.equals(confirmPassword)) {
-            showMessage("Password and confirmation do not match.");
+        if (!password.equals(confirm)) {
+            showMessage("As palavras-passe não coincidem.");
             return;
         }
 
@@ -104,15 +97,21 @@ public class RegisterController {
                 : accountTypeComboBox.getValue();
 
         try {
-            AuthenticatedUserDto authenticatedUser = authService.register(name, email, password, selectedType);
+            AuthenticatedUserDto user = authService.register(
+                    name, email, password, selectedType,
+                    phone.isBlank() ? null : phone,
+                    reference.isBlank() ? null : reference);
+
             if (selectedType == UserType.DRIVER) {
                 showDriverPendingOverlay(name);
                 return;
             }
-            SessionManager.login(authenticatedUser);
-            NavigationManager.navigateToDashboard();
-        } catch (IllegalArgumentException | AuthenticationException exception) {
-            showMessage(exception.getMessage());
+
+            SessionManager.login(user);
+            NavigationManager.navigateToLogin();
+
+        } catch (IllegalArgumentException | AuthenticationException e) {
+            showMessage(e.getMessage());
         }
     }
 
@@ -124,6 +123,15 @@ public class RegisterController {
     @FXML
     public void handleBackToLogin() {
         NavigationManager.navigateToLogin();
+    }
+
+    // ── Private ───────────────────────────────────────────────────────────────
+
+    private void updateReferenceLabel(UserType type) {
+        if (referenceLabel == null || referenceField == null) return;
+        boolean isDriver = type == UserType.DRIVER;
+        referenceLabel.setText(isDriver ? "Nº DE LICENÇA" : "NIF");
+        referenceField.setPromptText(isDriver ? "Ex: PT123456789" : "000000000");
     }
 
     private String safe(String value) {
@@ -143,12 +151,10 @@ public class RegisterController {
 
     private void showDriverPendingOverlay(String name) {
         if (driverPendingMessageLabel != null) {
-            String displayName = safe(name);
-            String prefix = displayName.isBlank() ? "A tua conta" : "A conta de " + displayName;
-            driverPendingMessageLabel.setText(prefix
-                    + " foi criada como motorista e está pendente de validação por um admin.");
+            String prefix = name.isBlank() ? "A tua conta" : "A conta de " + name;
+            driverPendingMessageLabel.setText(
+                    prefix + " foi criada como motorista e está pendente de validação por um admin.");
         }
-
         if (driverPendingOverlay != null) {
             driverPendingOverlay.setVisible(true);
             driverPendingOverlay.setManaged(true);

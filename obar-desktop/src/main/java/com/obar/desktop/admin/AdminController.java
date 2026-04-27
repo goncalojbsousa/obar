@@ -37,7 +37,7 @@ public class AdminController {
     }
 
     private final AdminService adminService;
-    private AdminSection currentSection = AdminSection.DRIVERS;
+    private AdminSection currentSection;
 
     @FXML private Label currentSectionLabel;
     @FXML private Label sidebarUserInitialsLabel;

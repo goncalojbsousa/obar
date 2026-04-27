@@ -35,7 +35,8 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public List<User> findAvailableDrivers() {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.type = 'DRIVER' AND u.available = true", User.class)
+                            "FROM User u WHERE u.type = :type AND u.available = true", User.class)
+                    .setParameter("type", UserType.DRIVER)
                     .list();
         }
     }

@@ -19,7 +19,6 @@ import javafx.scene.layout.VBox;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 /**
  * Controller dedicado à fila de aprovação de motoristas pendentes.
@@ -171,10 +170,7 @@ public class PendingDriversController implements AdminSectionController {
         if (q.isBlank()) {
             filtered.setAll(allPending);
         } else {
-            List<AdminUserDTO> result = allPending.stream()
-                    .filter(u -> matches(u, q))
-                    .collect(Collectors.toList());
-            filtered.setAll(result);
+            filtered.setAll(allPending.stream().filter(u -> matches(u, q)).toList());
         }
         updateInfoLabel();
     }
@@ -203,9 +199,9 @@ public class PendingDriversController implements AdminSectionController {
     private void bindDetailPanel(AdminUserDTO u) {
         setText(detailNameLabel,       u.getName());
         setText(detailEmailLabel,      u.getEmail());
-        setText(detailPhoneLabel,      u.getPhone() != null ? u.getPhone() : "—");
-        setText(detailLicenseLabel,    u.getLicenseNumber() != null ? u.getLicenseNumber() : "—");
-        setText(detailRegisteredLabel, u.getCreatedAt() != null ? u.getCreatedAt().format(DATE_FMT) : "—");
+        setText(detailPhoneLabel,      u.getPhone());
+        setText(detailLicenseLabel,    u.getLicenseNumber());
+        setText(detailRegisteredLabel, u.getCreatedAt() != null ? u.getCreatedAt().format(DATE_FMT) : null);
     }
 
     private void updateActionButtons(AdminUserDTO selected) {
@@ -243,9 +239,9 @@ public class PendingDriversController implements AdminSectionController {
         colEmail.setCellValueFactory(cd -> new SimpleStringProperty(
                 AdminFormatUtils.fallback(cd.getValue().getEmail())));
         colPhone.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getPhone() != null ? cd.getValue().getPhone() : "—"));
+                AdminFormatUtils.fallback(cd.getValue().getPhone())));
         colLicense.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getLicenseNumber() != null ? cd.getValue().getLicenseNumber() : "—"));
+                AdminFormatUtils.fallback(cd.getValue().getLicenseNumber())));
         colRegistered.setCellValueFactory(cd -> {
             var t = cd.getValue().getCreatedAt();
             return new SimpleStringProperty(t != null ? t.format(DATE_FMT) : "—");

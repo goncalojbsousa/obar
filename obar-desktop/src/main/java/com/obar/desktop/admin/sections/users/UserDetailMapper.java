@@ -38,7 +38,6 @@ public final class UserDetailMapper {
                 .card3(viewModel.detailCardThreeTitle(), viewModel.cardThreeValue(user))
                 .card4(viewModel.detailCardFourTitle(), viewModel.cardFourValue(user))
                 .ref(viewModel.referenceTitle(), viewModel.referenceValue(user))
-                .extra1("", "").extra2("", "").extra3("", "")
                 .build();
     }
 

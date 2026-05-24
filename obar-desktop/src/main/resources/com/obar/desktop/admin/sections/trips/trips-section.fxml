@@ -23,21 +23,21 @@
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <Label text="Viagens" styleClass="title-2" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button fx:id="addUserButton" text="+ Nova Viagem" onAction="#handleAddUser" styleClass="accent" />
+                    <Button fx:id="addTripButton" text="+ Nova Viagem" onAction="#handleAddTrip" styleClass="accent" />
                 </HBox>
 
                 <HBox spacing="8.0" alignment="CENTER_LEFT">
                     <TextField fx:id="searchField" promptText="Pesquisar por ID, cliente, motorista, estado..." HBox.hgrow="ALWAYS" />
-                    <Button fx:id="filterAllButton" text="Todos" onAction="#handleFilterAll" styleClass="filter-chip-active" />
-                    <Button fx:id="filterActiveButton" text="Aceites" onAction="#handleFilterActive" styleClass="filter-chip" />
-                    <Button fx:id="filterInactiveButton" text="Em progresso" onAction="#handleFilterInactive" styleClass="filter-chip" />
-                    <Button fx:id="filterBlockedButton" text="Concluidas" onAction="#handleFilterBlocked" styleClass="filter-chip" />
-                    <Button fx:id="filterPendingButton" text="Pendentes" onAction="#handleFilterPending" styleClass="filter-chip" />
+                    <Button fx:id="allTripsFilterButton" text="Todos" onAction="#handleShowAllTrips" styleClass="filter-chip-active" />
+                    <Button fx:id="acceptedTripsFilterButton" text="Aceites" onAction="#handleShowAcceptedTrips" styleClass="filter-chip" />
+                    <Button fx:id="inProgressTripsFilterButton" text="Em progresso" onAction="#handleShowInProgressTrips" styleClass="filter-chip" />
+                    <Button fx:id="completedTripsFilterButton" text="Concluidas" onAction="#handleShowCompletedTrips" styleClass="filter-chip" />
+                    <Button fx:id="pendingTripsFilterButton" text="Pendentes" onAction="#handleShowPendingTrips" styleClass="filter-chip" />
                 </HBox>
 
                 <HBox spacing="8.0">
-                    <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
-                    <Button fx:id="deleteUserButton" text="Apagar" onAction="#handleDeleteUser" styleClass="danger" />
+                    <Button fx:id="editTripButton" text="Editar" onAction="#handleEditTrip" />
+                    <Button fx:id="deleteTripButton" text="Apagar" onAction="#handleDeleteTrip" styleClass="danger" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 viagens" styleClass="admin-subtitle" />
                 </HBox>

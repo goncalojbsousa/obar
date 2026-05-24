@@ -56,14 +56,14 @@
         </HBox>
 
         <!-- Tabela de pendentes -->
-        <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS" styleClass="users-table">
+        <TableView fx:id="pendingDriversTable" VBox.vgrow="ALWAYS" styleClass="users-table">
             <columns>
-                <TableColumn fx:id="colId"         text="ID"           prefWidth="64.0" />
-                <TableColumn fx:id="colName"        text="Motorista"    prefWidth="200.0" />
-                <TableColumn fx:id="colEmail"       text="Email"        prefWidth="230.0" />
-                <TableColumn fx:id="colPhone"       text="Telefone"     prefWidth="120.0" />
-                <TableColumn fx:id="colLicense"     text="Licença"      prefWidth="130.0" />
-                <TableColumn fx:id="colRegistered"  text="Registado em" prefWidth="145.0" />
+                <TableColumn fx:id="pendingDriverIdColumn"         text="ID"           prefWidth="64.0" />
+                <TableColumn fx:id="pendingDriverNameColumn"        text="Motorista"    prefWidth="200.0" />
+                <TableColumn fx:id="pendingDriverEmailColumn"       text="Email"        prefWidth="230.0" />
+                <TableColumn fx:id="pendingDriverPhoneColumn"       text="Telefone"     prefWidth="120.0" />
+                <TableColumn fx:id="pendingDriverLicenseColumn"     text="Licença"      prefWidth="130.0" />
+                <TableColumn fx:id="pendingDriverRegisteredColumn"  text="Registado em" prefWidth="145.0" />
             </columns>
             <placeholder>
                 <Label text="Nenhum motorista aguarda aprovação 🎉"
@@ -108,7 +108,7 @@
         <Label fx:id="detailRegisteredLabel" text="—" styleClass="meta-value" />
 
         <Label text="NOTA INTERNA (OPCIONAL)" styleClass="meta-title" />
-        <TextArea fx:id="noteField"
+        <TextArea fx:id="approvalNoteField"
                   promptText="Escreve uma nota para registar..."
                   prefRowCount="3" wrapText="true"
                   styleClass="note-field" />

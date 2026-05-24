@@ -1,6 +1,5 @@
 package com.obar.bll;
 
-import com.obar.dal.UserRepository;
 import com.obar.dal.VehicleRepository;
 import com.obar.model.User;
 import com.obar.model.Vehicle;
@@ -12,7 +11,6 @@ import java.util.Optional;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository = new VehicleRepository();
-    private final UserRepository userRepository = new UserRepository();
 
     public Vehicle addVehicle(Vehicle vehicle) {
         User driver = vehicle.getDriver();

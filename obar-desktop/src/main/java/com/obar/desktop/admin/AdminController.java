@@ -39,28 +39,47 @@ public class AdminController {
     private final AdminService adminService;
     private AdminSection currentSection;
 
-    @FXML private Label currentSectionLabel;
-    @FXML private Label sidebarUserInitialsLabel;
-    @FXML private Label sidebarUserNameLabel;
-    @FXML private Label sidebarUserRoleLabel;
+    @FXML
+    private Label currentSectionLabel;
+    @FXML
+    private Label sidebarUserInitialsLabel;
+    @FXML
+    private Label sidebarUserNameLabel;
+    @FXML
+    private Label sidebarUserRoleLabel;
 
-    @FXML private Button motoristasSectionButton;
-    @FXML private Button pendingDriversSectionButton;
-    @FXML private Button clientesSectionButton;
-    @FXML private Button viagensSectionButton;
-    @FXML private Button financeiraSectionButton;
+    @FXML
+    private Button motoristasSectionButton;
+    @FXML
+    private Button pendingDriversSectionButton;
+    @FXML
+    private Button clientesSectionButton;
+    @FXML
+    private Button viagensSectionButton;
+    @FXML
+    private Button financeiraSectionButton;
 
-    @FXML private StackPane driversSection;
-    @FXML private javafx.scene.layout.HBox pendingDriversSection;
-    @FXML private StackPane clientsSection;
-    @FXML private StackPane tripsSection;
-    @FXML private StackPane financialSection;
+    @FXML
+    private StackPane driversSection;
+    @FXML
+    private javafx.scene.layout.HBox pendingDriversSection;
+    @FXML
+    private StackPane clientsSection;
+    @FXML
+    private StackPane tripsSection;
+    @FXML
+    private StackPane financialSection;
 
-    @FXML private DriversController driversSectionController;
-    @FXML private PendingDriversController pendingDriversSectionController;
-    @FXML private ClientsController clientsSectionController;
-    @FXML private TripsController tripsSectionController;
-    @FXML private FinancialController financialSectionController;
+    @FXML
+    private DriversController driversSectionController;
+    @FXML
+    private PendingDriversController pendingDriversSectionController;
+    @FXML
+    private ClientsController clientsSectionController;
+    @FXML
+    private TripsController tripsSectionController;
+    @FXML
+    private FinancialController financialSectionController;
 
     public AdminController(AdminService adminService) {
         if (adminService == null) {
@@ -83,17 +102,48 @@ public class AdminController {
 
     // ── Handlers da sidebar ───────────────────────────────────────────────────
 
-    @FXML public void handleMotoristasSection()    { switchSection(AdminSection.DRIVERS); }
-    @FXML public void handlePendingDriversSection() { switchSection(AdminSection.PENDING_DRIVERS); }
-    @FXML public void handleClientesSection()      { switchSection(AdminSection.CLIENTS); }
-    @FXML public void handleViagensSection()       { switchSection(AdminSection.TRIPS); }
-    @FXML public void handleFinanceiraSection()    { switchSection(AdminSection.FINANCIAL); }
+    @FXML
+    public void handleMotoristasSection() {
+        switchSection(AdminSection.DRIVERS);
+    }
 
-    @FXML public void handleLogout()          { SessionManager.logout(); NavigationManager.navigateToLogin(); }
+    @FXML
+    public void handlePendingDriversSection() {
+        switchSection(AdminSection.PENDING_DRIVERS);
+    }
 
-    @FXML public void handleModalCancel()        { /* delegado */ }
-    @FXML public void handleModalSave()          { /* delegado */ }
-    @FXML public void handleModalConfirmDelete() { /* delegado */ }
+    @FXML
+    public void handleClientesSection() {
+        switchSection(AdminSection.CLIENTS);
+    }
+
+    @FXML
+    public void handleViagensSection() {
+        switchSection(AdminSection.TRIPS);
+    }
+
+    @FXML
+    public void handleFinanceiraSection() {
+        switchSection(AdminSection.FINANCIAL);
+    }
+
+    @FXML
+    public void handleLogout() {
+        SessionManager.logout();
+        NavigationManager.navigateToLogin();
+    }
+
+    @FXML
+    public void handleModalCancel() {
+        /* delegado */ }
+
+    @FXML
+    public void handleModalSave() {
+        /* delegado */ }
+
+    @FXML
+    public void handleModalConfirmDelete() {
+        /* delegado */ }
 
     // ── Private ───────────────────────────────────────────────────────────────
 
@@ -117,17 +167,17 @@ public class AdminController {
             currentSectionLabel.setText(section.title);
         }
 
-        setSectionVisible(driversSection,        section == AdminSection.DRIVERS);
-        setSectionVisible(pendingDriversSection,  section == AdminSection.PENDING_DRIVERS);
-        setSectionVisible(clientsSection,         section == AdminSection.CLIENTS);
-        setSectionVisible(tripsSection,           section == AdminSection.TRIPS);
-        setSectionVisible(financialSection,       section == AdminSection.FINANCIAL);
+        setSectionVisible(driversSection, section == AdminSection.DRIVERS);
+        setSectionVisible(pendingDriversSection, section == AdminSection.PENDING_DRIVERS);
+        setSectionVisible(clientsSection, section == AdminSection.CLIENTS);
+        setSectionVisible(tripsSection, section == AdminSection.TRIPS);
+        setSectionVisible(financialSection, section == AdminSection.FINANCIAL);
 
-        setButtonState(motoristasSectionButton,   section == AdminSection.DRIVERS);
+        setButtonState(motoristasSectionButton, section == AdminSection.DRIVERS);
         setButtonState(pendingDriversSectionButton, section == AdminSection.PENDING_DRIVERS);
-        setButtonState(clientesSectionButton,     section == AdminSection.CLIENTS);
-        setButtonState(viagensSectionButton,      section == AdminSection.TRIPS);
-        setButtonState(financeiraSectionButton,   section == AdminSection.FINANCIAL);
+        setButtonState(clientesSectionButton, section == AdminSection.CLIENTS);
+        setButtonState(viagensSectionButton, section == AdminSection.TRIPS);
+        setButtonState(financeiraSectionButton, section == AdminSection.FINANCIAL);
 
         AdminSectionController active = getActiveSectionController();
         if (active != null) {
@@ -137,23 +187,26 @@ public class AdminController {
 
     private AdminSectionController getActiveSectionController() {
         return switch (currentSection) {
-            case DRIVERS         -> driversSectionController;
+            case DRIVERS -> driversSectionController;
             case PENDING_DRIVERS -> pendingDriversSectionController;
-            case CLIENTS         -> clientsSectionController;
-            case TRIPS           -> tripsSectionController;
-            case FINANCIAL       -> financialSectionController;
+            case CLIENTS -> clientsSectionController;
+            case TRIPS -> tripsSectionController;
+            case FINANCIAL -> financialSectionController;
         };
     }
 
     private void setSectionVisible(javafx.scene.Node node, boolean visible) {
-        if (node == null) return;
+        if (node == null)
+            return;
         node.setVisible(visible);
         node.setManaged(visible);
     }
 
     private void setButtonState(Button button, boolean active) {
-        if (button == null) return;
-        button.getStyleClass().removeAll("sidebar-item", "sidebar-item-active", "pending-sidebar-item", "pending-sidebar-item-active");
+        if (button == null)
+            return;
+        button.getStyleClass().removeAll("sidebar-item", "sidebar-item-active", "pending-sidebar-item",
+                "pending-sidebar-item-active");
         button.getStyleClass().add(active ? "sidebar-item-active" : "sidebar-item");
     }
 

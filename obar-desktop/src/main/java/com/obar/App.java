@@ -2,6 +2,7 @@ package com.obar;
 
 import atlantafx.base.theme.PrimerLight;
 import com.obar.bll.CoreLifecycleService;
+import com.obar.desktop.app.DesktopApplicationContext;
 import com.obar.desktop.navigation.NavigationManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -13,6 +14,7 @@ import javafx.stage.Stage;
 public class App extends Application {
 
     private final CoreLifecycleService coreLifecycleService = new CoreLifecycleService();
+    private final DesktopApplicationContext desktopApplicationContext = new DesktopApplicationContext();
 
     @Override
     public void init() {
@@ -30,7 +32,7 @@ public class App extends Application {
         Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
         stage.setTitle("OBAR Desktop");
 
-        NavigationManager.initialize(stage);
+        NavigationManager.initialize(stage, desktopApplicationContext);
         NavigationManager.navigateToLogin();
     }
 

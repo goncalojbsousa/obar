@@ -1,18 +1,18 @@
 package com.obar.desktop.admin.sections.trips;
 
 import com.obar.bll.admin.AdminService;
+import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
-import com.obar.desktop.admin.shared.AdminModalController;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
-import com.obar.desktop.admin.shared.DetailPanelBinder;
-import com.obar.desktop.admin.shared.FilterChipManager;
-import com.obar.desktop.admin.sections.trips.TripModalPresenter.PersistResult;
+import com.obar.desktop.admin.shared.AdminParseUtils;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -28,21 +28,17 @@ import java.time.LocalDateTime;
  * Controller for the Trips admin section.
  *
  * <p>
- * Responsibilities (only these):
- * <ul>
- * <li>Wire FXML nodes to the ViewModel and Presenter on {@code initialize()}.
- * <li>Dispatch user actions to {@link TripsViewModel} or
- * {@link TripModalPresenter}.
- * <li>React to ViewModel state changes (selection, filter counts) to update
- * labels.
- * </ul>
- *
- * <p>
- * No filtering logic, no formatting logic, no persistence logic lives here.
+ * Maintains the trip table state, applies status and search filters, handles
+ * the trip form modal, and delegates create, update, and delete operations to
+ * {@link AdminService}.
+ * </p>
  */
 public class TripsController implements AdminSectionController {
 
-    // - table & toolbar -
+    private enum ModalMode {
+        NONE, CREATE, EDIT, DELETE_CONFIRM
+    }
+
     @FXML
     private TextField searchField;
     @FXML
@@ -66,17 +62,22 @@ public class TripsController implements AdminSectionController {
     @FXML
     private Label feedbackLabel;
     @FXML
-    private Button filterAllButton;
+    private Button allTripsFilterButton;
     @FXML
-    private Button filterActiveButton;
+    private Button acceptedTripsFilterButton;
     @FXML
-    private Button filterInactiveButton;
+    private Button inProgressTripsFilterButton;
     @FXML
-    private Button filterBlockedButton;
+    private Button completedTripsFilterButton;
     @FXML
-    private Button filterPendingButton;
+    private Button pendingTripsFilterButton;
+    @FXML
+    private Button addTripButton;
+    @FXML
+    private Button editTripButton;
+    @FXML
+    private Button deleteTripButton;
 
-    // - detail panel -
     @FXML
     private VBox detailPanel;
     @FXML
@@ -128,307 +129,271 @@ public class TripsController implements AdminSectionController {
     @FXML
     private Label detailExtraThreeValueLabel;
 
-    // - shared modal include -
     @FXML
     private AdminModalIncludeController sharedModalController;
 
-    // - collaborators (created in initialize, not injected) -
-    private TripsViewModel viewModel;
-    private TripModalPresenter modalPresenter;
-    private DetailPanelBinder detailBinder;
-    private FilterChipManager<TripStatus> statusChips;
+    private final ObservableList<AdminTripDTO> allTrips = FXCollections.observableArrayList();
+    private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
 
-    // ---------------------------------------------
-    // AdminSectionController contract
-    // ---------------------------------------------
+    private AdminService adminService;
+    private TripStatus activeStatusFilter;
+    private ModalMode modalMode = ModalMode.NONE;
+    private AdminTripDTO modalTarget;
 
     @Override
     public void setAdminService(AdminService adminService) {
-        // ViewModel is created in initialize(); service is set here if called after,
-        // or held until initialize() picks it up via the viewModel reference.
-        if (viewModel != null) {
-            viewModel.init(adminService);
-        }
+        this.adminService = adminService;
     }
 
     @Override
     public void onSectionActivated() {
-        if (viewModel != null) {
-            viewModel.reload();
-            updateCountLabels();
-        }
+        reloadTrips();
     }
-
-    // ---------------------------------------------
-    // Initialization
-    // ---------------------------------------------
 
     @FXML
     public void initialize() {
-        viewModel = new TripsViewModel();
+        configureTripModal();
+        configureTripTableColumns();
 
-        // Build modal infrastructure
-        AdminModalController modalController = sharedModalController.createModalController();
+        tripsTable.setItems(filteredTrips);
+        searchField.textProperty().addListener((obs, oldText, newText) -> applyTripFilter());
+        tripsTable.getSelectionModel().selectedItemProperty()
+                .addListener((obs, previous, selected) -> showTripDetails(selected));
+        allTrips.addListener((javafx.collections.ListChangeListener<AdminTripDTO>) change -> updateCountLabels());
+        filteredTrips.addListener((javafx.collections.ListChangeListener<AdminTripDTO>) change -> updateCountLabels());
+
+        setDetailVisible(false);
+        updateFilterChipStyles();
+        updateCountLabels();
+    }
+
+    private void configureTripModal() {
         sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
                 this::handleModalConfirmDelete);
-
-        // Build presenter and wire modal fields from shared include
-        modalPresenter = new TripModalPresenter(viewModel, modalController);
-        wireModalPresenterFields();
-
-        // Build detail binder
-        detailBinder = new DetailPanelBinder(
-                detailPanel,
-                detailInitialsLabel, detailTitleLabel, detailNameLabel, detailEmailLabel,
-                detailStatusLabel, detailRoleLabel, detailPhoneValueLabel, detailCreatedValueLabel,
-                detailCardOneTitleLabel, detailCardOneValueLabel,
-                detailCardTwoTitleLabel, detailCardTwoValueLabel,
-                detailCardThreeTitleLabel, detailCardThreeValueLabel,
-                detailCardFourTitleLabel, detailCardFourValueLabel,
-                detailReferenceTitleLabel, detailReferenceValueLabel,
-                detailExtraOneTitleLabel, detailExtraOneValueLabel,
-                detailExtraTwoTitleLabel, detailExtraTwoValueLabel,
-                detailExtraThreeTitleLabel, detailExtraThreeValueLabel);
-
-        // Bind filter chips
-        statusChips = new FilterChipManager<TripStatus>()
-                .add(filterAllButton, null)
-                .add(filterActiveButton, TripStatus.ACCEPTED)
-                .add(filterInactiveButton, TripStatus.IN_PROGRESS)
-                .add(filterBlockedButton, TripStatus.COMPLETED)
-                .add(filterPendingButton, TripStatus.PENDING);
-
-        // Populate combo boxes in shared modal
         sharedModalController.<TripType>getModalTripTypeCombo()
                 .setItems(FXCollections.observableArrayList(TripType.values()));
         sharedModalController.<TripStatus>getModalTripStatusCombo()
                 .setItems(FXCollections.observableArrayList(TripStatus.values()));
-
-        // Bind table to filtered list
-        tripsTable.setItems(viewModel.getFilteredTrips());
-
-        // Bind search field to ViewModel property
-        searchField.textProperty().bindBidirectional(viewModel.searchQueryProperty());
-
-        // React to selection changes
-        tripsTable.getSelectionModel().selectedItemProperty()
-                .addListener((obs, previous, current) -> onSelectionChanged(current));
-
-        // React to filter changes to update chip styles and count labels
-        viewModel.activeStatusFilterProperty()
-                .addListener((obs, previous, current) -> {
-                    statusChips.setActive(current);
-                    updateCountLabels();
-                });
-
-        // React to list changes to update count labels
-        viewModel.getAllTrips()
-                .addListener((javafx.collections.ListChangeListener<AdminTripDTO>) change -> updateCountLabels());
-
-        setupColumns();
-        detailBinder.setVisible(false);
-    }
-
-    private void wireModalPresenterFields() {
-        modalPresenter.wireFields(
-                sharedModalController.getModalTripsFormSection(),
-                sharedModalController.getModalDeleteMessageLabel(),
-                sharedModalController.getModalTripClientIdField(),
-                sharedModalController.getModalTripDriverIdField(),
-                sharedModalController.getModalTripTypeCombo(),
-                sharedModalController.getModalTripStatusCombo(),
-                sharedModalController.getModalTripOriginField(),
-                sharedModalController.getModalTripDestinationField(),
-                sharedModalController.getModalTripEstimatedPriceField(),
-                sharedModalController.getModalTripFinalPriceField(),
-                sharedModalController.getModalTripNotesField());
-    }
-
-    // ---------------------------------------------
-    // Filter handlers
-    // ---------------------------------------------
-
-    @FXML
-    public void handleFilterAll() {
-        viewModel.setStatusFilter(null);
     }
 
     @FXML
-    public void handleFilterActive() {
-        viewModel.setStatusFilter(TripStatus.ACCEPTED);
+    public void handleShowAllTrips() {
+        setStatusFilter(null);
     }
 
     @FXML
-    public void handleFilterInactive() {
-        viewModel.setStatusFilter(TripStatus.IN_PROGRESS);
+    public void handleShowAcceptedTrips() {
+        setStatusFilter(TripStatus.ACCEPTED);
     }
 
     @FXML
-    public void handleFilterBlocked() {
-        viewModel.setStatusFilter(TripStatus.COMPLETED);
+    public void handleShowInProgressTrips() {
+        setStatusFilter(TripStatus.IN_PROGRESS);
     }
 
     @FXML
-    public void handleFilterPending() {
-        viewModel.setStatusFilter(TripStatus.PENDING);
-    }
-
-    // ---------------------------------------------
-    // Toolbar handlers
-    // ---------------------------------------------
-
-    @FXML
-    public void handleAddUser() {
-        modalPresenter.openCreate();
+    public void handleShowCompletedTrips() {
+        setStatusFilter(TripStatus.COMPLETED);
     }
 
     @FXML
-    public void handleEditUser() {
+    public void handleShowPendingTrips() {
+        setStatusFilter(TripStatus.PENDING);
+    }
+
+    @FXML
+    public void handleAddTrip() {
+        modalMode = ModalMode.CREATE;
+        modalTarget = null;
+        sharedModalController.prepareForForm("Nova viagem");
+        showOnlyTripForm();
+        clearTripForm();
+    }
+
+    @FXML
+    public void handleEditTrip() {
         AdminTripDTO selected = tripsTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showFeedback("Selecione uma viagem primeiro.", true);
             return;
         }
-        modalPresenter.openEdit(selected);
+        modalMode = ModalMode.EDIT;
+        modalTarget = selected;
+        sharedModalController.prepareForForm("Editar viagem");
+        showOnlyTripForm();
+        fillTripForm(selected);
     }
 
     @FXML
-    public void handleDeleteUser() {
+    public void handleDeleteTrip() {
         AdminTripDTO selected = tripsTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showFeedback("Selecione uma viagem primeiro.", true);
             return;
         }
-        modalPresenter.openDeleteConfirm(selected);
+        modalMode = ModalMode.DELETE_CONFIRM;
+        modalTarget = selected;
+        sharedModalController.prepareForDeleteConfirm("Apagar viagem");
+        hideAllModalForms();
+        sharedModalController.getModalDeleteMessageLabel().setText(
+                "Tem a certeza que deseja apagar a viagem #" + selected.getId()
+                        + "?\nRota: " + AdminFormatUtils.fallback(selected.getOriginAddress())
+                        + " -> " + AdminFormatUtils.fallback(selected.getDestinationAddress()) + ".");
     }
 
     @FXML
     public void handleCloseDetailPanel() {
         tripsTable.getSelectionModel().clearSelection();
-        detailBinder.clear(TripDetailMapper.empty());
+        setDetailVisible(false);
     }
-
-    // ---------------------------------------------
-    // Modal handlers
-    // ---------------------------------------------
 
     @FXML
     public void handleModalCancel() {
-        modalPresenter.close();
+        closeModal();
     }
 
     @FXML
     public void handleModalSave() {
-        TripsViewModel.ModalMode mode = viewModel.getModalMode();
-        if (mode == TripsViewModel.ModalMode.DELETE_CONFIRM) {
+        if (modalMode == ModalMode.DELETE_CONFIRM) {
             return;
         }
-        PersistResult result = modalPresenter.save();
-        if (result.success()) {
-            modalPresenter.close();
-            viewModel.reload();
-            updateCountLabels();
-            showFeedback(result.message(), false);
-        } else {
-            // Error is shown inside modal - presenter could also expose
-            // modalController.showError(),
-            // but keeping it simple: feedback bar is enough for non-modal errors.
-            showFeedback(result.message(), true);
+        try {
+            AdminTripCommand command = buildTripCommand();
+            if (modalMode == ModalMode.EDIT) {
+                if (modalTarget == null || modalTarget.getId() == null) {
+                    sharedModalController.showError("Viagem invalida.");
+                    return;
+                }
+                adminService.updateTrip(modalTarget.getId(), command);
+                finishModalWithSuccess("Viagem atualizada com sucesso.");
+                return;
+            }
+
+            adminService.createTrip(command);
+            finishModalWithSuccess("Viagem criada com sucesso.");
+        } catch (Exception exception) {
+            sharedModalController.showError("Falha ao guardar viagem: " + exception.getMessage());
         }
     }
 
     @FXML
     public void handleModalConfirmDelete() {
-        PersistResult result = modalPresenter.confirmDelete();
-        if (result.success()) {
-            modalPresenter.close();
-            viewModel.reload();
-            updateCountLabels();
-            showFeedback(result.message(), false);
-        } else {
-            showFeedback(result.message(), true);
+        if (modalTarget == null || modalTarget.getId() == null) {
+            sharedModalController.showError("Viagem invalida.");
+            return;
+        }
+        try {
+            adminService.deleteTrip(modalTarget.getId());
+            finishModalWithSuccess("Viagem apagada com sucesso.");
+        } catch (Exception exception) {
+            sharedModalController.showError("Falha ao apagar viagem: " + exception.getMessage());
         }
     }
 
-    // ---------------------------------------------
-    // Private helpers
-    // ---------------------------------------------
-
-    private void onSelectionChanged(AdminTripDTO trip) {
-        if (trip == null) {
-            detailBinder.clear(TripDetailMapper.empty());
+    private void reloadTrips() {
+        if (adminService == null) {
             return;
         }
-        detailBinder.bind(TripDetailMapper.from(trip));
+        allTrips.setAll(adminService.listTrips());
+        applyTripFilter();
+        updateCountLabels();
+    }
+
+    private void setStatusFilter(TripStatus status) {
+        activeStatusFilter = status;
+        applyTripFilter();
+        updateFilterChipStyles();
+        updateCountLabels();
+    }
+
+    private void applyTripFilter() {
+        String query = AdminFormatUtils.normalize(searchField == null ? "" : searchField.getText());
+        filteredTrips.setPredicate(trip -> matchesStatus(trip) && matchesSearch(trip, query));
+    }
+
+    private boolean matchesStatus(AdminTripDTO trip) {
+        return activeStatusFilter == null || trip.getStatus() == activeStatusFilter;
+    }
+
+    private boolean matchesSearch(AdminTripDTO trip, String query) {
+        if (query.isBlank()) {
+            return true;
+        }
+        String id = trip.getId() == null ? "" : String.valueOf(trip.getId());
+        return AdminFormatUtils.normalize(id).contains(query)
+                || AdminFormatUtils.normalize(trip.getClientName()).contains(query)
+                || AdminFormatUtils.normalize(trip.getDriverName()).contains(query)
+                || AdminFormatUtils.normalize(trip.getOriginAddress()).contains(query)
+                || AdminFormatUtils.normalize(trip.getDestinationAddress()).contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyTripStatus(trip.getStatus())).contains(query);
     }
 
     private void updateCountLabels() {
-        long accepted = count(TripStatus.ACCEPTED);
-        long inProgress = count(TripStatus.IN_PROGRESS);
-        long completed = count(TripStatus.COMPLETED);
-        long pending = count(TripStatus.PENDING);
-        int total = viewModel.getAllTrips().size();
-        int shown = viewModel.getFilteredTrips().size();
-
-        if (filterAllButton != null)
-            filterAllButton.setText("Todos (" + total + ")");
-        if (filterActiveButton != null)
-            filterActiveButton.setText("Aceites (" + accepted + ")");
-        if (filterInactiveButton != null)
-            filterInactiveButton.setText("Em progresso (" + inProgress + ")");
-        if (filterBlockedButton != null)
-            filterBlockedButton.setText("Concluidas (" + completed + ")");
-        if (filterPendingButton != null)
-            filterPendingButton.setText("Pendentes (" + pending + ")");
-        if (listInfoLabel != null)
-            listInfoLabel.setText("A mostrar " + shown + " de " + total + " viagens");
+        setButtonText(allTripsFilterButton, "Todos (" + allTrips.size() + ")");
+        setButtonText(acceptedTripsFilterButton, "Aceites (" + count(TripStatus.ACCEPTED) + ")");
+        setButtonText(inProgressTripsFilterButton, "Em progresso (" + count(TripStatus.IN_PROGRESS) + ")");
+        setButtonText(completedTripsFilterButton, "Concluidas (" + count(TripStatus.COMPLETED) + ")");
+        setButtonText(pendingTripsFilterButton, "Pendentes (" + count(TripStatus.PENDING) + ")");
+        setLabelText(listInfoLabel, "A mostrar " + filteredTrips.size() + " de " + allTrips.size() + " viagens");
     }
 
     private long count(TripStatus status) {
-        return viewModel.getAllTrips().stream()
-                .filter(t -> t.getStatus() == status)
-                .count();
+        return allTrips.stream().filter(trip -> trip.getStatus() == status).count();
     }
 
-    private void setupColumns() {
-        tripIdColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getId() == null ? "-" : "#" + cd.getValue().getId()));
-        tripClientColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cd.getValue().getClientName())));
-        tripDriverColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cd.getValue().getDriverName())));
-        tripStatusColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.prettyTripStatus(cd.getValue().getStatus())));
-        tripTypeColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.prettyTripType(cd.getValue().getTripType())));
-        tripPriceColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.formatTripPrice(cd.getValue())));
-        tripRequestedAtColumn.setCellValueFactory(cd -> {
-            LocalDateTime t = cd.getValue().getRequestTime();
-            return new SimpleStringProperty(t == null ? "-" : t.toString());
+    private void updateFilterChipStyles() {
+        updateChip(allTripsFilterButton, activeStatusFilter == null);
+        updateChip(acceptedTripsFilterButton, activeStatusFilter == TripStatus.ACCEPTED);
+        updateChip(inProgressTripsFilterButton, activeStatusFilter == TripStatus.IN_PROGRESS);
+        updateChip(completedTripsFilterButton, activeStatusFilter == TripStatus.COMPLETED);
+        updateChip(pendingTripsFilterButton, activeStatusFilter == TripStatus.PENDING);
+    }
+
+    private void updateChip(Button button, boolean active) {
+        if (button == null) {
+            return;
+        }
+        button.getStyleClass().removeAll("filter-chip", "filter-chip-active");
+        button.getStyleClass().add(active ? "filter-chip-active" : "filter-chip");
+    }
+
+    private void configureTripTableColumns() {
+        tripIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getId() == null ? "-" : "#" + cellData.getValue().getId()));
+        tripClientColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.fallback(cellData.getValue().getClientName())));
+        tripDriverColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.fallback(cellData.getValue().getDriverName())));
+        tripStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.prettyTripStatus(cellData.getValue().getStatus())));
+        tripTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.prettyTripType(cellData.getValue().getTripType())));
+        tripPriceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.formatTripPrice(cellData.getValue())));
+        tripRequestedAtColumn.setCellValueFactory(cellData -> {
+            LocalDateTime requestTime = cellData.getValue().getRequestTime();
+            return new SimpleStringProperty(requestTime == null ? "-" : requestTime.toString());
         });
 
-        // Status column with CSS class per status
         tripStatusColumn.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
+            protected void updateItem(String statusLabel, boolean empty) {
+                super.updateItem(statusLabel, empty);
                 getStyleClass().removeAll(
                         "trip-completed", "trip-in-progress", "trip-accepted",
                         "trip-pending", "trip-cancelled", "trip-rejected");
-                if (empty || item == null) {
+                if (empty || statusLabel == null) {
                     setText(null);
                     return;
                 }
-                setText(item);
-                if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                setText(statusLabel);
+                AdminTripDTO trip = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
+                        ? getTableView().getItems().get(getIndex())
+                        : null;
+                if (trip == null || trip.getStatus() == null) {
                     return;
                 }
-                AdminTripDTO row = getTableView().getItems().get(getIndex());
-                if (row.getStatus() == null) {
-                    return;
-                }
-                switch (row.getStatus()) {
+                switch (trip.getStatus()) {
                     case COMPLETED -> getStyleClass().add("trip-completed");
                     case IN_PROGRESS -> getStyleClass().add("trip-in-progress");
                     case ACCEPTED -> getStyleClass().add("trip-accepted");
@@ -440,12 +405,140 @@ public class TripsController implements AdminSectionController {
         });
     }
 
+    private AdminTripCommand buildTripCommand() {
+        return new AdminTripCommand(
+                AdminParseUtils.parseRequiredInteger(sharedModalController.getModalTripClientIdField().getText(),
+                        "Cliente ID"),
+                AdminParseUtils.parseOptionalInteger(sharedModalController.getModalTripDriverIdField().getText()),
+                sharedModalController.getModalTripOriginField().getText(),
+                sharedModalController.getModalTripDestinationField().getText(),
+                sharedModalController.<TripType>getModalTripTypeCombo().getValue(),
+                sharedModalController.<TripStatus>getModalTripStatusCombo().getValue(),
+                sharedModalController.getModalTripNotesField().getText(),
+                AdminParseUtils.parseOptionalDecimal(sharedModalController.getModalTripEstimatedPriceField().getText()),
+                AdminParseUtils.parseOptionalDecimal(sharedModalController.getModalTripFinalPriceField().getText()));
+    }
+
+    private void showOnlyTripForm() {
+        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), true);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalDeleteSection(), false);
+    }
+
+    private void hideAllModalForms() {
+        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
+    }
+
+    private void fillTripForm(AdminTripDTO trip) {
+        sharedModalController.getModalTripClientIdField()
+                .setText(trip.getClientId() == null ? "" : String.valueOf(trip.getClientId()));
+        sharedModalController.getModalTripDriverIdField()
+                .setText(trip.getDriverId() == null ? "" : String.valueOf(trip.getDriverId()));
+        sharedModalController.<TripType>getModalTripTypeCombo()
+                .setValue(trip.getTripType() == null ? TripType.IMMEDIATE : trip.getTripType());
+        sharedModalController.<TripStatus>getModalTripStatusCombo()
+                .setValue(trip.getStatus() == null ? TripStatus.PENDING : trip.getStatus());
+        sharedModalController.getModalTripOriginField().setText(nullToEmpty(trip.getOriginAddress()));
+        sharedModalController.getModalTripDestinationField().setText(nullToEmpty(trip.getDestinationAddress()));
+        sharedModalController.getModalTripEstimatedPriceField()
+                .setText(trip.getEstimatedPrice() == null ? "" : trip.getEstimatedPrice().toPlainString());
+        sharedModalController.getModalTripFinalPriceField()
+                .setText(trip.getFinalPrice() == null ? "" : trip.getFinalPrice().toPlainString());
+        sharedModalController.getModalTripNotesField().setText(nullToEmpty(trip.getNotes()));
+    }
+
+    private void clearTripForm() {
+        sharedModalController.getModalTripClientIdField().clear();
+        sharedModalController.getModalTripDriverIdField().clear();
+        sharedModalController.<TripType>getModalTripTypeCombo().setValue(TripType.IMMEDIATE);
+        sharedModalController.<TripStatus>getModalTripStatusCombo().setValue(TripStatus.PENDING);
+        sharedModalController.getModalTripOriginField().clear();
+        sharedModalController.getModalTripDestinationField().clear();
+        sharedModalController.getModalTripEstimatedPriceField().clear();
+        sharedModalController.getModalTripFinalPriceField().clear();
+        sharedModalController.getModalTripNotesField().clear();
+    }
+
+    private void showTripDetails(AdminTripDTO trip) {
+        if (trip == null) {
+            setDetailVisible(false);
+            return;
+        }
+
+        String route = AdminFormatUtils.fallback(trip.getOriginAddress())
+                + " -> " + AdminFormatUtils.fallback(trip.getDestinationAddress());
+        setLabelText(detailInitialsLabel, trip.getId() == null ? "--" : "#" + trip.getId());
+        setLabelText(detailTitleLabel, "Detalhe da viagem");
+        setLabelText(detailNameLabel, route);
+        setLabelText(detailEmailLabel, "Cliente: " + AdminFormatUtils.fallback(trip.getClientName()));
+        setLabelText(detailStatusLabel, AdminFormatUtils.prettyTripStatus(trip.getStatus()));
+        setLabelText(detailRoleLabel, AdminFormatUtils.prettyTripType(trip.getTripType()));
+        setLabelText(detailPhoneValueLabel, "Motorista: " + AdminFormatUtils.fallback(trip.getDriverName()));
+        setLabelText(detailCreatedValueLabel, trip.getRequestTime() == null ? "-" : trip.getRequestTime().toString());
+        setLabelText(detailCardOneTitleLabel, "ID Cliente");
+        setLabelText(detailCardOneValueLabel, trip.getClientId() == null ? "-" : "#" + trip.getClientId());
+        setLabelText(detailCardTwoTitleLabel, "ID Motorista");
+        setLabelText(detailCardTwoValueLabel, trip.getDriverId() == null ? "-" : "#" + trip.getDriverId());
+        setLabelText(detailCardThreeTitleLabel, "Veiculo");
+        setLabelText(detailCardThreeValueLabel, AdminFormatUtils.fallback(trip.getVehicleDisplay()));
+        setLabelText(detailCardFourTitleLabel, "Distancia");
+        setLabelText(detailCardFourValueLabel, trip.getDistanceKm() == null ? "-" : trip.getDistanceKm() + " km");
+        setLabelText(detailReferenceTitleLabel, "Preco estimado");
+        setLabelText(detailReferenceValueLabel,
+                trip.getEstimatedPrice() == null ? "-" : "EUR " + trip.getEstimatedPrice());
+        setLabelText(detailExtraOneTitleLabel, "Preco final");
+        setLabelText(detailExtraOneValueLabel, trip.getFinalPrice() == null ? "-" : "EUR " + trip.getFinalPrice());
+        setLabelText(detailExtraTwoTitleLabel, "Inicio");
+        setLabelText(detailExtraTwoValueLabel, trip.getStartTime() == null ? "-" : trip.getStartTime().toString());
+        setLabelText(detailExtraThreeTitleLabel, "Fim");
+        setLabelText(detailExtraThreeValueLabel, trip.getEndTime() == null ? "-" : trip.getEndTime().toString());
+        setDetailVisible(true);
+    }
+
+    private void finishModalWithSuccess(String message) {
+        closeModal();
+        reloadTrips();
+        showFeedback(message, false);
+    }
+
+    private void closeModal() {
+        modalMode = ModalMode.NONE;
+        modalTarget = null;
+        sharedModalController.hide();
+    }
+
     private void showFeedback(String message, boolean isError) {
         if (feedbackLabel == null) {
             return;
         }
-        feedbackLabel.setText(message);
+        feedbackLabel.setText(message == null ? "" : message);
         feedbackLabel.getStyleClass().removeAll("feedback-success", "feedback-error");
         feedbackLabel.getStyleClass().add(isError ? "feedback-error" : "feedback-success");
+    }
+
+    private void setDetailVisible(boolean visible) {
+        if (detailPanel != null) {
+            detailPanel.setVisible(visible);
+            detailPanel.setManaged(visible);
+        }
+    }
+
+    private void setButtonText(Button button, String text) {
+        if (button != null) {
+            button.setText(text);
+        }
+    }
+
+    private void setLabelText(Label label, String text) {
+        if (label != null) {
+            label.setText(text == null ? "-" : text);
+        }
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

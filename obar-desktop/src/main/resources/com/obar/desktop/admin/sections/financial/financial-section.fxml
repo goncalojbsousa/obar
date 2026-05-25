@@ -45,11 +45,11 @@
                 <!-- Row 3: Search + filter chips -->
                 <HBox spacing="8.0">
                     <TextField fx:id="searchField" promptText="Pesquisar por pagamento, viagem, cliente, motorista..." HBox.hgrow="ALWAYS" />
-                    <Button text="Todos" onAction="#handleFilterAll" styleClass="filter-chip" />
-                    <Button text="Processados" onAction="#handleFilterActive" styleClass="filter-chip" />
-                    <Button text="Falhados" onAction="#handleFilterInactive" styleClass="filter-chip" />
-                    <Button text="Reembolsados" onAction="#handleFilterBlocked" styleClass="filter-chip" />
-                    <Button text="Pendentes" onAction="#handleFilterPending" styleClass="filter-chip" />
+                    <Button text="Todos" onAction="#handleShowAllPayments" styleClass="filter-chip" />
+                    <Button text="Processados" onAction="#handleShowProcessedPayments" styleClass="filter-chip" />
+                    <Button text="Falhados" onAction="#handleShowFailedPayments" styleClass="filter-chip" />
+                    <Button text="Reembolsados" onAction="#handleShowRefundedPayments" styleClass="filter-chip" />
+                    <Button text="Pendentes" onAction="#handleShowPendingPayments" styleClass="filter-chip" />
                 </HBox>
 
                 <!-- Row 4: Hero card (compact) -->

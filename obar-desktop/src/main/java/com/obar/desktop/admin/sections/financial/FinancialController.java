@@ -1,57 +1,70 @@
 package com.obar.desktop.admin.sections.financial;
 
+import com.obar.bll.admin.AdminFinancialOverviewDTO;
 import com.obar.bll.admin.AdminFinancialPeriod;
 import com.obar.bll.admin.AdminPaymentByTripDTO;
 import com.obar.bll.admin.AdminService;
+import com.obar.bll.admin.AdminTaxRateCommand;
+import com.obar.bll.admin.AdminTaxRateDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
-import com.obar.desktop.admin.shared.AdminModalController;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
-import com.obar.desktop.admin.shared.DetailPanelBinder;
+import com.obar.desktop.admin.shared.AdminParseUtils;
 import com.obar.model.enums.PaymentStatus;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * Controller for the Financial admin section.
  *
  * <p>
- * Responsibilities:
- * - wire FXML controls with ViewModel properties
- * - dispatch events to ViewModel/Presenters
- * - refresh UI when observable state changes
+ * Loads financial data from {@link AdminService}, filters the payments table,
+ * updates dashboard labels and charts, edits IVA/tax rates, and delegates
+ * CSV/PDF generation to {@link FinancialExportService}.
+ * </p>
  */
 public class FinancialController implements AdminSectionController {
 
-    private static final DateTimeFormatter PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern(
-            "dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-PT"));
-    private static final DateTimeFormatter EXPORT_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern(
-            "yyyyMMdd_HHmmss", Locale.ROOT);
+    private static final DateTimeFormatter PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
+    private static final DateTimeFormatter EXPORT_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss",
+            Locale.ROOT);
 
     private final FinancialExportService exportService = new FinancialExportService();
-    private final FinancialDashboardPresenter dashboardPresenter = new FinancialDashboardPresenter();
+    private final ObservableList<AdminPaymentByTripDTO> allPayments = FXCollections.observableArrayList();
+    private final FilteredList<AdminPaymentByTripDTO> filteredPayments = new FilteredList<>(allPayments,
+            payment -> true);
+    private final ObservableList<AdminTaxRateDTO> allTaxRates = FXCollections.observableArrayList();
 
-    private FinancialViewModel viewModel;
-    private FinancialModalPresenter modalPresenter;
-    private DetailPanelBinder detailBinder;
-    private AdminService pendingAdminService;
+    private AdminService adminService;
+    private AdminFinancialPeriod activePeriod = AdminFinancialPeriod.MONTH;
+    private PaymentStatus activePaymentStatusFilter;
+    private AdminFinancialOverviewDTO currentOverview;
+    private FinancialDashboardController dashboardController;
+    private FinancialPaymentDetailPanel paymentDetailPanel;
 
-    // - table & toolbar -
     @FXML
     private TextField searchField;
     @FXML
@@ -129,7 +142,6 @@ public class FinancialController implements AdminSectionController {
     @FXML
     private Label methodFourPercentLabel;
 
-    // - detail panel labels (wired into DetailPanelBinder) -
     @FXML
     private VBox detailPanel;
     @FXML
@@ -181,260 +193,45 @@ public class FinancialController implements AdminSectionController {
     @FXML
     private Label detailExtraThreeValueLabel;
 
-    // - modal fields (bound from shared modal) -
     @FXML
     private AdminModalIncludeController sharedModalController;
 
     @Override
     public void setAdminService(AdminService adminService) {
-        pendingAdminService = adminService;
-        if (viewModel != null) {
-            viewModel.init(adminService);
-            viewModel.reload();
-            refreshUiState();
+        this.adminService = adminService;
+        if (paymentsTable != null) {
+            reloadFinancialData();
         }
-    }
-
-    @FXML
-    public void initialize() {
-        viewModel = new FinancialViewModel();
-        if (pendingAdminService != null) {
-            viewModel.init(pendingAdminService);
-        }
-
-        AdminModalController modalController = sharedModalController.createModalController();
-        sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
-                this::handleModalConfirmDelete);
-
-        modalPresenter = new FinancialModalPresenter(viewModel, modalController);
-        modalPresenter.wireFields(
-                sharedModalController.getModalTaxRateFormSection(),
-                sharedModalController.getModalDeleteMessageLabel(),
-                sharedModalController.getModalTaxRateCombo(),
-                sharedModalController.getModalTaxRateNameField(),
-                sharedModalController.getModalTaxRateValueField(),
-                sharedModalController.getModalTaxRateDescriptionField(),
-                sharedModalController.getModalTaxRateActiveCheck());
-        modalPresenter.initialize();
-
-        detailBinder = new DetailPanelBinder(
-                detailPanel,
-                detailInitialsLabel, detailTitleLabel, detailNameLabel, detailEmailLabel,
-                detailStatusLabel, detailRoleLabel, detailPhoneValueLabel, detailCreatedValueLabel,
-                detailCardOneTitleLabel, detailCardOneValueLabel,
-                detailCardTwoTitleLabel, detailCardTwoValueLabel,
-                detailCardThreeTitleLabel, detailCardThreeValueLabel,
-                detailCardFourTitleLabel, detailCardFourValueLabel,
-                detailReferenceTitleLabel, detailReferenceValueLabel,
-                detailExtraOneTitleLabel, detailExtraOneValueLabel,
-                detailExtraTwoTitleLabel, detailExtraTwoValueLabel,
-                detailExtraThreeTitleLabel, detailExtraThreeValueLabel);
-
-        paymentsTable.setItems(viewModel.getFilteredPayments());
-        searchField.textProperty().bindBidirectional(viewModel.searchQueryProperty());
-
-        paymentsTable.getSelectionModel().selectedItemProperty()
-                .addListener((obs, previous, current) -> onPaymentSelectionChanged(current));
-        viewModel.getAllPayments()
-                .addListener((javafx.collections.ListChangeListener<AdminPaymentByTripDTO>) change -> {
-                    refreshUiState();
-                });
-        viewModel.activePaymentStatusFilterProperty().addListener((obs, oldValue, newValue) -> refreshUiState());
-        viewModel.activePeriodProperty().addListener((obs, oldValue, newValue) -> refreshUiState());
-
-        setupColumns();
-        detailBinder.setVisible(false);
     }
 
     @Override
     public void onSectionActivated() {
-        if (viewModel != null) {
-            viewModel.reload();
-            refreshUiState();
-            detailBinder.setVisible(false);
-        }
-    }
-
-    // - period handlers -
-
-    @FXML
-    public void handlePeriodChanged() {
-        if (viewModel != null) {
-            viewModel.reload();
-            refreshUiState();
-        }
+        reloadFinancialData();
+        hidePaymentDetailPanel();
     }
 
     @FXML
-    public void handleFinancialPeriodDay() {
-        viewModel.setPeriod(AdminFinancialPeriod.DAY);
+    public void initialize() {
+        configureTaxRateModal();
+        configurePaymentsTableColumns();
+        configureDashboard();
+        configurePaymentDetailPanel();
+
+        paymentsTable.setItems(filteredPayments);
+        searchField.textProperty().addListener((obs, oldText, newText) -> applyPaymentFilter());
+        paymentsTable.getSelectionModel().selectedItemProperty()
+                .addListener((obs, previous, selected) -> showPaymentDetails(selected));
+        allPayments
+                .addListener((javafx.collections.ListChangeListener<AdminPaymentByTripDTO>) change -> refreshUiState());
+        filteredPayments
+                .addListener((javafx.collections.ListChangeListener<AdminPaymentByTripDTO>) change -> refreshUiState());
+
+        hidePaymentDetailPanel();
+        refreshUiState();
     }
 
-    @FXML
-    public void handleFinancialPeriodWeek() {
-        viewModel.setPeriod(AdminFinancialPeriod.WEEK);
-    }
-
-    @FXML
-    public void handleFinancialPeriodMonth() {
-        viewModel.setPeriod(AdminFinancialPeriod.MONTH);
-    }
-
-    @FXML
-    public void handleFinancialPeriodYear() {
-        viewModel.setPeriod(AdminFinancialPeriod.YEAR);
-    }
-
-    @FXML
-    public void handleFinancialPeriodAll() {
-        viewModel.setPeriod(AdminFinancialPeriod.ALL);
-    }
-
-    // - filter handlers -
-
-    @FXML
-    public void handleFilterAll() {
-        viewModel.setPaymentStatusFilter(null);
-    }
-
-    @FXML
-    public void handleFilterActive() {
-        viewModel.setPaymentStatusFilter(PaymentStatus.PROCESSED);
-    }
-
-    @FXML
-    public void handleFilterInactive() {
-        viewModel.setPaymentStatusFilter(PaymentStatus.FAILED);
-    }
-
-    @FXML
-    public void handleFilterBlocked() {
-        viewModel.setPaymentStatusFilter(PaymentStatus.REFUNDED);
-    }
-
-    @FXML
-    public void handleFilterPending() {
-        viewModel.setPaymentStatusFilter(PaymentStatus.PENDING);
-    }
-
-    @FXML
-    public void handleEditTaxRate() {
-        FinancialModalPresenter.PersistResult result = modalPresenter.openEditTaxRate();
-        if (!result.success()) {
-            showFeedback(result.message(), true);
-        }
-    }
-
-    @FXML
-    public void handleExportSection(ActionEvent event) {
-        try {
-            if (viewModel == null || viewModel.getAdminService() == null) {
-                return;
-            }
-            FinancialExportService.FinancialExportSnapshot snapshot = buildExportSnapshot();
-            Path exportDir = resolveExportDirectory();
-            String timestamp = EXPORT_TIMESTAMP_FORMAT.format(LocalDateTime.now());
-            boolean exportPdf = event != null && event.getSource() == exportPdfButton;
-            Path exportPath = exportDir.resolve("relatorio_financeiro_" + timestamp + (exportPdf ? ".pdf" : ".csv"));
-            if (exportPdf) {
-                exportService.exportPdf(snapshot, exportPath);
-            } else {
-                exportService.exportCsv(snapshot, exportPath);
-            }
-            showFeedback("Exportacao concluida: " + exportPath.toAbsolutePath(), false);
-        } catch (Exception exception) {
-            showFeedback("Falha na exportacao financeira: " + exception.getMessage(), true);
-        }
-    }
-
-    // - modal handlers -
-
-    @FXML
-    public void handleModalCancel() {
-        modalPresenter.close();
-    }
-
-    @FXML
-    public void handleModalSave() {
-        FinancialModalPresenter.PersistResult result = modalPresenter.saveTaxRate();
-        if (result.success()) {
-            modalPresenter.close();
-            viewModel.reload();
-            refreshUiState();
-            showFeedback(result.message(), false);
-        } else if (!result.silent() && result.message() != null) {
-            showFeedback(result.message(), true);
-        }
-    }
-
-    @FXML
-    public void handleModalConfirmDelete() {
-        modalPresenter.close();
-    }
-
-    @FXML
-    public void handleCloseDetailPanel() {
-        paymentsTable.getSelectionModel().clearSelection();
-        detailBinder.setVisible(false);
-    }
-
-    // - private helpers -
-
-    private void onPaymentSelectionChanged(AdminPaymentByTripDTO payment) {
-        if (payment == null) {
-            detailBinder.setVisible(false);
-            return;
-        }
-        detailBinder.bind(PaymentDetailMapper.fromPayment(payment, viewModel));
-    }
-
-    private void setupColumns() {
-        paymentIdColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getPaymentId() == null ? "-" : "#" + cd.getValue().getPaymentId()));
-        paymentTripIdColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getTripId() == null ? "-" : "#" + cd.getValue().getTripId()));
-        paymentClientColumn.setCellValueFactory(
-                cd -> new SimpleStringProperty(AdminFormatUtils.fallback(cd.getValue().getClientName())));
-        paymentMethodColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                AdminFormatUtils.prettyPaymentMethod(cd.getValue().getPaymentMethodType())));
-        paymentAmountColumn.setCellValueFactory(
-                cd -> new SimpleStringProperty(AdminFormatUtils.formatPaymentAmount(cd.getValue())));
-        paymentDateColumn.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getPaymentDate() == null ? "-"
-                        : PAYMENT_DATE_FORMAT.format(cd.getValue().getPaymentDate())));
-        paymentStatusColumn.setCellValueFactory(
-                cd -> new SimpleStringProperty(AdminFormatUtils.prettyPaymentStatus(cd.getValue().getStatus())));
-        paymentStatusColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                getStyleClass().removeAll("payment-processed", "payment-pending", "payment-failed", "payment-refunded");
-                if (empty || item == null) {
-                    setText(null);
-                    return;
-                }
-                setText(item);
-                if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
-                    return;
-                }
-                AdminPaymentByTripDTO row = getTableView().getItems().get(getIndex());
-                if (row.getStatus() == null) {
-                    return;
-                }
-                switch (row.getStatus()) {
-                    case PROCESSED -> getStyleClass().add("payment-processed");
-                    case PENDING -> getStyleClass().add("payment-pending");
-                    case FAILED -> getStyleClass().add("payment-failed");
-                    case REFUNDED -> getStyleClass().add("payment-refunded");
-                }
-            }
-        });
-    }
-
-    private void refreshUiState() {
-        dashboardPresenter.updateFilterSummary(viewModel, paymentsTableTitle, listInfoLabel);
-        dashboardPresenter.updateDashboard(
-                viewModel,
+    private void configureDashboard() {
+        dashboardController = new FinancialDashboardController(
                 revenuePeriodLabel,
                 revenueTotalLabel,
                 revenueTrendLabel,
@@ -455,39 +252,415 @@ public class FinancialController implements AdminSectionController {
                 methodThreePercentLabel,
                 methodFourLabel,
                 methodFourPercentLabel);
+    }
 
-        periodDayButton.setDisable(viewModel.getActivePeriod() == AdminFinancialPeriod.DAY);
-        periodWeekButton.setDisable(viewModel.getActivePeriod() == AdminFinancialPeriod.WEEK);
-        periodMonthButton.setDisable(viewModel.getActivePeriod() == AdminFinancialPeriod.MONTH);
-        periodYearButton.setDisable(viewModel.getActivePeriod() == AdminFinancialPeriod.YEAR);
-        periodAllButton.setDisable(viewModel.getActivePeriod() == AdminFinancialPeriod.ALL);
+    private void configurePaymentDetailPanel() {
+        paymentDetailPanel = new FinancialPaymentDetailPanel(
+                detailPanel,
+                detailInitialsLabel,
+                detailTitleLabel,
+                detailNameLabel,
+                detailEmailLabel,
+                detailStatusLabel,
+                detailRoleLabel,
+                detailPhoneValueLabel,
+                detailCreatedValueLabel,
+                detailCardOneTitleLabel,
+                detailCardOneValueLabel,
+                detailCardTwoTitleLabel,
+                detailCardTwoValueLabel,
+                detailCardThreeTitleLabel,
+                detailCardThreeValueLabel,
+                detailCardFourTitleLabel,
+                detailCardFourValueLabel,
+                detailReferenceTitleLabel,
+                detailReferenceValueLabel,
+                detailExtraOneTitleLabel,
+                detailExtraOneValueLabel,
+                detailExtraTwoTitleLabel,
+                detailExtraTwoValueLabel,
+                detailExtraThreeTitleLabel,
+                detailExtraThreeValueLabel);
+    }
+
+    private void configureTaxRateModal() {
+        sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
+                this::handleModalConfirmDelete);
+        var taxRateCombo = sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo();
+        taxRateCombo.setConverter(new TaxRateStringConverter());
+        taxRateCombo.setCellFactory(listView -> new TaxRateListCell());
+        taxRateCombo.setButtonCell(new TaxRateListCell());
+        taxRateCombo.valueProperty()
+                .addListener((obs, oldTaxRate, newTaxRate) -> fillTaxRateForm(newTaxRate));
+    }
+
+    @FXML
+    public void handleFinancialPeriodDay() {
+        setPeriod(AdminFinancialPeriod.DAY);
+    }
+
+    @FXML
+    public void handleFinancialPeriodWeek() {
+        setPeriod(AdminFinancialPeriod.WEEK);
+    }
+
+    @FXML
+    public void handleFinancialPeriodMonth() {
+        setPeriod(AdminFinancialPeriod.MONTH);
+    }
+
+    @FXML
+    public void handleFinancialPeriodYear() {
+        setPeriod(AdminFinancialPeriod.YEAR);
+    }
+
+    @FXML
+    public void handleFinancialPeriodAll() {
+        setPeriod(AdminFinancialPeriod.ALL);
+    }
+
+    @FXML
+    public void handlePeriodChanged() {
+        reloadFinancialData();
+    }
+
+    @FXML
+    public void handleShowAllPayments() {
+        setPaymentStatusFilter(null);
+    }
+
+    @FXML
+    public void handleShowProcessedPayments() {
+        setPaymentStatusFilter(PaymentStatus.PROCESSED);
+    }
+
+    @FXML
+    public void handleShowFailedPayments() {
+        setPaymentStatusFilter(PaymentStatus.FAILED);
+    }
+
+    @FXML
+    public void handleShowRefundedPayments() {
+        setPaymentStatusFilter(PaymentStatus.REFUNDED);
+    }
+
+    @FXML
+    public void handleShowPendingPayments() {
+        setPaymentStatusFilter(PaymentStatus.PENDING);
+    }
+
+    @FXML
+    public void handleEditTaxRate() {
+        if (allTaxRates.isEmpty()) {
+            showFeedback("Nao existem taxas de IVA para editar.", true);
+            return;
+        }
+
+        sharedModalController.prepareForForm("Editar taxa de IVA");
+        showOnlyTaxRateForm();
+        sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getItems().setAll(allTaxRates);
+        sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getSelectionModel().selectFirst();
+        fillTaxRateForm(sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getValue());
+    }
+
+    @FXML
+    public void handleExportSection(ActionEvent event) {
+        if (adminService == null || currentOverview == null) {
+            showFeedback("Exportacao indisponivel.", true);
+            return;
+        }
+
+        try {
+            FinancialExportService.FinancialExportSnapshot snapshot = buildExportSnapshot();
+            Path exportDirectory = resolveExportDirectory();
+            String timestamp = EXPORT_TIMESTAMP_FORMAT.format(LocalDateTime.now());
+            boolean exportPdf = event != null && event.getSource() == exportPdfButton;
+            Path exportPath = exportDirectory.resolve(
+                    "relatorio_financeiro_" + timestamp + (exportPdf ? ".pdf" : ".csv"));
+
+            if (exportPdf) {
+                exportService.exportPdf(snapshot, exportPath);
+            } else {
+                exportService.exportCsv(snapshot, exportPath);
+            }
+
+            showFeedback("Exportacao concluida: " + exportPath.toAbsolutePath(), false);
+        } catch (Exception exception) {
+            showFeedback("Falha na exportacao financeira: " + exception.getMessage(), true);
+        }
+    }
+
+    @FXML
+    public void handleModalCancel() {
+        sharedModalController.hide();
+    }
+
+    @FXML
+    public void handleModalSave() {
+        try {
+            AdminTaxRateDTO selected = sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getValue();
+            if (selected == null || selected.getId() == null) {
+                sharedModalController.showError("Selecione uma taxa de IVA valida.");
+                return;
+            }
+
+            BigDecimal rate = AdminParseUtils.parseRequiredDecimal(
+                    sharedModalController.getModalTaxRateValueField().getText(), "Taxa de IVA");
+            adminService.updateTaxRate(selected.getId(), new AdminTaxRateCommand(
+                    sharedModalController.getModalTaxRateNameField().getText(),
+                    rate,
+                    sharedModalController.getModalTaxRateDescriptionField().getText(),
+                    sharedModalController.getModalTaxRateActiveCheck().isSelected()));
+
+            sharedModalController.hide();
+            reloadFinancialData();
+            showFeedback("Taxa de IVA atualizada com sucesso.", false);
+        } catch (Exception exception) {
+            sharedModalController.showError("Falha ao atualizar taxa de IVA: " + exception.getMessage());
+        }
+    }
+
+    @FXML
+    public void handleModalConfirmDelete() {
+        sharedModalController.hide();
+    }
+
+    @FXML
+    public void handleCloseDetailPanel() {
+        paymentsTable.getSelectionModel().clearSelection();
+        hidePaymentDetailPanel();
+    }
+
+    private void reloadFinancialData() {
+        if (adminService == null) {
+            return;
+        }
+        allPayments.setAll(adminService.listPaymentsByTrip(activePeriod));
+        allTaxRates.setAll(adminService.listTaxRates());
+        currentOverview = adminService.getFinancialOverview(activePeriod);
+        applyPaymentFilter();
+        refreshUiState();
+    }
+
+    private void setPeriod(AdminFinancialPeriod period) {
+        if (period == null || period == activePeriod) {
+            return;
+        }
+        activePeriod = period;
+        reloadFinancialData();
+    }
+
+    private void setPaymentStatusFilter(PaymentStatus status) {
+        activePaymentStatusFilter = status;
+        applyPaymentFilter();
+        refreshUiState();
+    }
+
+    private void applyPaymentFilter() {
+        String query = AdminFormatUtils.normalize(searchField == null ? "" : searchField.getText());
+        filteredPayments.setPredicate(payment -> matchesStatus(payment) && matchesSearch(payment, query));
+    }
+
+    private boolean matchesStatus(AdminPaymentByTripDTO payment) {
+        return activePaymentStatusFilter == null || payment.getStatus() == activePaymentStatusFilter;
+    }
+
+    private boolean matchesSearch(AdminPaymentByTripDTO payment, String query) {
+        if (query.isBlank()) {
+            return true;
+        }
+        String paymentId = payment.getPaymentId() == null ? "" : String.valueOf(payment.getPaymentId());
+        String tripId = payment.getTripId() == null ? "" : String.valueOf(payment.getTripId());
+        return AdminFormatUtils.normalize(paymentId).contains(query)
+                || AdminFormatUtils.normalize(tripId).contains(query)
+                || AdminFormatUtils.normalize(payment.getClientName()).contains(query)
+                || AdminFormatUtils.normalize(payment.getDriverName()).contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentMethod(payment.getPaymentMethodType()))
+                        .contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentStatus(payment.getStatus()))
+                        .contains(query);
+    }
+
+    private void configurePaymentsTableColumns() {
+        paymentIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getPaymentId() == null ? "-" : "#" + cellData.getValue().getPaymentId()));
+        paymentTripIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getTripId() == null ? "-" : "#" + cellData.getValue().getTripId()));
+        paymentClientColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.fallback(cellData.getValue().getClientName())));
+        paymentMethodColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.prettyPaymentMethod(cellData.getValue().getPaymentMethodType())));
+        paymentAmountColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.formatPaymentAmount(cellData.getValue())));
+        paymentDateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getPaymentDate() == null ? "-"
+                        : PAYMENT_DATE_FORMAT.format(cellData.getValue().getPaymentDate())));
+        paymentStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                AdminFormatUtils.prettyPaymentStatus(cellData.getValue().getStatus())));
+
+        paymentStatusColumn.setCellFactory(column -> new PaymentStatusTableCell());
+    }
+
+    private void refreshUiState() {
+        updateFilterSummary();
+        if (dashboardController != null) {
+            dashboardController.update(activePeriod, currentOverview, List.copyOf(allPayments));
+        }
+        setPeriodButtons();
+    }
+
+    private void updateFilterSummary() {
+        long pending = countPayments(PaymentStatus.PENDING);
+        long processed = countPayments(PaymentStatus.PROCESSED);
+        long failed = countPayments(PaymentStatus.FAILED);
+        long refunded = countPayments(PaymentStatus.REFUNDED);
+
+        setLabelText(listInfoLabel,
+                "A mostrar " + filteredPayments.size() + " de " + allPayments.size() + " pagamentos");
+        setLabelText(paymentsTableTitle, "Ultimos Pagamentos"
+                + " | Proc: " + processed
+                + " Pend: " + pending
+                + " Falh: " + failed
+                + " Reemb: " + refunded);
+    }
+
+    private long countPayments(PaymentStatus status) {
+        return allPayments.stream().filter(payment -> payment.getStatus() == status).count();
+    }
+
+    private void setPeriodButtons() {
+        if (periodDayButton != null)
+            periodDayButton.setDisable(activePeriod == AdminFinancialPeriod.DAY);
+        if (periodWeekButton != null)
+            periodWeekButton.setDisable(activePeriod == AdminFinancialPeriod.WEEK);
+        if (periodMonthButton != null)
+            periodMonthButton.setDisable(activePeriod == AdminFinancialPeriod.MONTH);
+        if (periodYearButton != null)
+            periodYearButton.setDisable(activePeriod == AdminFinancialPeriod.YEAR);
+        if (periodAllButton != null)
+            periodAllButton.setDisable(activePeriod == AdminFinancialPeriod.ALL);
+    }
+
+    private void showOnlyTaxRateForm() {
+        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), true);
+        AdminModalIncludeController.setVisible(sharedModalController.getModalDeleteSection(), false);
+    }
+
+    private void fillTaxRateForm(AdminTaxRateDTO taxRate) {
+        if (taxRate == null) {
+            sharedModalController.getModalTaxRateNameField().clear();
+            sharedModalController.getModalTaxRateValueField().clear();
+            sharedModalController.getModalTaxRateDescriptionField().clear();
+            sharedModalController.getModalTaxRateActiveCheck().setSelected(false);
+            return;
+        }
+        sharedModalController.getModalTaxRateNameField()
+                .setText(AdminFormatUtils.fallback(taxRate.getName()).equals("-") ? "" : taxRate.getName());
+        sharedModalController.getModalTaxRateValueField()
+                .setText(taxRate.getRate() == null ? "" : taxRate.getRate().toPlainString());
+        sharedModalController.getModalTaxRateDescriptionField()
+                .setText(AdminFormatUtils.fallback(taxRate.getDescription()).equals("-") ? ""
+                        : taxRate.getDescription());
+        sharedModalController.getModalTaxRateActiveCheck().setSelected(Boolean.TRUE.equals(taxRate.getActive()));
     }
 
     private FinancialExportService.FinancialExportSnapshot buildExportSnapshot() {
-        String scope = AdminFormatUtils.prettyFinancialPeriod(viewModel.getActivePeriod())
-                + " | " + viewModel.getFilteredPayments().size() + " de " + viewModel.getAllPayments().size()
-                + " pagamentos";
+        String scopeDescription = AdminFormatUtils.prettyFinancialPeriod(activePeriod)
+                + " | " + filteredPayments.size() + " de " + allPayments.size() + " pagamentos";
         return new FinancialExportService.FinancialExportSnapshot(
                 LocalDateTime.now(),
-                scope,
-                viewModel.getCurrentOverview(),
-                viewModel.getPaymentsSnapshot(),
-                viewModel.getTaxRatesSnapshot(),
-                viewModel.groupPaymentMethods());
+                scopeDescription,
+                currentOverview,
+                List.copyOf(allPayments),
+                List.copyOf(allTaxRates),
+                FinancialDashboardController.groupPaymentMethods(List.copyOf(allPayments)));
     }
 
     private Path resolveExportDirectory() throws Exception {
-        Path dir = Path.of(System.getProperty("user.home"), "Documents", "obar-exports");
-        Files.createDirectories(dir);
-        return dir;
+        Path exportDirectory = Path.of(System.getProperty("user.home"), "Documents", "obar-exports");
+        Files.createDirectories(exportDirectory);
+        return exportDirectory;
     }
 
     private void showFeedback(String message, boolean isError) {
         if (feedbackLabel == null) {
             return;
         }
-        feedbackLabel.setText(message);
+        feedbackLabel.setText(message == null ? "" : message);
         feedbackLabel.getStyleClass().removeAll("feedback-success", "feedback-error");
         feedbackLabel.getStyleClass().add(isError ? "feedback-error" : "feedback-success");
+    }
+
+    private void showPaymentDetails(AdminPaymentByTripDTO payment) {
+        if (paymentDetailPanel != null) {
+            paymentDetailPanel.show(payment, activePeriod);
+        }
+    }
+
+    private void hidePaymentDetailPanel() {
+        if (paymentDetailPanel != null) {
+            paymentDetailPanel.hide();
+        } else if (detailPanel != null) {
+            detailPanel.setVisible(false);
+            detailPanel.setManaged(false);
+        }
+    }
+
+    private void setLabelText(Label label, String text) {
+        if (label != null) {
+            label.setText(text == null ? "-" : text);
+        }
+    }
+
+    /** Renders IVA/tax rate values in the tax-rate combo box. */
+    private static final class TaxRateListCell extends ListCell<AdminTaxRateDTO> {
+        @Override
+        protected void updateItem(AdminTaxRateDTO item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(empty || item == null ? null : AdminFormatUtils.formatTaxRateDisplay(item));
+        }
+    }
+
+    /** Converts IVA/tax rate DTOs to the text shown by the combo box. */
+    private static final class TaxRateStringConverter extends StringConverter<AdminTaxRateDTO> {
+        @Override
+        public String toString(AdminTaxRateDTO taxRate) {
+            return taxRate == null ? "" : AdminFormatUtils.formatTaxRateDisplay(taxRate);
+        }
+
+        @Override
+        public AdminTaxRateDTO fromString(String value) {
+            return null;
+        }
+    }
+
+    /** Applies payment status styles to rows in the payments table. */
+    private static final class PaymentStatusTableCell extends TableCell<AdminPaymentByTripDTO, String> {
+        @Override
+        protected void updateItem(String statusLabel, boolean empty) {
+            super.updateItem(statusLabel, empty);
+            getStyleClass().removeAll("payment-processed", "payment-pending", "payment-failed", "payment-refunded");
+            if (empty || statusLabel == null) {
+                setText(null);
+                return;
+            }
+
+            setText(statusLabel);
+            AdminPaymentByTripDTO payment = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
+                    ? getTableView().getItems().get(getIndex())
+                    : null;
+            if (payment == null || payment.getStatus() == null) {
+                return;
+            }
+
+            switch (payment.getStatus()) {
+                case PROCESSED -> getStyleClass().add("payment-processed");
+                case PENDING -> getStyleClass().add("payment-pending");
+                case FAILED -> getStyleClass().add("payment-failed");
+                case REFUNDED -> getStyleClass().add("payment-refunded");
+            }
+        }
     }
 }

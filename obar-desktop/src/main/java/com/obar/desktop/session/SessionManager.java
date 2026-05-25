@@ -8,7 +8,7 @@ import com.obar.model.enums.UserType;
  */
 public final class SessionManager {
 
-    private static final ThreadLocal<AuthenticatedUserDto> currentUser = ThreadLocal.withInitial(() -> null);
+    private static AuthenticatedUserDto currentUser;
 
     private SessionManager() {
         throw new UnsupportedOperationException("Utility class");
@@ -24,7 +24,7 @@ public final class SessionManager {
         if (user == null) {
             throw new IllegalArgumentException("User must not be null.");
         }
-        currentUser.set(user);
+        currentUser = user;
     }
 
     /**
@@ -34,18 +34,17 @@ public final class SessionManager {
      * @throws IllegalStateException when no active session exists
      */
     public static AuthenticatedUserDto getCurrentUser() {
-        AuthenticatedUserDto user = currentUser.get();
-        if (user == null) {
+        if (currentUser == null) {
             throw new IllegalStateException("No active session.");
         }
-        return user;
+        return currentUser;
     }
 
     /**
      * Clears the currently authenticated user
      */
     public static void logout() {
-        currentUser.remove();
+        currentUser = null;
     }
 
     /**
@@ -54,17 +53,17 @@ public final class SessionManager {
      * @return {@code true} if logged in, otherwise {@code false}
      */
     public static boolean isLoggedIn() {
-        return currentUser.get() != null;
+        return currentUser != null;
     }
 
     /**
      * Checks whether the current user has the specified role
      *
      * @param role role to verify against the authenticated user
-     * @return {@code true} when logged in and the current user has the role, {@code false} otherwise
+     * @return {@code true} when logged in and the current user has the role,
+     *         {@code false} otherwise
      */
     public static boolean hasRole(UserType role) {
-        AuthenticatedUserDto user = currentUser.get();
-        return user != null && user.type() == role;
+        return currentUser != null && currentUser.type() == role;
     }
 }

@@ -1,11 +1,6 @@
 package com.obar.desktop.navigation;
 
-import com.obar.bll.admin.AdminService;
-import com.obar.bll.auth.AuthService;
-import com.obar.desktop.admin.AdminController;
-import com.obar.desktop.auth.ChangePasswordController;
-import com.obar.desktop.auth.LoginController;
-import com.obar.desktop.auth.RegisterController;
+import com.obar.desktop.app.DesktopApplicationContext;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -15,8 +10,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * Centralized desktop-layer navigation utility for switching authentication
- * test views.
+ * Centralized desktop-layer navigation utility for switching JavaFX screens.
  */
 public final class NavigationManager {
 
@@ -24,10 +18,8 @@ public final class NavigationManager {
     private static final double WINDOW_HEIGHT = 640;
     private static final String DESKTOP_STYLESHEET = "/com/obar/desktop/styles/DesktopTheme.css";
 
-    private static final AuthService AUTH_SERVICE = new AuthService();
-    private static final AdminService ADMIN_SERVICE = new AdminService();
-
     private static Stage primaryStage;
+    private static DesktopApplicationContext applicationContext;
 
     private NavigationManager() {
         throw new UnsupportedOperationException("Utility class");
@@ -38,12 +30,16 @@ public final class NavigationManager {
      *
      * @param stage primary application stage used for all scene transitions
      */
-    public static void initialize(Stage stage) {
+    public static void initialize(Stage stage, DesktopApplicationContext context) {
         if (stage == null) {
             throw new IllegalArgumentException("Stage must not be null.");
         }
+        if (context == null) {
+            throw new IllegalArgumentException("DesktopApplicationContext must not be null.");
+        }
 
         primaryStage = stage;
+        applicationContext = context;
         if (primaryStage.getScene() == null) {
             primaryStage.setScene(new Scene(new StackPane(), WINDOW_WIDTH, WINDOW_HEIGHT));
         }
@@ -70,27 +66,12 @@ public final class NavigationManager {
         if (primaryStage == null) {
             throw new IllegalStateException("NavigationManager must be initialized before navigation.");
         }
+        if (applicationContext == null) {
+            throw new IllegalStateException("DesktopApplicationContext must be initialized before navigation.");
+        }
 
         FXMLLoader loader = new FXMLLoader(NavigationManager.class.getResource(fxmlPath));
-        loader.setControllerFactory(type -> {
-            if (type == LoginController.class) {
-                return new LoginController(AUTH_SERVICE);
-            }
-            if (type == ChangePasswordController.class) {
-                return new ChangePasswordController(AUTH_SERVICE);
-            }
-            if (type == RegisterController.class) {
-                return new RegisterController(AUTH_SERVICE);
-            }
-            if (type == AdminController.class) {
-                return new AdminController(ADMIN_SERVICE);
-            }
-            try {
-                return type.getDeclaredConstructor().newInstance();
-            } catch (ReflectiveOperationException exception) {
-                throw new RuntimeException("Failed to create controller: " + type.getName(), exception);
-            }
-        });
+        loader.setControllerFactory(applicationContext::createController);
 
         try {
             Parent root = loader.load();

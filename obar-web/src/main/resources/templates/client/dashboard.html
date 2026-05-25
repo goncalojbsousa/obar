@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cliente | Obar</title>
+    <link rel="stylesheet" th:href="@{/css/web.css}">
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" th:href="@{/app}">Obar</a>
+        <div class="user-area">
+            <span th:text="${currentUser.name()}">Cliente</span>
+            <form th:action="@{/logout}" method="post">
+                <button class="ghost-button" type="submit">Sair</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="client-shell">
+        <section class="summary-grid" aria-label="Resumo da conta">
+            <article>
+                <span>Email</span>
+                <strong th:text="${currentUser.email()}">cliente@obar.test</strong>
+            </article>
+            <article>
+                <span>Estado</span>
+                <strong th:text="${currentUser.status()}">ACTIVE</strong>
+            </article>
+            <article>
+                <span>Perfil</span>
+                <strong th:text="${currentUser.type()}">CLIENT</strong>
+            </article>
+        </section>
+    </main>
+</body>
+
+</html>

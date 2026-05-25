@@ -7,7 +7,8 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
 
 /**
- * HTTP-session helper for storing and retrieving authenticated users in web requests
+ * HTTP-session helper for storing and retrieving authenticated users in web
+ * requests
  */
 public final class WebSessionHelper {
 
@@ -21,8 +22,9 @@ public final class WebSessionHelper {
      * Stores an authenticated user in the current HTTP session.
      *
      * @param session active HTTP session
-     * @param user authenticated user to store
-     * @throws IllegalArgumentException when {@code session} or {@code user} is {@code null}
+     * @param user    authenticated user to store
+     * @throws IllegalArgumentException when {@code session} or {@code user} is
+     *                                  {@code null}
      */
     public static void login(HttpSession session, AuthenticatedUserDto user) {
         if (session == null) {
@@ -38,12 +40,12 @@ public final class WebSessionHelper {
      * Returns the authenticated user currently stored in session.
      *
      * @param session active HTTP session
-     * @return optional containing the authenticated user DTO when present; empty optional when absent
-     * @throws IllegalArgumentException when {@code session} is {@code null}
+     * @return optional containing the authenticated user DTO when present; empty
+     *         optional when absent
      */
     public static Optional<AuthenticatedUserDto> getCurrentUser(HttpSession session) {
         if (session == null) {
-            throw new IllegalArgumentException("Session must not be null.");
+            return Optional.empty();
         }
         Object value = session.getAttribute(SESSION_KEY);
         return value instanceof AuthenticatedUserDto authenticatedUser
@@ -55,7 +57,8 @@ public final class WebSessionHelper {
      * Checks whether there is an authenticated user in session.
      *
      * @param session active HTTP session
-     * @return {@code true} when a user is present in session; otherwise {@code false}
+     * @return {@code true} when a user is present in session; otherwise
+     *         {@code false}
      * @throws IllegalArgumentException when {@code session} is {@code null}
      */
     public static boolean isLoggedIn(HttpSession session) {
@@ -80,7 +83,7 @@ public final class WebSessionHelper {
      * Checks whether the authenticated user has the given role.
      *
      * @param session active HTTP session
-     * @param role role to validate
+     * @param role    role to validate
      * @return {@code true} when logged in and role matches; {@code false} otherwise
      * @throws IllegalArgumentException when {@code session} is {@code null}
      */

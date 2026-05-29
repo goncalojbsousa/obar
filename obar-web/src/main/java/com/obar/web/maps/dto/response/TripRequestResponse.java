@@ -1,6 +1,7 @@
-package com.obar.web.maps;
+package com.obar.web.maps.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record TripRequestResponse(
                 Integer tripId,
@@ -8,5 +9,8 @@ public record TripRequestResponse(
                 double distanceKm,
                 int durationMin,
                 BigDecimal estimatedPrice,
+                String vehicleCategory,
+                String tripType,
+                LocalDateTime scheduledAt,
                 String status) {
 }

@@ -24,6 +24,10 @@ public class VehicleService {
         return vehicleRepository.findByDriverId(driverId);
     }
 
+    public List<String> findActiveCategories() {
+        return vehicleRepository.findActiveCategories();
+    }
+
     public Optional<Vehicle> findById(Integer id) {
         return vehicleRepository.findById(id);
     }

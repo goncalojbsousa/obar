@@ -1,4 +1,6 @@
-package com.obar.web.maps;
+package com.obar.web.maps.dto.request;
+
+import java.time.LocalDateTime;
 
 public record RouteEstimateRequest(
                 double originLat,
@@ -6,5 +8,7 @@ public record RouteEstimateRequest(
                 double destinationLat,
                 double destinationLng,
                 String originAddress,
-                String destinationAddress) {
+                String destinationAddress,
+                String vehicleCategory,
+                LocalDateTime scheduledAt) {
 }

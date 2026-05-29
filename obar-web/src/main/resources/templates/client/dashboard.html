@@ -15,7 +15,7 @@
         <a class="brand" th:href="@{/app}">Obar</a>
         <nav class="client-nav" aria-label="Navegação do cliente">
             <a class="active" th:href="@{/app}">Nova Viagem</a>
-            <a href="#" aria-disabled="true">Histórico</a>
+            <a th:href="@{/app/scheduled}">Agendadas</a>
             <a href="#" aria-disabled="true">Pagamentos</a>
         </nav>
         <div class="user-area">
@@ -53,6 +53,19 @@
                             data-destination-input>
                         <div class="suggestions-list" data-location-suggestions hidden></div>
                     </label>
+
+                    <label class="search-field vehicle-category-field">
+                        Tipo de veículo
+                        <select data-vehicle-category>
+                            <option th:each="category : ${vehicleCategories}" th:value="${category}"
+                                th:text="${category}">STANDARD</option>
+                        </select>
+                    </label>
+
+                    <label class="search-field schedule-field">
+                        Agendar para
+                        <input type="datetime-local" data-scheduled-at>
+                    </label>
                 </div>
 
                 <div class="estimate-panel" data-estimate-panel hidden>
@@ -69,6 +82,7 @@
                         <strong data-price>0,00 €</strong>
                     </div>
                     <button class="primary-button" type="button" data-request-button disabled>Pedir viagem</button>
+                    <button class="ghost-button" type="button" data-schedule-button disabled>Agendar viagem</button>
                 </div>
 
                 <div class="waiting-panel" data-waiting-panel hidden>

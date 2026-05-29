@@ -9,6 +9,14 @@ import com.obar.model.Trip;
 import com.obar.model.User;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
+import com.obar.web.maps.client.MapsServiceClient;
+import com.obar.web.maps.dto.request.RouteEstimateRequest;
+import com.obar.web.maps.dto.response.ActiveTripResponse;
+import com.obar.web.maps.dto.response.LocationSuggestionResponse;
+import com.obar.web.maps.dto.response.RouteEstimateResponse;
+import com.obar.web.maps.dto.response.TripCancellationResponse;
+import com.obar.web.maps.dto.response.TripRequestResponse;
+import com.obar.web.maps.utils.VehicleCategoryCatalog;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -22,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @RestController
 public class MapsApiController {
@@ -43,35 +52,46 @@ public class MapsApiController {
     }
 
     @GetMapping("/api/locations/search")
-    public List<LocationSuggestion> searchLocations(@RequestParam("text") String text) {
+    public List<LocationSuggestionResponse> searchLocations(@RequestParam("text") String text) {
         return mapsServiceClient.autocomplete(text);
     }
 
     @GetMapping("/api/locations/reverse")
-    public LocationSuggestion reverseLocation(
+    public LocationSuggestionResponse reverseLocation(
             @RequestParam("lat") double lat,
             @RequestParam("lng") double lng) {
         return mapsServiceClient.reverseGeocode(lat, lng);
     }
 
     @PostMapping("/api/routes/estimate")
-    public RouteEstimate estimateRoute(@RequestBody RouteEstimateRequest request) {
+    public RouteEstimateResponse estimateRoute(@RequestBody RouteEstimateRequest request) {
         return mapsServiceClient.estimate(request);
     }
 
     @PostMapping("/api/trips/request")
     public TripRequestResponse requestTrip(@RequestBody RouteEstimateRequest request, HttpSession session) {
+        return createTrip(request, session, TripType.IMMEDIATE);
+    }
+
+    @PostMapping("/api/trips/schedule")
+    public TripRequestResponse scheduleTrip(@RequestBody RouteEstimateRequest request, HttpSession session) {
+        return createTrip(request, session, TripType.SCHEDULED);
+    }
+
+    private TripRequestResponse createTrip(RouteEstimateRequest request, HttpSession session, TripType tripType) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         User client = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        if (hasActiveTrip(client.getId())) {
+        if (tripType == TripType.IMMEDIATE && hasActiveTrip(client.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Já tens uma viagem ativa ou à espera de motorista.");
         }
+        LocalDateTime scheduledAt = tripType == TripType.SCHEDULED ? validateScheduledAt(request.scheduledAt()) : null;
 
-        RouteEstimate estimate = mapsServiceClient.estimate(request);
+        String vehicleCategory = VehicleCategoryCatalog.normalize(request.vehicleCategory());
+        RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
 
         Route route = new Route();
         route.setOriginAddress(blankToDefault(request.originAddress(), "Localização atual"));
@@ -87,7 +107,9 @@ public class MapsApiController {
         Trip trip = new Trip();
         trip.setClient(client);
         trip.setRoute(savedRoute);
-        trip.setTripType(TripType.IMMEDIATE);
+        trip.setTripType(tripType);
+        trip.setScheduledTime(scheduledAt);
+        trip.setVehicleCategory(vehicleCategory);
         trip.setEstimatedPrice(estimate.estimatedPrice());
         Trip savedTrip = tripService.requestTrip(trip);
 
@@ -97,6 +119,9 @@ public class MapsApiController {
                 estimate.distanceKm(),
                 estimate.durationMin(),
                 estimate.estimatedPrice(),
+                savedTrip.getVehicleCategory(),
+                savedTrip.getTripType().name(),
+                savedTrip.getScheduledTime(),
                 savedTrip.getStatus().name());
     }
 
@@ -113,7 +138,7 @@ public class MapsApiController {
     }
 
     @PostMapping("/api/trips/{tripId}/cancel")
-    public TripStatusResponse cancelTrip(@PathVariable Integer tripId, HttpSession session) {
+    public TripCancellationResponse cancelTrip(@PathVariable Integer tripId, HttpSession session) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         Trip trip = tripService.findById(tripId)
@@ -129,7 +154,7 @@ public class MapsApiController {
 
         Trip cancelledTrip = tripService.cancelTrip(tripId, "CLIENT",
                 "Cancelado pelo cliente enquanto aguardava motorista.");
-        return new TripStatusResponse(
+        return new TripCancellationResponse(
                 cancelledTrip.getId(),
                 cancelledTrip.getStatus().name(),
                 "Pedido de viagem cancelado.");
@@ -145,9 +170,10 @@ public class MapsApiController {
     }
 
     private boolean isActiveTrip(Trip trip) {
-        return trip.getStatus() == TripStatus.PENDING
-                || trip.getStatus() == TripStatus.ACCEPTED
-                || trip.getStatus() == TripStatus.IN_PROGRESS;
+        return trip.getTripType() == TripType.IMMEDIATE
+                && (trip.getStatus() == TripStatus.PENDING
+                        || trip.getStatus() == TripStatus.ACCEPTED
+                        || trip.getStatus() == TripStatus.IN_PROGRESS);
     }
 
     private ActiveTripResponse toActiveTripResponse(Trip trip) {
@@ -164,6 +190,19 @@ public class MapsApiController {
                 route.getDestinationLongitude(),
                 route.getDistanceKm(),
                 route.getEstimatedDurationMin(),
-                trip.getEstimatedPrice());
+                trip.getEstimatedPrice(),
+                trip.getVehicleCategory());
     }
+
+    private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {
+        if (scheduledAt == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe a data e hora da viagem.");
+        }
+        if (scheduledAt.isBefore(LocalDateTime.now().plusMinutes(15))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A viagem agendada deve ser marcada com pelo menos 15 minutos de antecedência.");
+        }
+        return scheduledAt;
+    }
+
 }

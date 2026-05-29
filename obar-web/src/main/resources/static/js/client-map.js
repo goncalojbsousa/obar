@@ -33,7 +33,10 @@ const elements = {
     locateButton: document.querySelector("[data-locate-button]"),
     destinationInput: document.querySelector("[data-destination-input]"),
     destinationSuggestions: document.querySelector("[data-location-suggestions]"),
+    vehicleCategory: document.querySelector("[data-vehicle-category]"),
+    scheduledAt: document.querySelector("[data-scheduled-at]"),
     requestButton: document.querySelector("[data-request-button]"),
+    scheduleButton: document.querySelector("[data-schedule-button]"),
     estimatePanel: document.querySelector("[data-estimate-panel]"),
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
@@ -46,9 +49,16 @@ const elements = {
 elements.locateButton.addEventListener("click", locateUser);
 elements.originInput.addEventListener("input", (event) => handleLocationInput("origin", event));
 elements.destinationInput.addEventListener("input", (event) => handleLocationInput("destination", event));
+elements.vehicleCategory.addEventListener("change", () => {
+    if (state.origin && state.destination) {
+        estimateRoute();
+    }
+});
 elements.requestButton.addEventListener("click", requestTrip);
+elements.scheduleButton.addEventListener("click", scheduleTrip);
 elements.cancelTripButton.addEventListener("click", cancelTrip);
 
+initializeScheduleInput();
 initializeRide();
 
 async function initializeRide() {
@@ -225,6 +235,32 @@ async function requestTrip() {
     }
 }
 
+async function scheduleTrip() {
+    if (!state.origin || !state.destination || state.tripLocked) {
+        return;
+    }
+
+    if (!elements.scheduledAt.value) {
+        setMessage("Escolhe a data e hora para agendar a viagem.");
+        return;
+    }
+
+    setBusy(true);
+    setMessage("");
+    try {
+        const trip = await fetchJson("/api/trips/schedule", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(buildRouteRequest({ scheduled: true }))
+        });
+        setMessage(`Viagem agendada para ${formatDateTime(trip.scheduledAt)}. Podes continuar a pedir viagens imediatas.`);
+    } catch (error) {
+        setMessage(error.message);
+    } finally {
+        setBusy(false);
+    }
+}
+
 async function cancelTrip() {
     if (!state.activeTripId) {
         return;
@@ -248,15 +284,20 @@ async function cancelTrip() {
     }
 }
 
-function buildRouteRequest() {
-    return {
+function buildRouteRequest(options = {}) {
+    const request = {
         originLat: state.origin.lat,
         originLng: state.origin.lng,
         destinationLat: state.destination.lat,
         destinationLng: state.destination.lng,
         originAddress: state.origin.label,
-        destinationAddress: state.destination.label
+        destinationAddress: state.destination.label,
+        vehicleCategory: elements.vehicleCategory.value
     };
+    if (options.scheduled) {
+        request.scheduledAt = elements.scheduledAt.value;
+    }
+    return request;
 }
 
 function renderEstimate(estimate) {
@@ -268,6 +309,7 @@ function renderEstimate(estimate) {
     elements.price.textContent = formatCurrency(estimate.estimatedPrice);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = false;
+    elements.scheduleButton.disabled = false;
 
     state.routeLayer = buildRouteLayer(estimate.geometry).addTo(map);
     map.fitBounds(state.routeLayer.getBounds(), { padding: [28, 28] });
@@ -288,6 +330,7 @@ async function renderActiveTrip(trip) {
 
     elements.originInput.value = trip.originAddress;
     elements.destinationInput.value = trip.destinationAddress;
+    elements.vehicleCategory.value = trip.vehicleCategory || elements.vehicleCategory.value;
     elements.originStatus.textContent = "Origem da viagem ativa.";
     setMarker("origin", state.origin, "Origem");
     setMarker("destination", state.destination, "Destino");
@@ -381,6 +424,7 @@ function clearRouteEstimate() {
     removeRouteLayer();
     elements.estimatePanel.hidden = true;
     elements.requestButton.disabled = true;
+    elements.scheduleButton.disabled = true;
 }
 
 function removeRouteLayer() {
@@ -392,8 +436,11 @@ function removeRouteLayer() {
 
 function setBusy(isBusy) {
     elements.requestButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
+    elements.scheduleButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
     elements.destinationInput.disabled = isBusy || state.tripLocked;
     elements.originInput.disabled = isBusy || state.tripLocked;
+    elements.vehicleCategory.disabled = isBusy || state.tripLocked;
+    elements.scheduledAt.disabled = isBusy || state.tripLocked;
     elements.locateButton.disabled = isBusy || state.tripLocked;
     elements.cancelTripButton.disabled = isBusy && state.tripLocked;
 }
@@ -403,8 +450,11 @@ function setTripLockedState(status) {
     state.tripLocked = isLocked;
     elements.waitingPanel.hidden = !isLocked;
     elements.requestButton.disabled = isLocked || elements.estimatePanel.hidden;
+    elements.scheduleButton.disabled = isLocked || elements.estimatePanel.hidden;
     elements.destinationInput.disabled = isLocked;
     elements.originInput.disabled = isLocked;
+    elements.vehicleCategory.disabled = isLocked;
+    elements.scheduledAt.disabled = isLocked;
     elements.locateButton.hidden = isLocked || Boolean(state.origin);
     elements.cancelTripButton.hidden = status === "IN_PROGRESS";
     renderSuggestions("origin", []);
@@ -456,4 +506,25 @@ function formatCurrency(value) {
         style: "currency",
         currency: "EUR"
     }).format(value);
+}
+
+function initializeScheduleInput() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 15);
+    elements.scheduledAt.min = toLocalDateTimeValue(now);
+}
+
+function toLocalDateTimeValue(date) {
+    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return offsetDate.toISOString().slice(0, 16);
+}
+
+function formatDateTime(value) {
+    if (!value) {
+        return "";
+    }
+    return new Intl.DateTimeFormat("pt-PT", {
+        dateStyle: "short",
+        timeStyle: "short"
+    }).format(new Date(value));
 }

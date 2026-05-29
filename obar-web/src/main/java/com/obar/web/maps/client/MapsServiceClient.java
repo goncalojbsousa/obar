@@ -1,7 +1,12 @@
-package com.obar.web.maps;
+package com.obar.web.maps.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.obar.web.maps.dto.request.RouteEstimateRequest;
+import com.obar.web.maps.dto.response.LocationSuggestionResponse;
+import com.obar.web.maps.dto.response.RouteEstimateResponse;
+import com.obar.web.maps.utils.VehicleCategoryCatalog;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -23,10 +28,21 @@ import java.util.List;
 @Component
 public class MapsServiceClient {
 
-    private static final BigDecimal BASE_FARE = new BigDecimal("3.50");
-    private static final BigDecimal PRICE_PER_KM = new BigDecimal("0.85");
-    private static final BigDecimal PRICE_PER_MINUTE = new BigDecimal("0.08");
-    private static final BigDecimal MINIMUM_FARE = new BigDecimal("4.50");
+    private static final PriceProfile STANDARD_PRICE = new PriceProfile(
+            new BigDecimal("3.50"),
+            new BigDecimal("0.85"),
+            new BigDecimal("0.08"),
+            new BigDecimal("4.50"));
+    private static final PriceProfile XL_PRICE = new PriceProfile(
+            new BigDecimal("5.00"),
+            new BigDecimal("1.15"),
+            new BigDecimal("0.10"),
+            new BigDecimal("6.50"));
+    private static final PriceProfile PREMIUM_PRICE = new PriceProfile(
+            new BigDecimal("7.50"),
+            new BigDecimal("1.60"),
+            new BigDecimal("0.14"),
+            new BigDecimal("9.00"));
 
     private final String openRouteServiceApiKey;
     private final String openRouteServiceBaseUrl;
@@ -50,7 +66,7 @@ public class MapsServiceClient {
                 .build();
     }
 
-    public List<LocationSuggestion> autocomplete(String text) {
+    public List<LocationSuggestionResponse> autocomplete(String text) {
         if (text == null || text.isBlank()) {
             return List.of();
         }
@@ -66,13 +82,13 @@ public class MapsServiceClient {
         }
     }
 
-    private List<LocationSuggestion> searchWithOpenRouteService(String text) {
+    private List<LocationSuggestionResponse> searchWithOpenRouteService(String text) {
         URI uri = URI.create(openRouteServiceBaseUrl + "/geocode/autocomplete?api_key=" + encode(openRouteServiceApiKey)
                 + "&text=" + encode(text.trim())
                 + "&size=6");
         JsonNode json = sendMapRequest(HttpRequest.newBuilder(uri).GET().build(), "openrouteservice");
 
-        List<LocationSuggestion> suggestions = new ArrayList<>();
+        List<LocationSuggestionResponse> suggestions = new ArrayList<>();
         for (JsonNode feature : json.path("features")) {
             JsonNode coordinates = feature.path("geometry").path("coordinates");
             if (!coordinates.isArray() || coordinates.size() < 2) {
@@ -85,7 +101,7 @@ public class MapsServiceClient {
                 continue;
             }
 
-            suggestions.add(new LocationSuggestion(
+            suggestions.add(new LocationSuggestionResponse(
                     label,
                     coordinates.get(1).asDouble(),
                     coordinates.get(0).asDouble()));
@@ -93,7 +109,7 @@ public class MapsServiceClient {
         return suggestions;
     }
 
-    private List<LocationSuggestion> searchWithNominatim(String text) {
+    private List<LocationSuggestionResponse> searchWithNominatim(String text) {
         URI uri = URI.create(nominatimBaseUrl + "/search?q=" + encode(text.trim())
                 + "&format=jsonv2"
                 + "&addressdetails=1"
@@ -106,7 +122,7 @@ public class MapsServiceClient {
                 .GET()
                 .build(), "Nominatim");
 
-        List<LocationSuggestion> suggestions = new ArrayList<>();
+        List<LocationSuggestionResponse> suggestions = new ArrayList<>();
         if (!json.isArray()) {
             return suggestions;
         }
@@ -117,7 +133,7 @@ public class MapsServiceClient {
                 continue;
             }
 
-            suggestions.add(new LocationSuggestion(
+            suggestions.add(new LocationSuggestionResponse(
                     label,
                     place.path("lat").asDouble(),
                     place.path("lon").asDouble()));
@@ -125,7 +141,7 @@ public class MapsServiceClient {
         return suggestions;
     }
 
-    public LocationSuggestion reverseGeocode(double lat, double lng) {
+    public LocationSuggestionResponse reverseGeocode(double lat, double lng) {
         if (!isLatitude(lat) || !isLongitude(lng)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coordenadas inválidas.");
         }
@@ -146,10 +162,10 @@ public class MapsServiceClient {
             label = "Localização atual";
         }
 
-        return new LocationSuggestion(label, lat, lng);
+        return new LocationSuggestionResponse(label, lat, lng);
     }
 
-    public RouteEstimate estimate(RouteEstimateRequest request) {
+    public RouteEstimateResponse estimate(RouteEstimateRequest request) {
         validateCoordinates(request);
 
         if (openRouteServiceApiKey.isBlank()) {
@@ -163,7 +179,7 @@ public class MapsServiceClient {
         }
     }
 
-    private RouteEstimate estimateWithOpenRouteService(RouteEstimateRequest request) {
+    private RouteEstimateResponse estimateWithOpenRouteService(RouteEstimateRequest request) {
         String body;
         try {
             body = objectMapper.writeValueAsString(new DirectionsRequest(
@@ -197,16 +213,16 @@ public class MapsServiceClient {
         JsonNode summary = feature.path("properties").path("summary");
         double distanceKm = summary.path("distance").asDouble(0) / 1000.0;
         int durationMin = Math.max(1, (int) Math.ceil(summary.path("duration").asDouble(0) / 60.0));
-        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin);
+        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin, request.vehicleCategory());
 
-        return new RouteEstimate(
+        return new RouteEstimateResponse(
                 round(distanceKm, 2),
                 durationMin,
                 estimatedPrice,
                 toPlainJson(feature.path("geometry")));
     }
 
-    private RouteEstimate estimateWithOsrm(RouteEstimateRequest request) {
+    private RouteEstimateResponse estimateWithOsrm(RouteEstimateRequest request) {
         URI uri = URI.create(osrmBaseUrl + "/route/v1/driving/"
                 + request.originLng() + "," + request.originLat()
                 + ";"
@@ -225,9 +241,9 @@ public class MapsServiceClient {
 
         double distanceKm = route.path("distance").asDouble(0) / 1000.0;
         int durationMin = Math.max(1, (int) Math.ceil(route.path("duration").asDouble(0) / 60.0));
-        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin);
+        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin, request.vehicleCategory());
 
-        return new RouteEstimate(
+        return new RouteEstimateResponse(
                 round(distanceKm, 2),
                 durationMin,
                 estimatedPrice,
@@ -274,11 +290,20 @@ public class MapsServiceClient {
         return value >= -180 && value <= 180;
     }
 
-    private BigDecimal estimatePrice(double distanceKm, int durationMin) {
-        BigDecimal price = BASE_FARE
-                .add(BigDecimal.valueOf(distanceKm).multiply(PRICE_PER_KM))
-                .add(BigDecimal.valueOf(durationMin).multiply(PRICE_PER_MINUTE));
-        return price.max(MINIMUM_FARE).setScale(2, RoundingMode.HALF_UP);
+    private BigDecimal estimatePrice(double distanceKm, int durationMin, String vehicleCategory) {
+        PriceProfile profile = priceProfile(vehicleCategory);
+        BigDecimal price = profile.baseFare()
+                .add(BigDecimal.valueOf(distanceKm).multiply(profile.pricePerKm()))
+                .add(BigDecimal.valueOf(durationMin).multiply(profile.pricePerMinute()));
+        return price.max(profile.minimumFare()).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private PriceProfile priceProfile(String vehicleCategory) {
+        return switch (VehicleCategoryCatalog.normalize(vehicleCategory)) {
+            case "XL" -> XL_PRICE;
+            case "PREMIUM" -> PREMIUM_PRICE;
+            default -> STANDARD_PRICE;
+        };
     }
 
     private Object toPlainJson(JsonNode node) {
@@ -303,5 +328,12 @@ public class MapsServiceClient {
     }
 
     private record DirectionsRequest(List<List<Double>> coordinates) {
+    }
+
+    private record PriceProfile(
+            BigDecimal baseFare,
+            BigDecimal pricePerKm,
+            BigDecimal pricePerMinute,
+            BigDecimal minimumFare) {
     }
 }

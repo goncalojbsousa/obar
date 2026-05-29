@@ -33,12 +33,18 @@ public class Trip {
     @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
+    @Column(name = "vehicle_category", nullable = false)
+    private String vehicleCategory = "STANDARD";
+
     @ManyToOne
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
     @Column(name = "request_time", nullable = false)
     private LocalDateTime requestTime = LocalDateTime.now();
+
+    @Column(name = "scheduled_time")
+    private LocalDateTime scheduledTime;
 
     @Column(name = "start_time")
     private LocalDateTime startTime;

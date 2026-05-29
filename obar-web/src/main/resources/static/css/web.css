@@ -372,19 +372,25 @@ button:disabled {
 }
 
 .client-page .search-field:first-of-type::before {
-    background: var(--brand);
-}
-
-.client-page .search-field:last-of-type::before {
     background: #22c55e;
 }
 
+.client-page .search-field:nth-of-type(2)::before {
+    background: var(--brand);
+}
+
+.client-page .vehicle-category-field::before {
+    background: #f5f5f6;
+}
+
 .client-page .search-field input,
+.client-page .search-field select,
 .client-page .field-note {
     margin-left: 22px;
 }
 
-.client-page input {
+.client-page input,
+.client-page select {
     background: transparent;
     border: 0;
     border-radius: 0;
@@ -393,17 +399,35 @@ button:disabled {
     padding: 0;
 }
 
-.client-page input:focus {
+.client-page input:focus,
+.client-page select:focus {
     box-shadow: none;
 }
 
-.client-page input:disabled {
+.client-page input:disabled,
+.client-page select:disabled {
     background: transparent;
     color: #b7b7bf;
 }
 
+.client-page select {
+    appearance: none;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+}
+
+.client-page select option {
+    background: #202027;
+    color: #f5f5f6;
+}
+
 .client-page input::placeholder {
     color: #696974;
+}
+
+.client-page input[type="datetime-local"] {
+    color-scheme: dark;
 }
 
 .client-page .field-note {
@@ -526,6 +550,10 @@ button:disabled {
     line-height: 1;
 }
 
+.client-page .estimate-panel .ghost-button {
+    width: 100%;
+}
+
 .client-page .primary-button {
     border-radius: 9px;
     min-height: 48px;
@@ -625,6 +653,90 @@ button:disabled {
     background: #17251d;
     border-color: #285f3a;
     color: #86efac;
+}
+
+.scheduled-page {
+    height: auto;
+    overflow: auto;
+}
+
+.scheduled-shell {
+    display: block;
+    min-height: calc(100vh - 78px);
+}
+
+.scheduled-trips {
+    margin: 0 auto;
+    max-width: 1040px;
+    padding: 34px 22px;
+}
+
+.scheduled-header {
+    align-items: center;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.scheduled-header h1 {
+    color: #f5f5f6;
+    font-size: 1.5rem;
+    margin: 0 0 6px;
+}
+
+.inline-action {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-width: 140px;
+    text-decoration: none;
+}
+
+.scheduled-list {
+    display: grid;
+    gap: 12px;
+}
+
+.scheduled-trip-card,
+.empty-state {
+    background: #1b1b20;
+    border: 1px solid #2b2b33;
+    border-radius: 8px;
+    color: #f5f5f6;
+    padding: 18px;
+}
+
+.scheduled-trip-card {
+    display: grid;
+    gap: 14px;
+}
+
+.scheduled-trip-card strong,
+.empty-state strong {
+    color: #f5f5f6;
+}
+
+.scheduled-trip-card p,
+.empty-state p {
+    color: #8c8c96;
+    margin: 6px 0 0;
+}
+
+.scheduled-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scheduled-meta span {
+    background: #25252c;
+    border: 1px solid #34343b;
+    border-radius: 999px;
+    color: #f5f5f6;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 6px 10px;
 }
 
 .map-panel,

@@ -1,4 +1,4 @@
-package com.obar.web.maps;
+package com.obar.web.maps.dto.response;
 
 import java.math.BigDecimal;
 
@@ -14,5 +14,6 @@ public record ActiveTripResponse(
         double destinationLng,
         double distanceKm,
         int durationMin,
-        BigDecimal estimatedPrice) {
+        BigDecimal estimatedPrice,
+        String vehicleCategory) {
 }

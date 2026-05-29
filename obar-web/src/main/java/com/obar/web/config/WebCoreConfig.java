@@ -4,6 +4,7 @@ import com.obar.bll.CoreLifecycleService;
 import com.obar.bll.RouteService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
+import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthService;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,6 +33,11 @@ public class WebCoreConfig {
     @Bean
     public UserService userService() {
         return new UserService();
+    }
+
+    @Bean
+    public VehicleService vehicleService() {
+        return new VehicleService();
     }
 
     @Bean

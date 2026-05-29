@@ -5,13 +5,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cliente | Obar</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY=" crossorigin="">
     <link rel="stylesheet" th:href="@{/css/web.css}">
 </head>
 
-<body>
+<body class="client-page">
     <header class="topbar">
         <a class="brand" th:href="@{/app}">Obar</a>
+        <nav class="client-nav" aria-label="Navegação do cliente">
+            <a class="active" th:href="@{/app}">Nova Viagem</a>
+            <a th:href="@{/app/scheduled}">Agendadas</a>
+            <a href="#" aria-disabled="true">Pagamentos</a>
+        </nav>
         <div class="user-area">
+            <span class="user-avatar" aria-hidden="true"
+                th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
             <span th:text="${currentUser.name()}">Cliente</span>
             <form th:action="@{/logout}" method="post">
                 <button class="ghost-button" type="submit">Sair</button>
@@ -20,21 +29,84 @@
     </header>
 
     <main class="client-shell">
-        <section class="summary-grid" aria-label="Resumo da conta">
-            <article>
-                <span>Email</span>
-                <strong th:text="${currentUser.email()}">cliente@obar.test</strong>
-            </article>
-            <article>
-                <span>Estado</span>
-                <strong th:text="${currentUser.status()}">ACTIVE</strong>
-            </article>
-            <article>
-                <span>Perfil</span>
-                <strong th:text="${currentUser.type()}">CLIENT</strong>
-            </article>
+        <section class="ride-request" aria-label="Pedir viagem">
+            <div class="ride-sidebar">
+                <div>
+                    <h1>Solicitar Viagem</h1>
+                    <p class="muted">Para onde vais hoje?</p>
+                </div>
+
+                <div class="ride-form">
+                    <label class="search-field">
+                        Origem
+                        <input type="search" autocomplete="off" placeholder="A obter localização atual..."
+                            data-origin-input>
+                        <div class="suggestions-list" data-origin-suggestions hidden></div>
+                        <span class="field-note" data-origin-status>Localização ainda não definida.</span>
+                    </label>
+
+                    <button class="ghost-button" type="button" data-locate-button hidden>Usar localização atual</button>
+
+                    <label class="search-field">
+                        Destino
+                        <input type="search" autocomplete="off" placeholder="Rua, cidade ou ponto de interesse"
+                            data-destination-input>
+                        <div class="suggestions-list" data-location-suggestions hidden></div>
+                    </label>
+
+                    <label class="search-field vehicle-category-field">
+                        Tipo de veículo
+                        <select data-vehicle-category>
+                            <option th:each="category : ${vehicleCategories}" th:value="${category}"
+                                th:text="${category}">STANDARD</option>
+                        </select>
+                    </label>
+
+                    <label class="search-field schedule-field">
+                        Agendar para
+                        <input type="datetime-local" data-scheduled-at>
+                    </label>
+                </div>
+
+                <div class="estimate-panel" data-estimate-panel hidden>
+                    <div>
+                        <span>Distância</span>
+                        <strong data-distance>0 km</strong>
+                    </div>
+                    <div>
+                        <span>Duração</span>
+                        <strong data-duration>0 min</strong>
+                    </div>
+                    <div>
+                        <span>Preço</span>
+                        <strong data-price>0,00 €</strong>
+                    </div>
+                    <button class="primary-button" type="button" data-request-button disabled>Pedir viagem</button>
+                    <button class="ghost-button" type="button" data-schedule-button disabled>Agendar viagem</button>
+                </div>
+
+                <div class="waiting-panel" data-waiting-panel hidden>
+                    <div class="waiting-indicator" aria-hidden="true"></div>
+                    <div>
+                        <span class="field-title">Pedido enviado</span>
+                        <strong data-waiting-title>À espera de motorista</strong>
+                        <p>A procurar um motorista disponível para aceitar a viagem.</p>
+                    </div>
+                    <button class="ghost-button danger-button" type="button" data-cancel-trip-button>Cancelar
+                        pedido</button>
+                </div>
+
+                <p class="ride-message" data-ride-message hidden></p>
+            </div>
+
+            <div class="map-panel">
+                <div id="ride-map"></div>
+            </div>
         </section>
     </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script th:src="@{/js/client-map.js}"></script>
 </body>
 
 </html>

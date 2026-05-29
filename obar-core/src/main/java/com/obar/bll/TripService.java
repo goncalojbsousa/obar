@@ -2,9 +2,11 @@ package com.obar.bll;
 
 import com.obar.dal.TripRepository;
 import com.obar.dal.TripDriverRepository;
+import com.obar.dal.VehicleRepository;
 import com.obar.model.Trip;
 import com.obar.model.TripDriver;
 import com.obar.model.User;
+import com.obar.model.Vehicle;
 import com.obar.model.enums.TripDriverStatus;
 import com.obar.model.enums.TripStatus;
 
@@ -16,6 +18,7 @@ public class TripService {
 
     private final TripRepository tripRepository = new TripRepository();
     private final TripDriverRepository tripDriverRepository = new TripDriverRepository();
+    private final VehicleRepository vehicleRepository = new VehicleRepository();
 
     public Trip requestTrip(Trip trip) {
         trip.setStatus(TripStatus.PENDING);
@@ -31,7 +34,11 @@ public class TripService {
             throw new IllegalStateException("Viagem não está disponível para aceitar.");
         }
 
+        Vehicle vehicle = vehicleRepository.findActiveByDriverIdAndCategory(driver.getId(), trip.getVehicleCategory())
+                .orElseThrow(() -> new IllegalStateException("Motorista não tem veículo ativo da categoria pedida."));
+
         trip.setDriver(driver);
+        trip.setVehicle(vehicle);
         trip.setStatus(TripStatus.ACCEPTED);
         return tripRepository.update(trip);
     }
@@ -80,12 +87,26 @@ public class TripService {
         return tripRepository.findByClientId(clientId);
     }
 
+    public List<Trip> findScheduledByClient(Integer clientId) {
+        return tripRepository.findScheduledByClientId(clientId);
+    }
+
     public List<Trip> findByDriver(Integer driverId) {
         return tripRepository.findByDriverId(driverId);
     }
 
     public List<Trip> findPending() {
         return tripRepository.findByStatus(TripStatus.PENDING);
+    }
+
+    public List<Trip> findPendingForDriver(Integer driverId) {
+        List<String> categories = vehicleRepository.findByDriverId(driverId).stream()
+                .map(Vehicle::getCategory)
+                .filter(category -> category != null && !category.isBlank())
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
+        return tripRepository.findPendingByVehicleCategories(categories);
     }
 
     public Optional<Trip> findById(Integer id) {

@@ -1,6 +1,10 @@
 package com.obar.web.config;
 
 import com.obar.bll.CoreLifecycleService;
+import com.obar.bll.RouteService;
+import com.obar.bll.TripService;
+import com.obar.bll.UserService;
+import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthService;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -14,6 +18,26 @@ public class WebCoreConfig {
     @Bean
     public AuthService authService() {
         return new AuthService();
+    }
+
+    @Bean
+    public RouteService routeService() {
+        return new RouteService();
+    }
+
+    @Bean
+    public TripService tripService() {
+        return new TripService();
+    }
+
+    @Bean
+    public UserService userService() {
+        return new UserService();
+    }
+
+    @Bean
+    public VehicleService vehicleService() {
+        return new VehicleService();
     }
 
     @Bean

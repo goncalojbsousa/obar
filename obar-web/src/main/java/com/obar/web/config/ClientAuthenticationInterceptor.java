@@ -16,6 +16,11 @@ public class ClientAuthenticationInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        if (request.getRequestURI().startsWith(request.getContextPath() + "/api/")) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+
         response.sendRedirect(request.getContextPath() + "/login");
         return false;
     }

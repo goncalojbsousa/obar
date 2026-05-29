@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | Obar</title>
+    <link rel="stylesheet" th:href="@{/css/web.css}">
+</head>
+
+<body class="auth-page">
+    <main class="auth-shell">
+        <section class="auth-panel">
+            <a class="brand" th:href="@{/login}">Obar</a>
+            <h1>Entra na tua conta</h1>
+            <p class="muted">Pede viagens, acompanha pedidos e gere os teus dados de cliente.</p>
+
+            <p class="alert success" th:if="${param.logout}">Sessão terminada.</p>
+            <p class="alert" th:if="${error}" th:text="${error}"></p>
+
+            <form class="form-stack" th:action="@{/login}" th:object="${loginForm}" method="post">
+                <label>
+                    Email
+                    <input type="email" th:field="*{email}" autocomplete="email" required autofocus>
+                </label>
+
+                <label>
+                    Palavra-passe
+                    <input type="password" th:field="*{password}" autocomplete="current-password" required>
+                </label>
+
+                <button class="primary-button" type="submit">Entrar</button>
+            </form>
+
+            <p class="switch-link">Ainda nao tens conta? <a th:href="@{/register}">Criar conta cliente</a></p>
+        </section>
+    </main>
+</body>
+
+</html>

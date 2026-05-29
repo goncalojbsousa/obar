@@ -133,7 +133,7 @@
 .login-title {
     -fx-text-fill: #eff2f8;
     -fx-font-size: 36px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
 }
 
 .login-subtitle {
@@ -174,7 +174,7 @@
     -fx-background-color: linear-gradient(to right, #ff6a2f, #ff5317);
     -fx-text-fill: #fff6f1;
     -fx-font-size: 16px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
     -fx-background-radius: 8;
     -fx-padding: 12 16;
 }

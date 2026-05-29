@@ -60,7 +60,7 @@ public class LoginController {
             if (authenticatedUser.type() == UserType.ADMIN) {
                 NavigationManager.navigateToAdmin();
             } else {
-                NavigationManager.navigateToDashboard();
+                NavigationManager.navigateToLogin();
             }
         } catch (AuthenticationException exception) {
             errorLabel.setText(exception.getMessage());

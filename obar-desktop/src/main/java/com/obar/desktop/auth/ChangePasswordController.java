@@ -67,7 +67,7 @@ public class ChangePasswordController {
                     SessionManager.getCurrentUser().id(),
                     currentPasswordField.getText(),
                     newPassword);
-            NavigationManager.navigateToDashboard();
+            NavigationManager.navigateToAdmin();
         } catch (AuthenticationException exception) {
             messageLabel.setText(exception.getMessage());
             messageLabel.setVisible(true);
@@ -82,6 +82,6 @@ public class ChangePasswordController {
      */
     @FXML
     public void handleCancel() {
-        NavigationManager.navigateToDashboard();
+        NavigationManager.navigateToAdmin();
     }
 }

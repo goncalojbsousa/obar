@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Criar conta | Obar</title>
+    <link rel="stylesheet" th:href="@{/css/web.css}">
+</head>
+
+<body class="auth-page">
+    <main class="auth-shell">
+        <section class="auth-panel wide">
+            <a class="brand" th:href="@{/login}">Obar</a>
+            <h1>Criar conta cliente</h1>
+            <p class="muted">Cria uma conta cliente para pedir viagens pela web.</p>
+
+            <p class="alert" th:if="${error}" th:text="${error}"></p>
+
+            <form class="form-stack" th:action="@{/register}" th:object="${registerForm}" method="post">
+                <div class="two-columns">
+                    <label>
+                        Nome
+                        <input type="text" th:field="*{name}" autocomplete="name" required autofocus>
+                    </label>
+
+                    <label>
+                        Email
+                        <input type="email" th:field="*{email}" autocomplete="email" required>
+                    </label>
+                </div>
+
+                <div class="two-columns">
+                    <label>
+                        Telefone
+                        <input type="tel" th:field="*{phone}" autocomplete="tel">
+                    </label>
+
+                    <label>
+                        NIF
+                        <input type="text" th:field="*{taxNumber}" inputmode="numeric">
+                    </label>
+                </div>
+
+                <div class="two-columns">
+                    <label>
+                        Palavra-passe
+                        <input type="password" th:field="*{password}" autocomplete="new-password" required>
+                    </label>
+
+                    <label>
+                        Confirmar palavra-passe
+                        <input type="password" th:field="*{confirmPassword}" autocomplete="new-password" required>
+                    </label>
+                </div>
+
+                <button class="primary-button" type="submit">Criar conta</button>
+            </form>
+
+            <p class="switch-link">Ja tens conta? <a th:href="@{/login}">Entrar</a></p>
+        </section>
+    </main>
+</body>
+
+</html>

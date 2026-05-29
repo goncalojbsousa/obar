@@ -37,7 +37,7 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
     @Override
     public Optional<T> findById(ID id) {
         try (Session session = getSession()) {
-            return Optional.ofNullable(session.get(entityClass, id));
+            return Optional.ofNullable(session.find(entityClass, id));
         }
     }
 

@@ -1,6 +1,7 @@
 package com.obar.dal;
 
 import com.obar.model.User;
+import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.UserType;
 import org.hibernate.Session;
 
@@ -34,7 +35,19 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public List<User> findAvailableDrivers() {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.type = 'DRIVER' AND u.available = true", User.class)
+                            "FROM User u WHERE u.type = :type AND u.available = true", User.class)
+                    .setParameter("type", UserType.DRIVER)
+                    .list();
+        }
+    }
+
+    public List<User> findPendingDrivers() {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                            "FROM User u WHERE u.type = :type AND u.status = :status ORDER BY u.createdAt ASC",
+                            User.class)
+                    .setParameter("type", UserType.DRIVER)
+                    .setParameter("status", AccountStatus.PENDING)
                     .list();
         }
     }

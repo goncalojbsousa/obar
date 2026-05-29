@@ -88,7 +88,7 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-padding: 10 14;
-    -fx-max-width: 1.7976931348623157E308;
+    -fx-max-width: 1000000;
 }
 
 .sidebar-user-avatar {
@@ -115,13 +115,29 @@
     -fx-font-size: 10px;
 }
 
+.sidebar-user-card:hover {
+    -fx-background-color: #1a1a1e;
+    -fx-border-color: #3a3a3e;
+    -fx-cursor: hand;
+}
+
+.sidebar-logout-icon {
+    -fx-text-fill: #55607a;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.sidebar-user-card:hover .sidebar-logout-icon {
+    -fx-text-fill: #ff7a4b;
+}
+
 .admin-content {
     -fx-background-color: #09090B;
 }
 
 .admin-content .title-2 {
     -fx-font-size: 24px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
     -fx-text-fill: #f6f9ff;
 }
 
@@ -271,16 +287,61 @@
     -fx-text-fill: #ff8f8f;
 }
 
+.users-table .table-cell.payment-processed {
+    -fx-text-fill: #56e39a;
+}
+
+.users-table .table-cell.payment-pending {
+    -fx-text-fill: #ffd379;
+}
+
+.users-table .table-cell.payment-failed {
+    -fx-text-fill: #ff8f8f;
+}
+
+.users-table .table-cell.payment-refunded {
+    -fx-text-fill: #7fb6ff;
+}
+
 .detail-panel {
     -fx-background-color: #111113;
     -fx-border-color: #232326;
     -fx-border-width: 0 0 0 1;
 }
 
+.admin-content .detail-panel {
+    -fx-background-color: #111113;
+    -fx-min-width: 320;
+    -fx-pref-width: 320;
+    -fx-max-width: 320;
+    -fx-padding: 18 14 18 18;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+}
+
 .detail-title {
     -fx-text-fill: #f2f6ff;
     -fx-font-size: 16px;
     -fx-font-weight: 700;
+}
+
+.detail-close {
+    -fx-background-color: #12141a;
+    -fx-text-fill: #a2adc3;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-border-color: #2a3040;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-padding: 0;
+}
+
+.detail-close:hover {
+    -fx-background-color: #191d27;
+    -fx-text-fill: #e4eaf8;
 }
 
 .detail-avatar {
@@ -321,11 +382,11 @@
 }
 
 .metric-card {
-    -fx-background-color: #111113;
-    -fx-border-color: #232326;
+    -fx-background-color: #10131a;
+    -fx-border-color: #232a36;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
-    -fx-padding: 10;
+    -fx-padding: 10 10 9 10;
 }
 
 .metric-value {
@@ -340,7 +401,7 @@
 }
 
 .meta-title {
-    -fx-text-fill: #68738d;
+    -fx-text-fill: #667389;
     -fx-font-size: 10px;
     -fx-font-weight: 700;
 }
@@ -348,6 +409,60 @@
 .meta-value {
     -fx-text-fill: #d4deef;
     -fx-font-size: 13px;
+}
+
+.detail-actions {
+    -fx-padding: 12 0 0 0;
+}
+
+.detail-action,
+.detail-action-danger {
+    -fx-pref-height: 38;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.detail-action {
+    -fx-background-color: #16191f;
+    -fx-border-color: #2a2f3e;
+    -fx-text-fill: #c8d4ec;
+}
+
+.detail-action:hover {
+    -fx-background-color: rgba(255, 106, 47, 0.10);
+    -fx-border-color: rgba(255, 106, 47, 0.35);
+    -fx-text-fill: #ff9565;
+}
+
+.detail-action-danger {
+    -fx-background-color: rgba(141, 30, 30, 0.22);
+    -fx-border-color: rgba(184, 50, 50, 0.40);
+    -fx-text-fill: #ff8f8f;
+}
+
+.detail-action-danger:hover {
+    -fx-background-color: rgba(184, 42, 42, 0.36);
+    -fx-border-color: rgba(220, 60, 60, 0.55);
+    -fx-text-fill: #ffaaaa;
+}
+
+/* Approve button inside detail panel — slightly taller */
+.detail-actions .approve-button {
+    -fx-pref-height: 38;
+    -fx-font-size: 12px;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-background-color: rgba(33, 170, 93, 0.20);
+    -fx-border-color: rgba(33, 170, 93, 0.45);
+    -fx-text-fill: #3fe68a;
+}
+
+.detail-actions .approve-button:hover {
+    -fx-background-color: rgba(33, 170, 93, 0.32);
+    -fx-border-color: rgba(33, 170, 93, 0.65);
 }
 
 .feedback-success {
@@ -362,6 +477,8 @@
 
 .modal-overlay {
     -fx-background-color: rgba(2, 5, 10, 0.72);
+    -fx-alignment: center;
+    -fx-padding: 28 44 28 44;
 }
 
 .modal-card {
@@ -369,6 +486,9 @@
     -fx-border-color: #232326;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
+    -fx-padding: 18 20 18 20;
+    -fx-pref-width: 820;
+    -fx-max-width: 820;
 }
 
 .modal-card .label {
@@ -385,10 +505,14 @@
     -fx-pref-height: 40;
 }
 
+.modal-card .check-box {
+    -fx-text-fill: #dbe3f4;
+}
+
 .modal-title {
     -fx-text-fill: #f6f9ff;
     -fx-font-size: 20px;
-    -fx-font-weight: 750;
+    -fx-font-weight: 700;
 }
 
 .modal-card .text-field,
@@ -418,5 +542,286 @@
     -fx-background-color: rgba(184, 34, 34, 0.26);
     -fx-text-fill: #ff9a9a;
     -fx-border-color: rgba(184, 34, 34, 0.45);
+}
+
+.period-chip,
+.period-chip-active {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 6 12;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+
+.period-chip {
+    -fx-background-color: #111113;
+    -fx-text-fill: #808aa0;
+    -fx-border-color: #232326;
+}
+
+.period-chip-active {
+    -fx-background-color: rgba(255, 106, 47, 0.23);
+    -fx-text-fill: #ff8b5e;
+    -fx-border-color: rgba(255, 106, 47, 0.5);
+}
+
+.financial-hero-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 14 18;
+}
+
+.financial-hero-caption {
+    -fx-text-fill: #76819a;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-hero-value {
+    -fx-text-fill: #f6f9ff;
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+}
+
+.financial-positive-trend {
+    -fx-text-fill: #4cdc8e;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.financial-side-metric {
+    -fx-padding: 0 12 0 12;
+    -fx-border-color: transparent transparent transparent #232326;
+    -fx-border-width: 0 0 0 1;
+}
+
+.financial-side-label {
+    -fx-text-fill: #6c768d;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.financial-side-value,
+.financial-side-value-positive,
+.financial-side-value-warning {
+    -fx-font-size: 17px;
+    -fx-font-weight: 800;
+}
+
+.financial-side-value {
+    -fx-text-fill: #f0f4ff;
+}
+
+.financial-side-value-positive {
+    -fx-text-fill: #2ad178;
+}
+
+.financial-side-value-warning {
+    -fx-text-fill: #ff7d45;
+}
+
+.financial-mini-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 9 12;
+}
+
+.financial-mini-title {
+    -fx-text-fill: #7b859e;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+}
+
+.financial-mini-value {
+    -fx-text-fill: #f2f6ff;
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+}
+
+.financial-mini-note {
+    -fx-text-fill: #2fd985;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.financial-chart-card,
+.financial-methods-card {
+    -fx-background-color: #111113;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 10 12;
+}
+
+.financial-chart-title {
+    -fx-text-fill: #eef3ff;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+.financial-bar-column {
+    -fx-min-width: 14;
+    -fx-max-width: 30;
+}
+
+.financial-bar {
+    -fx-background-color: linear-gradient(to top, #8f3617, #c35422);
+    -fx-background-radius: 4;
+}
+
+.financial-bar-medium {
+    -fx-background-color: linear-gradient(to top, #c64f1d, #ea6528);
+}
+
+.financial-bar-strong {
+    -fx-background-color: linear-gradient(to top, #ea6223, #ff762f);
+}
+
+.financial-bar-label {
+    -fx-text-fill: #55607a;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-max-width: 38;
+}
+
+.financial-bar-value {
+    -fx-text-fill: #d3ddf4;
+    -fx-font-size: 8px;
+    -fx-font-weight: 700;
+    -fx-max-width: 38;
+}
+
+.financial-empty-state {
+    -fx-text-fill: #6f7990;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-method-name {
+    -fx-text-fill: #a4aec3;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.financial-method-percent {
+    -fx-text-fill: #f2f6ff;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.method-dot {
+    -fx-min-width: 8;
+    -fx-min-height: 8;
+    -fx-max-width: 8;
+    -fx-max-height: 8;
+    -fx-background-radius: 8;
+}
+
+.method-dot-one {
+    -fx-background-color: #ff6f2b;
+}
+
+.method-dot-two {
+    -fx-background-color: #2e9fff;
+}
+
+.method-dot-three {
+    -fx-background-color: #a17bff;
+}
+
+.method-dot-four {
+    -fx-background-color: #6a748f;
+}
+
+.financial-table-title {
+    -fx-text-fill: #eef3ff;
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-padding: 4 0 0 2;
+}
+
+/* ─── Botão de aprovação ──────────────────────────────────── */
+.approve-button {
+    -fx-background-color: rgba(33, 170, 93, 0.22);
+    -fx-text-fill: #3fe68a;
+    -fx-border-color: rgba(33, 170, 93, 0.5);
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-font-weight: 700;
+}
+
+.approve-button:hover {
+    -fx-background-color: rgba(33, 170, 93, 0.34);
+}
+
+/* ─── Sidebar — botão Aprovações ─────────────────────────── */
+.pending-sidebar-item {
+    -fx-background-color: rgba(255, 186, 0, 0.08);
+    -fx-text-fill: #d4a800;
+    -fx-font-weight: 600;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-border-color: rgba(255, 186, 0, 0.22);
+    -fx-border-radius: 10;
+}
+
+.pending-sidebar-item:hover,
+.pending-sidebar-item-active:hover {
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+}
+
+.pending-sidebar-item-active {
+    -fx-background-color: rgba(255, 186, 0, 0.24);
+    -fx-text-fill: #ffc107;
+    -fx-font-weight: 700;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-border-color: rgba(255, 186, 0, 0.5);
+    -fx-border-radius: 10;
+}
+
+/* ─── Banner de aviso na secção de pendentes ─────────────── */
+.pending-banner {
+    -fx-background-color: rgba(255, 186, 0, 0.09);
+    -fx-border-color: rgba(255, 186, 0, 0.30);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.pending-banner-icon {
+    -fx-text-fill: #f5c500;
+    -fx-font-size: 16px;
+}
+
+.pending-banner-text {
+    -fx-text-fill: #c9a600;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+/* ─── Pill de estado pendente no detalhe ─────────────────── */
+.pending-pill {
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+    -fx-text-fill: #ffc107;
+}
+
+.note-field {
+    -fx-background-color: #18181b;
+    -fx-border-color: #2a2a2e;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1e0;
+    -fx-prompt-text-fill: #45505e;
+    -fx-font-size: 12px;
+}
+
+.note-field:focused {
+    -fx-border-color: #e8642a;
 }
 

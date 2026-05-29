@@ -24,6 +24,7 @@ public final class AdminUserDTO {
     private final String taxNumber;
     private final Integer defaultPaymentMethodId;
     private final LocalDateTime createdAt;
+    private final String approvalNote;
 
     private AdminUserDTO(
             Integer id,
@@ -38,7 +39,8 @@ public final class AdminUserDTO {
             String licenseNumber,
             String taxNumber,
             Integer defaultPaymentMethodId,
-            LocalDateTime createdAt) {
+            LocalDateTime createdAt,
+            String approvalNote) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -52,6 +54,7 @@ public final class AdminUserDTO {
         this.taxNumber = taxNumber;
         this.defaultPaymentMethodId = defaultPaymentMethodId;
         this.createdAt = createdAt;
+        this.approvalNote = approvalNote;
     }
 
     public static AdminUserDTO from(User user) {
@@ -72,7 +75,8 @@ public final class AdminUserDTO {
                 user.getLicenseNumber(),
                 user.getTaxNumber(),
                 user.getDefaultPaymentMethodId(),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                user.getApprovalNote());
     }
 
     public Integer getId() {
@@ -125,5 +129,9 @@ public final class AdminUserDTO {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getApprovalNote() {
+        return approvalNote;
     }
 }

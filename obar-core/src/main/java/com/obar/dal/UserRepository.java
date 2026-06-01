@@ -17,7 +17,7 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public Optional<User> findByEmail(String email) {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.email = :email", User.class)
+                    "FROM User u WHERE u.email = :email", User.class)
                     .setParameter("email", email)
                     .uniqueResultOptional();
         }
@@ -26,7 +26,7 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public List<User> findByType(UserType type) {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.type = :type", User.class)
+                    "FROM User u WHERE u.type = :type", User.class)
                     .setParameter("type", type)
                     .list();
         }
@@ -35,8 +35,29 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public List<User> findAvailableDrivers() {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.type = :type AND u.available = true", User.class)
+                    "FROM User u WHERE u.type = :type AND u.available = true", User.class)
                     .setParameter("type", UserType.DRIVER)
+                    .list();
+        }
+    }
+
+    public List<User> findAvailableDriversByVehicleCategoryWithCurrentLocation(String vehicleCategory) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "SELECT DISTINCT u "
+                            + "FROM Vehicle v "
+                            + "JOIN v.driver u "
+                            + "WHERE u.type = :type "
+                            + "AND u.status = :status "
+                            + "AND u.available = true "
+                            + "AND u.currentLatitude IS NOT NULL "
+                            + "AND u.currentLongitude IS NOT NULL "
+                            + "AND v.active = true "
+                            + "AND upper(v.category) = upper(:vehicleCategory)",
+                    User.class)
+                    .setParameter("type", UserType.DRIVER)
+                    .setParameter("status", AccountStatus.ACTIVE)
+                    .setParameter("vehicleCategory", vehicleCategory)
                     .list();
         }
     }
@@ -44,8 +65,8 @@ public class UserRepository extends BaseRepository<User, Integer> {
     public List<User> findPendingDrivers() {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "FROM User u WHERE u.type = :type AND u.status = :status ORDER BY u.createdAt ASC",
-                            User.class)
+                    "FROM User u WHERE u.type = :type AND u.status = :status ORDER BY u.createdAt ASC",
+                    User.class)
                     .setParameter("type", UserType.DRIVER)
                     .setParameter("status", AccountStatus.PENDING)
                     .list();

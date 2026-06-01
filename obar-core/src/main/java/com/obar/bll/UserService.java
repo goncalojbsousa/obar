@@ -57,4 +57,8 @@ public class UserService {
             userRepository.update(u);
         });
     }
+
+    public List<User> findOnlineDriversWithCurrentLocation() {
+        return userRepository.findOnlineDriversWithCurrentLocation();
+    }
 }

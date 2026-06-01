@@ -147,6 +147,14 @@ public class TripService {
 
     public Optional<Trip> findById(Integer id) {
         return tripRepository.findById(id);
+    }I
+
+    public List<Trip> findActiveImmediateTripsWithRoute() {
+        return tripRepository.findActiveImmediateTripsWithRoute();
+    }
+
+    public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId) {
+        return tripDriverRepository.findCurrentAssignmentForDriver(driverId);
     }
 
     public Optional<TripDriver> dispatchTripToNextBestAvailableDriver(Trip trip) {

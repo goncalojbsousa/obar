@@ -62,6 +62,23 @@ public class UserRepository extends BaseRepository<User, Integer> {
         }
     }
 
+    public List<User> findOnlineDriversWithCurrentLocation() {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "FROM User u "
+                            + "WHERE u.type = :type "
+                            + "AND u.status = :status "
+                            + "AND u.available = true "
+                            + "AND u.currentLatitude IS NOT NULL "
+                            + "AND u.currentLongitude IS NOT NULL "
+                            + "ORDER BY u.name ASC",
+                    User.class)
+                    .setParameter("type", UserType.DRIVER)
+                    .setParameter("status", AccountStatus.ACTIVE)
+                    .list();
+        }
+    }
+
     public List<User> findPendingDrivers() {
         try (Session session = getSession()) {
             return session.createQuery(

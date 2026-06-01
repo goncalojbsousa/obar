@@ -57,6 +57,26 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
         }
     }
 
+    public List<Trip> findActiveImmediateTripsWithRoute() {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.client "
+                            + "JOIN FETCH t.route "
+                            + "LEFT JOIN FETCH t.driver "
+                            + "WHERE t.tripType = :tripType "
+                            + "AND t.status IN (:statuses) "
+                            + "ORDER BY t.requestTime DESC",
+                    Trip.class)
+                    .setParameter("tripType", TripType.IMMEDIATE)
+                    .setParameter("statuses", List.of(
+                            TripStatus.PENDING,
+                            TripStatus.ACCEPTED,
+                            TripStatus.IN_PROGRESS))
+                    .list();
+        }
+    }
+
     public List<Trip> findPendingByVehicleCategories(List<String> categories) {
         if (categories == null || categories.isEmpty()) {
             return List.of();

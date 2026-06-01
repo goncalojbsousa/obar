@@ -14,6 +14,7 @@
         <nav class="client-nav" aria-label="Navegação do cliente">
             <a th:href="@{/app}">Nova Viagem</a>
             <a class="active" th:href="@{/app/scheduled}">Agendadas</a>
+            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
             <a href="#" aria-disabled="true">Pagamentos</a>
         </nav>
         <div class="user-area">

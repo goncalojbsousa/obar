@@ -61,6 +61,26 @@ public class TripDriverRepository extends BaseRepository<TripDriver, Integer> {
         }
     }
 
+    public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "SELECT td FROM TripDriver td "
+                            + "JOIN FETCH td.trip t "
+                            + "JOIN FETCH t.client "
+                            + "JOIN FETCH t.route "
+                            + "WHERE td.driver.id = :driverId "
+                            + "AND td.status = :status "
+                            + "AND t.status = :tripStatus "
+                            + "ORDER BY td.assignedAt DESC",
+                    TripDriver.class)
+                    .setParameter("driverId", driverId)
+                    .setParameter("status", TripDriverStatus.ASSIGNED)
+                    .setParameter("tripStatus", com.obar.model.enums.TripStatus.PENDING)
+                    .setMaxResults(1)
+                    .uniqueResultOptional();
+        }
+    }
+
     public List<TripDriver> findExpiredAssignedDrivers(LocalDateTime olderThan) {
         try (Session session = getSession()) {
             return session.createQuery(

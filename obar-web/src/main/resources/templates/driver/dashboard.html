@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Motorista | Obar</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY=" crossorigin="">
+    <link rel="stylesheet" th:href="@{/css/web.css}">
+</head>
+
+<body class="client-page driver-page">
+    <header class="topbar">
+        <a class="brand" th:href="@{/driver}">Obar</a>
+        <nav class="client-nav" aria-label="Navegação do motorista">
+            <a th:href="@{/app}">Nova Viagem</a>
+            <a th:href="@{/app/scheduled}">Agendadas</a>
+            <a class="active" th:href="@{/driver}">Motorista</a>
+        </nav>
+        <div class="user-area">
+            <span class="user-avatar" aria-hidden="true"
+                th:text="${#strings.substring(currentUser.name(),0,1)}">M</span>
+            <span th:text="${currentUser.name()}">Motorista</span>
+            <form th:action="@{/logout}" method="post">
+                <button class="ghost-button" type="submit">Sair</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="client-shell">
+        <section class="driver-workspace" aria-label="Painel do motorista">
+            <div class="map-panel">
+                <div id="driver-map"></div>
+            </div>
+
+            <aside class="driver-sidebar">
+                <div>
+                    <h1>Viagens atribuídas</h1>
+                    <p class="muted" data-driver-status>A procurar viagens para ti.</p>
+                </div>
+
+                <div class="driver-empty" data-driver-empty>
+                    <div class="waiting-indicator" aria-hidden="true"></div>
+                    <div>
+                        <strong>Sem viagem atribuída</strong>
+                        <p>Enquanto aguardas, o mapa mostra motoristas online e clientes com pedidos ativos.</p>
+                    </div>
+                </div>
+
+                <div class="driver-trip-card" data-driver-trip hidden>
+                    <div class="countdown-block">
+                        <span>Tempo para responder</span>
+                        <strong data-countdown>00:30</strong>
+                    </div>
+
+                    <div class="trip-route-summary">
+                        <div>
+                            <span>Origem</span>
+                            <strong data-origin-address>Origem</strong>
+                        </div>
+                        <div>
+                            <span>Destino</span>
+                            <strong data-destination-address>Destino</strong>
+                        </div>
+                    </div>
+
+                    <div class="driver-trip-metrics">
+                        <div>
+                            <span>Kms</span>
+                            <strong data-distance>0 km</strong>
+                        </div>
+                        <div>
+                            <span>Tempo</span>
+                            <strong data-duration>0 min</strong>
+                        </div>
+                        <div>
+                            <span>Preço</span>
+                            <strong data-price>0,00 €</strong>
+                        </div>
+                        <div>
+                            <span>Categoria</span>
+                            <strong data-category>STANDARD</strong>
+                        </div>
+                    </div>
+
+                    <div class="driver-trip-client">
+                        <span>Cliente</span>
+                        <strong data-client-name>Cliente</strong>
+                    </div>
+
+                    <div class="driver-actions">
+                        <button class="primary-button" type="button" data-accept-trip>Aceitar</button>
+                        <button class="ghost-button danger-button" type="button" data-reject-trip>Rejeitar</button>
+                    </div>
+                </div>
+
+                <p class="ride-message" data-driver-message hidden></p>
+            </aside>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script th:src="@{/js/driver-map.js}"></script>
+</body>
+
+</html>

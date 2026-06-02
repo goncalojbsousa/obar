@@ -23,13 +23,17 @@ public class AuthController {
 
     @GetMapping("/")
     public String home(HttpSession session) {
-        return WebSessionHelper.isLoggedIn(session) ? "redirect:/app" : "redirect:/login";
+        return WebSessionHelper.getCurrentUser(session)
+                .map(this::redirectFor)
+                .orElse("redirect:/login");
     }
 
     @GetMapping("/login")
     public String login(Model model, HttpSession session) {
         if (WebSessionHelper.isLoggedIn(session)) {
-            return "redirect:/app";
+            return WebSessionHelper.getCurrentUser(session)
+                    .map(this::redirectFor)
+                    .orElse("redirect:/app");
         }
         model.addAttribute("loginForm", new LoginForm());
         return "auth/login";
@@ -43,7 +47,7 @@ public class AuthController {
                     loginForm.getPassword());
 
             WebSessionHelper.login(session, authenticatedUser);
-            return "redirect:/app";
+            return redirectFor(authenticatedUser);
         } catch (AuthenticationException exception) {
             model.addAttribute("error", exception.getMessage());
             model.addAttribute("loginForm", loginForm);
@@ -99,5 +103,9 @@ public class AuthController {
     private String blankToNull(String value) {
         String safeValue = value == null ? "" : value.trim();
         return safeValue.isBlank() ? null : safeValue;
+    }
+
+    private String redirectFor(AuthenticatedUserDto user) {
+        return user.type() == UserType.DRIVER ? "redirect:/driver" : "redirect:/app";
     }
 }

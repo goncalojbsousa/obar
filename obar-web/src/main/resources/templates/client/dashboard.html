@@ -16,6 +16,7 @@
         <nav class="client-nav" aria-label="Navegação do cliente">
             <a class="active" th:href="@{/app}">Nova Viagem</a>
             <a th:href="@{/app/scheduled}">Agendadas</a>
+            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
             <a href="#" aria-disabled="true">Pagamentos</a>
         </nav>
         <div class="user-area">
@@ -91,6 +92,10 @@
                         <span class="field-title">Pedido enviado</span>
                         <strong data-waiting-title>À espera de motorista</strong>
                         <p>A procurar um motorista disponível para aceitar a viagem.</p>
+                        <div class="trip-pin" data-trip-pin-block hidden>
+                            <span>PIN para começar</span>
+                            <strong data-trip-pin>0000</strong>
+                        </div>
                     </div>
                     <button class="ghost-button danger-button" type="button" data-cancel-trip-button>Cancelar
                         pedido</button>

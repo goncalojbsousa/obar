@@ -1,0 +1,2 @@
+ALTER TABLE trips
+ADD COLUMN start_pin CHAR(4);

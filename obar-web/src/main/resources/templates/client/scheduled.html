@@ -14,6 +14,7 @@
         <nav class="client-nav" aria-label="Navegação do cliente">
             <a th:href="@{/app}">Nova Viagem</a>
             <a class="active" th:href="@{/app/scheduled}">Agendadas</a>
+            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
             <a href="#" aria-disabled="true">Pagamentos</a>
         </nav>
         <div class="user-area">
@@ -67,6 +68,11 @@
                     </p>
                     <form th:if="${trip.canCancel()}" th:action="@{/app/scheduled/{id}/cancel(id=${trip.id()})}"
                         method="post">
+                        <label class="cancel-reason-field">
+                            Motivo do cancelamento
+                            <input type="text" name="reason" required minlength="3" maxlength="255"
+                                placeholder="Indica o motivo">
+                        </label>
                         <button class="ghost-button danger-button" type="submit">Cancelar</button>
                     </form>
                 </article>

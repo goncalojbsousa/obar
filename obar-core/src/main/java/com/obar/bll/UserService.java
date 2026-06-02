@@ -5,6 +5,7 @@ import com.obar.model.User;
 import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.UserType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,5 +44,21 @@ public class UserService {
             u.setAvailable(available);
             userRepository.update(u);
         });
+    }
+
+    public void updateDriverCurrentLocation(Integer driverId, float currentLatitude, float currentLongitude) {
+        userRepository.findById(driverId).ifPresent(u -> {
+            if (u.getType() != UserType.DRIVER) {
+                throw new IllegalArgumentException("Utilizador não é um condutor.");
+            }
+            u.setCurrentLatitude(currentLatitude);
+            u.setCurrentLongitude(currentLongitude);
+            u.setLastLocationUpdate(LocalDateTime.now());
+            userRepository.update(u);
+        });
+    }
+
+    public List<User> findOnlineDriversWithCurrentLocation() {
+        return userRepository.findOnlineDriversWithCurrentLocation();
     }
 }

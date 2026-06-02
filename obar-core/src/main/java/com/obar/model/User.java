@@ -77,6 +77,15 @@ public class User {
     @Column(name = "total_trips")
     private Integer totalTrips = 0;
 
+    @Column(name = "current_latitude")
+    private Float currentLatitude;
+
+    @Column(name = "current_longitude")
+    private Float currentLongitude;
+
+    @Column(name = "last_location_update")
+    private LocalDateTime lastLocationUpdate;
+
     @Column(name = "approval_note")
     private String approvalNote;
 }

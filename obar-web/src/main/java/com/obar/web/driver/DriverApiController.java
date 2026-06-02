@@ -27,128 +27,185 @@ import java.util.List;
 @RestController
 public class DriverApiController {
 
-    private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
+        private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
 
-    private final TripService tripService;
-    private final UserService userService;
-    private final MapsServiceClient mapsServiceClient;
+        private final TripService tripService;
+        private final UserService userService;
+        private final MapsServiceClient mapsServiceClient;
 
-    public DriverApiController(TripService tripService, UserService userService, MapsServiceClient mapsServiceClient) {
-        this.tripService = tripService;
-        this.userService = userService;
-        this.mapsServiceClient = mapsServiceClient;
-    }
-
-    @GetMapping("/api/driver/assignment")
-    public DriverAssignmentResponse currentAssignment(HttpSession session) {
-        AuthenticatedUserDto currentUser = requireDriver(session);
-        return tripService.findCurrentAssignmentForDriver(currentUser.id())
-                .map(this::toAssignmentResponse)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sem viagem atribuída."));
-    }
-
-    @PostMapping("/api/driver/assignment/accept")
-    public DriverAssignmentResponse acceptAssignment(HttpSession session) {
-        AuthenticatedUserDto currentUser = requireDriver(session);
-        TripDriver assignment = currentAssignmentEntity(currentUser.id());
-        Trip assignedTrip = assignment.getTrip();
-        User driver = userService.findById(currentUser.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        tripService.acceptTrip(assignedTrip.getId(), driver);
-        return toAssignmentResponse(assignedTrip, assignment.getAssignedAt(), "ACCEPTED");
-    }
-
-    @PostMapping("/api/driver/assignment/reject")
-    public DriverActionResponse rejectAssignment(HttpSession session) {
-        AuthenticatedUserDto currentUser = requireDriver(session);
-        TripDriver assignment = currentAssignmentEntity(currentUser.id());
-        tripService.rejectAssignedDriver(assignment.getTrip().getId(), currentUser.id());
-        return new DriverActionResponse("Viagem rejeitada.");
-    }
-
-    @PostMapping("/api/driver/location")
-    public DriverActionResponse updateLocation(@RequestBody DriverLocationUpdateRequest request, HttpSession session) {
-        AuthenticatedUserDto currentUser = requireDriver(session);
-        userService.updateDriverCurrentLocation(currentUser.id(), (float) request.lat(), (float) request.lng());
-        return new DriverActionResponse("Localização atualizada.");
-    }
-
-    @GetMapping("/api/driver/map-snapshot")
-    public DriverMapSnapshotResponse mapSnapshot(HttpSession session) {
-        requireDriver(session);
-        List<DriverMapPointResponse> drivers = userService.findOnlineDriversWithCurrentLocation().stream()
-                .map(driver -> new DriverMapPointResponse(
-                        driver.getId(),
-                        driver.getName(),
-                        "DRIVER",
-                        driver.getCurrentLatitude(),
-                        driver.getCurrentLongitude()))
-                .toList();
-
-        List<DriverMapPointResponse> clients = tripService.findActiveImmediateTripsWithRoute().stream()
-                .filter(trip -> trip.getRoute().getOriginLatitude() != null
-                        && trip.getRoute().getOriginLongitude() != null)
-                .map(trip -> new DriverMapPointResponse(
-                        trip.getClient().getId(),
-                        trip.getClient().getName(),
-                        "CLIENT",
-                        trip.getRoute().getOriginLatitude(),
-                        trip.getRoute().getOriginLongitude()))
-                .toList();
-
-        return new DriverMapSnapshotResponse(drivers, clients);
-    }
-
-    private TripDriver currentAssignmentEntity(Integer driverId) {
-        return tripService.findCurrentAssignmentForDriver(driverId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sem viagem atribuída."));
-    }
-
-    private DriverAssignmentResponse toAssignmentResponse(TripDriver assignment) {
-        return toAssignmentResponse(assignment.getTrip(), assignment.getAssignedAt(),
-                assignment.getTrip().getStatus().name());
-    }
-
-    private DriverAssignmentResponse toAssignmentResponse(Trip trip, LocalDateTime assignedAt, String status) {
-        Route route = trip.getRoute();
-        RouteEstimateResponse estimate = mapsServiceClient.estimate(new RouteEstimateRequest(
-                route.getOriginLatitude(),
-                route.getOriginLongitude(),
-                route.getDestinationLatitude(),
-                route.getDestinationLongitude(),
-                route.getOriginAddress(),
-                route.getDestinationAddress(),
-                trip.getVehicleCategory(),
-                null));
-
-        long secondsLeft = Math.max(0,
-                DRIVER_RESPONSE_TIMEOUT.minus(Duration.between(assignedAt, LocalDateTime.now())).toSeconds());
-
-        return new DriverAssignmentResponse(
-                trip.getId(),
-                trip.getClient().getName(),
-                route.getOriginAddress(),
-                route.getDestinationAddress(),
-                route.getOriginLatitude(),
-                route.getOriginLongitude(),
-                route.getDestinationLatitude(),
-                route.getDestinationLongitude(),
-                estimate.distanceKm(),
-                estimate.durationMin(),
-                estimate.estimatedPrice(),
-                trip.getVehicleCategory(),
-                status,
-                assignedAt,
-                secondsLeft,
-                estimate.geometry());
-    }
-
-    private AuthenticatedUserDto requireDriver(HttpSession session) {
-        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        if (currentUser.type() != UserType.DRIVER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Área reservada a motoristas.");
+        public DriverApiController(TripService tripService, UserService userService,
+                        MapsServiceClient mapsServiceClient) {
+                this.tripService = tripService;
+                this.userService = userService;
+                this.mapsServiceClient = mapsServiceClient;
         }
-        return currentUser;
-    }
+
+        @GetMapping("/api/driver/assignment")
+        public DriverAssignmentResponse currentAssignment(HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                return tripService.findCurrentAssignmentForDriver(currentUser.id())
+                                .map(this::toAssignmentResponse)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sem viagem atribuída."));
+        }
+
+        @PostMapping("/api/driver/assignment/accept")
+        public DriverAssignmentResponse acceptAssignment(@RequestBody(required = false) DriverLocationUpdateRequest location,
+                        HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                Trip assignedTrip = assignment.getTrip();
+                User driver = userService.findById(currentUser.id())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                if (location != null) {
+                        userService.updateDriverCurrentLocation(currentUser.id(), (float) location.lat(),
+                                        (float) location.lng());
+                        driver.setCurrentLatitude((float) location.lat());
+                        driver.setCurrentLongitude((float) location.lng());
+                }
+                Trip acceptedTrip = tripService.acceptTrip(assignedTrip.getId(), driver);
+                assignment.setTrip(acceptedTrip);
+                assignment.setDriver(driver);
+                return toAssignmentResponse(acceptedTrip, assignment.getAssignedAt(), "ACCEPTED", driver);
+        }
+
+        @PostMapping("/api/driver/assignment/start")
+        public DriverAssignmentResponse startTrip(@RequestBody DriverStartTripRequest request, HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                Trip startedTrip = tripService.startTrip(assignment.getTrip().getId(), currentUser.id(), request.pin());
+                assignment.setTrip(startedTrip);
+                return toAssignmentResponse(startedTrip, assignment.getAssignedAt(), "IN_PROGRESS",
+                                assignment.getDriver());
+        }
+
+        @PostMapping("/api/driver/assignment/reject")
+        public DriverActionResponse rejectAssignment(HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                tripService.rejectAssignedDriver(assignment.getTrip().getId(), currentUser.id());
+                return new DriverActionResponse("Viagem rejeitada.");
+        }
+
+        @PostMapping("/api/driver/assignment/cancel")
+        public DriverActionResponse cancelTrip(@RequestBody DriverCancelTripRequest request, HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                Trip trip = assignment.getTrip();
+                if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não podes cancelar esta viagem.");
+                }
+                tripService.cancelTrip(trip.getId(), "DRIVER", requireReason(request == null ? null : request.reason()));
+                return new DriverActionResponse("Viagem cancelada.");
+        }
+
+        @PostMapping("/api/driver/location")
+        public DriverActionResponse updateLocation(@RequestBody DriverLocationUpdateRequest request,
+                        HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                userService.updateDriverCurrentLocation(currentUser.id(), (float) request.lat(), (float) request.lng());
+                return new DriverActionResponse("Localização atualizada.");
+        }
+
+        @GetMapping("/api/driver/map-snapshot")
+        public DriverMapSnapshotResponse mapSnapshot(HttpSession session) {
+                requireDriver(session);
+                List<DriverMapPointResponse> drivers = userService.findOnlineDriversWithCurrentLocation().stream()
+                                .map(driver -> new DriverMapPointResponse(
+                                                driver.getId(),
+                                                driver.getName(),
+                                                "DRIVER",
+                                                driver.getCurrentLatitude(),
+                                                driver.getCurrentLongitude()))
+                                .toList();
+
+                List<DriverMapPointResponse> clients = tripService.findActiveImmediateTripsWithRoute().stream()
+                                .filter(trip -> trip.getRoute().getOriginLatitude() != null
+                                                && trip.getRoute().getOriginLongitude() != null)
+                                .map(trip -> new DriverMapPointResponse(
+                                                trip.getClient().getId(),
+                                                trip.getClient().getName(),
+                                                "CLIENT",
+                                                trip.getRoute().getOriginLatitude(),
+                                                trip.getRoute().getOriginLongitude()))
+                                .toList();
+
+                return new DriverMapSnapshotResponse(drivers, clients);
+        }
+
+        private TripDriver currentAssignmentEntity(Integer driverId) {
+                return tripService.findCurrentAssignmentForDriver(driverId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sem viagem atribuída."));
+        }
+
+        private DriverAssignmentResponse toAssignmentResponse(TripDriver assignment) {
+                return toAssignmentResponse(assignment.getTrip(), assignment.getAssignedAt(),
+                                assignment.getTrip().getStatus().name(), assignment.getDriver());
+        }
+
+        private DriverAssignmentResponse toAssignmentResponse(Trip trip, LocalDateTime assignedAt, String status,
+                        User driver) {
+                Route route = trip.getRoute();
+                boolean pickupRoute = "ACCEPTED".equals(status)
+                                && driver != null
+                                && driver.getCurrentLatitude() != null
+                                && driver.getCurrentLongitude() != null;
+
+                double originLat = pickupRoute ? driver.getCurrentLatitude() : route.getOriginLatitude();
+                double originLng = pickupRoute ? driver.getCurrentLongitude() : route.getOriginLongitude();
+                double destinationLat = pickupRoute ? route.getOriginLatitude() : route.getDestinationLatitude();
+                double destinationLng = pickupRoute ? route.getOriginLongitude() : route.getDestinationLongitude();
+                String originAddress = pickupRoute ? "A tua localização" : route.getOriginAddress();
+                String destinationAddress = pickupRoute ? route.getOriginAddress() : route.getDestinationAddress();
+
+                RouteEstimateResponse estimate = mapsServiceClient.estimate(new RouteEstimateRequest(
+                                originLat,
+                                originLng,
+                                destinationLat,
+                                destinationLng,
+                                originAddress,
+                                destinationAddress,
+                                trip.getVehicleCategory(),
+                                null));
+
+                long secondsLeft = Math.max(0,
+                                DRIVER_RESPONSE_TIMEOUT.minus(Duration.between(assignedAt, LocalDateTime.now()))
+                                                .toSeconds());
+
+                return new DriverAssignmentResponse(
+                                trip.getId(),
+                                trip.getClient().getName(),
+                                originAddress,
+                                destinationAddress,
+                                originLat,
+                                originLng,
+                                destinationLat,
+                                destinationLng,
+                                estimate.distanceKm(),
+                                estimate.durationMin(),
+                                estimate.estimatedPrice(),
+                                trip.getVehicleCategory(),
+                                status,
+                                assignedAt,
+                                secondsLeft,
+                                pickupRoute ? "PICKUP" : "TRIP",
+                                estimate.geometry());
+        }
+
+        private AuthenticatedUserDto requireDriver(HttpSession session) {
+                AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                if (currentUser.type() != UserType.DRIVER) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Área reservada a motoristas.");
+                }
+                return currentUser;
+        }
+
+        private String requireReason(String reason) {
+                if (reason == null || reason.isBlank()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica o motivo do cancelamento.");
+                }
+                return reason.trim();
+        }
 }

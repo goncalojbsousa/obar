@@ -11,6 +11,7 @@ import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.web.maps.client.MapsServiceClient;
 import com.obar.web.maps.dto.request.RouteEstimateRequest;
+import com.obar.web.maps.dto.request.TripCancellationRequest;
 import com.obar.web.maps.dto.response.ActiveTripResponse;
 import com.obar.web.maps.dto.response.LocationSuggestionResponse;
 import com.obar.web.maps.dto.response.RouteEstimateResponse;
@@ -138,7 +139,9 @@ public class MapsApiController {
     }
 
     @PostMapping("/api/trips/{tripId}/cancel")
-    public TripCancellationResponse cancelTrip(@PathVariable Integer tripId, HttpSession session) {
+    public TripCancellationResponse cancelTrip(@PathVariable Integer tripId,
+            @RequestBody TripCancellationRequest request,
+            HttpSession session) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         Trip trip = tripService.findById(tripId)
@@ -148,16 +151,23 @@ public class MapsApiController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não podes cancelar esta viagem.");
         }
 
-        if (trip.getStatus() != TripStatus.PENDING && trip.getStatus() != TripStatus.ACCEPTED) {
+        if (trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta viagem já não pode ser cancelada.");
         }
 
         Trip cancelledTrip = tripService.cancelTrip(tripId, "CLIENT",
-                "Cancelado pelo cliente enquanto aguardava motorista.");
+                requireReason(request == null ? null : request.reason()));
         return new TripCancellationResponse(
                 cancelledTrip.getId(),
                 cancelledTrip.getStatus().name(),
-                "Pedido de viagem cancelado.");
+                "Viagem cancelada.");
+    }
+
+    private String requireReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica o motivo do cancelamento.");
+        }
+        return reason.trim();
     }
 
     private String blankToDefault(String value, String fallback) {
@@ -191,7 +201,8 @@ public class MapsApiController {
                 route.getDistanceKm(),
                 route.getEstimatedDurationMin(),
                 trip.getEstimatedPrice(),
-                trip.getVehicleCategory());
+                trip.getVehicleCategory(),
+                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null);
     }
 
     private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {

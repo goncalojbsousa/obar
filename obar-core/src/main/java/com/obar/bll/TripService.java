@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.security.SecureRandom;
 
 public class TripService {
 
@@ -27,6 +28,7 @@ public class TripService {
     private static final double RATING_SCORE_WEIGHT = 0.20;
     private static final double EXPERIENCE_SCORE_WEIGHT = 0.10;
     private static final double MAX_TRIPS_FOR_EXPERIENCE_SCORE = 100.0;
+    private static final SecureRandom PIN_RANDOM = new SecureRandom();
 
     private final TripRepository tripRepository = new TripRepository();
     private final TripDriverRepository tripDriverRepository = new TripDriverRepository();
@@ -65,6 +67,9 @@ public class TripService {
         trip.setDriver(driver);
         trip.setVehicle(vehicle);
         trip.setStatus(TripStatus.ACCEPTED);
+        if (trip.getStartPin() == null || trip.getStartPin().isBlank()) {
+            trip.setStartPin(generateStartPin());
+        }
         Trip acceptedTrip = tripRepository.update(trip);
 
         markDriverAssignmentAsAccepted(tripId, driver.getId());
@@ -74,12 +79,18 @@ public class TripService {
         return acceptedTrip;
     }
 
-    public Trip startTrip(Integer tripId) {
+    public Trip startTrip(Integer tripId, Integer driverId, String startPin) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Viagem não encontrada."));
 
         if (trip.getStatus() != TripStatus.ACCEPTED) {
             throw new IllegalStateException("Viagem não está aceite.");
+        }
+        if (trip.getDriver() == null || !trip.getDriver().getId().equals(driverId)) {
+            throw new IllegalStateException("Esta viagem pertence a outro motorista.");
+        }
+        if (startPin == null || !startPin.trim().equals(trip.getStartPin())) {
+            throw new IllegalStateException("PIN inválido.");
         }
 
         trip.setStatus(TripStatus.IN_PROGRESS);
@@ -109,10 +120,13 @@ public class TripService {
         if (trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
             throw new IllegalStateException("Viagem já terminada.");
         }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Indica o motivo do cancelamento.");
+        }
 
         trip.setStatus(TripStatus.CANCELLED);
         trip.setCancelledBy(cancelledBy);
-        trip.setCancelReason(reason);
+        trip.setCancelReason(reason.trim());
         Trip cancelledTrip = tripRepository.update(trip);
         tripDriverRepository.updateAssignedDriversStatus(tripId, TripDriverStatus.EXPIRED);
         releaseDriverAfterTripEnds(cancelledTrip);
@@ -147,7 +161,7 @@ public class TripService {
 
     public Optional<Trip> findById(Integer id) {
         return tripRepository.findById(id);
-    }I
+    }
 
     public List<Trip> findActiveImmediateTripsWithRoute() {
         return tripRepository.findActiveImmediateTripsWithRoute();
@@ -273,6 +287,10 @@ public class TripService {
 
         double centralAngle = 2 * Math.atan2(Math.sqrt(haversineValue), Math.sqrt(1 - haversineValue));
         return EARTH_RADIUS_KM * centralAngle;
+    }
+
+    private String generateStartPin() {
+        return String.format("%04d", PIN_RANDOM.nextInt(10_000));
     }
 
     private record DriverDispatchCandidate(User driver, double pickupDistanceKm) {

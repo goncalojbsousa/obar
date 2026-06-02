@@ -8,7 +8,8 @@ const state = {
     assignmentMarkers: L.layerGroup(),
     assignmentPoll: null,
     snapshotPoll: null,
-    countdownTimer: null
+    countdownTimer: null,
+    currentLocation: null
 };
 
 const map = L.map("driver-map", { zoomControl: true }).setView(defaultCenter, 12);
@@ -37,13 +38,24 @@ const elements = {
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
     clientName: document.querySelector("[data-client-name]"),
+    countdownBlock: document.querySelector("[data-countdown-block]"),
+    responseActions: document.querySelector("[data-response-actions]"),
     acceptButton: document.querySelector("[data-accept-trip]"),
     rejectButton: document.querySelector("[data-reject-trip]"),
+    startPanel: document.querySelector("[data-start-panel]"),
+    startPin: document.querySelector("[data-start-pin]"),
+    startButton: document.querySelector("[data-start-trip]"),
+    cancelTripButton: document.querySelector("[data-cancel-trip]"),
     message: document.querySelector("[data-driver-message]")
 };
 
 elements.acceptButton.addEventListener("click", acceptAssignment);
 elements.rejectButton.addEventListener("click", rejectAssignment);
+elements.startButton.addEventListener("click", startTrip);
+elements.cancelTripButton.addEventListener("click", cancelTrip);
+elements.startPin.addEventListener("input", () => {
+    elements.startPin.value = elements.startPin.value.replace(/\D/g, "").slice(0, 4);
+});
 
 initializeDriverMap();
 
@@ -59,17 +71,19 @@ function initializeDriverMap() {
     }, 10000);
 }
 
-function updateCurrentLocation() {
+function updateCurrentLocation(options = {}) {
+    const silent = options.silent === true;
     if (!navigator.geolocation) {
-        return;
+        return Promise.resolve(null);
     }
 
-    navigator.geolocation.getCurrentPosition(
+    return new Promise((resolve) => navigator.geolocation.getCurrentPosition(
         async (position) => {
             const point = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
             };
+            state.currentLocation = point;
             map.setView([point.lat, point.lng], 13);
             try {
                 await fetchJson("/api/driver/location", {
@@ -77,13 +91,17 @@ function updateCurrentLocation() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(point)
                 });
+                resolve(point);
             } catch (error) {
-                setMessage(error.message);
+                if (!silent) {
+                    setMessage(error.message);
+                }
+                resolve(point);
             }
         },
-        () => { },
+        () => resolve(state.currentLocation),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    ));
 }
 
 async function pollAssignment() {
@@ -138,7 +156,7 @@ function renderAssignment(assignment) {
     clearRouteLayer();
     setMessage("");
 
-    elements.status.textContent = "Tens uma viagem para responder.";
+    elements.status.textContent = statusCopy(assignment);
     elements.empty.hidden = true;
     elements.trip.hidden = false;
     elements.originAddress.textContent = assignment.originAddress;
@@ -148,38 +166,77 @@ function renderAssignment(assignment) {
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;
-    elements.acceptButton.disabled = false;
-    elements.rejectButton.disabled = false;
+    const isPending = assignment.status === "PENDING";
+    const isAccepted = assignment.status === "ACCEPTED";
+    const canCancel = assignment.status === "ACCEPTED" || assignment.status === "IN_PROGRESS";
+    elements.countdownBlock.hidden = !isPending;
+    elements.responseActions.hidden = !isPending;
+    elements.startPanel.hidden = !isAccepted;
+    elements.cancelTripButton.hidden = !canCancel;
+    elements.acceptButton.disabled = !isPending;
+    elements.rejectButton.disabled = !isPending;
+    elements.startButton.disabled = !isAccepted;
+    elements.cancelTripButton.disabled = !canCancel;
 
     state.routeLayer = buildRouteLayer(assignment.geometry).addTo(map);
     const originMarker = L.marker([assignment.originLat, assignment.originLng], {
-        icon: buildMarkerIcon("client"),
+        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "driver" : "client"),
         pane: "tripMarkerPane"
-    }).bindPopup("Origem");
+    }).bindPopup(assignment.routeMode === "PICKUP" ? "Motorista" : "Origem");
     const destinationMarker = L.marker([assignment.destinationLat, assignment.destinationLng], {
-        icon: buildMarkerIcon("destination"),
+        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "client" : "destination"),
         pane: "tripMarkerPane"
-    }).bindPopup("Destino");
+    }).bindPopup(assignment.routeMode === "PICKUP" ? "Cliente" : "Destino");
     originMarker.addTo(state.assignmentMarkers);
     destinationMarker.addTo(state.assignmentMarkers);
     map.fitBounds(L.featureGroup([state.routeLayer, originMarker, destinationMarker]).getBounds(), { padding: [36, 36] });
 
-    startCountdown(assignment.secondsLeft);
+    if (isPending) {
+        startCountdown(assignment.secondsLeft);
+    } else {
+        stopCountdown();
+    }
 }
 
 async function acceptAssignment() {
     setActionBusy(true);
     try {
-        const assignment = await fetchJson("/api/driver/assignment/accept", { method: "POST" });
+        const point = await updateCurrentLocation({ silent: true });
+        const options = { method: "POST" };
+        if (point) {
+            options.headers = { "Content-Type": "application/json" };
+            options.body = JSON.stringify(point);
+        }
+        const assignment = await fetchJson("/api/driver/assignment/accept", options);
         renderAssignment(assignment);
-        elements.status.textContent = "Viagem aceite.";
-        setMessage("Viagem aceite. Segue para a origem indicada no mapa.");
-        elements.acceptButton.disabled = true;
-        elements.rejectButton.disabled = true;
-        stopCountdown();
+        setMessage("Viagem aceite. Segue até ao cliente e introduz o PIN para começar.");
     } catch (error) {
         setMessage(error.message);
         setActionBusy(false);
+    }
+}
+
+async function startTrip() {
+    const pin = elements.startPin.value.trim();
+    if (pin.length !== 4) {
+        setMessage("Introduz o PIN de 4 dígitos indicado pelo cliente.");
+        return;
+    }
+
+    elements.startButton.disabled = true;
+    setMessage("");
+    try {
+        const assignment = await fetchJson("/api/driver/assignment/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pin })
+        });
+        elements.startPin.value = "";
+        renderAssignment(assignment);
+        setMessage("Viagem iniciada. Segue a rota até ao destino.");
+    } catch (error) {
+        setMessage(error.message);
+        elements.startButton.disabled = false;
     }
 }
 
@@ -193,6 +250,34 @@ async function rejectAssignment() {
     } catch (error) {
         setMessage(error.message);
         setActionBusy(false);
+    }
+}
+
+async function cancelTrip() {
+    if (!state.assignment) {
+        return;
+    }
+
+    const reason = window.prompt("Indica o motivo do cancelamento:");
+    if (!reason || !reason.trim()) {
+        setMessage("Indica o motivo do cancelamento.");
+        return;
+    }
+
+    elements.cancelTripButton.disabled = true;
+    setMessage("A cancelar viagem...");
+    try {
+        const result = await fetchJson("/api/driver/assignment/cancel", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reason.trim() })
+        });
+        resetAssignmentView();
+        setMessage(result.message);
+        loadSnapshot();
+    } catch (error) {
+        setMessage(error.message);
+        elements.cancelTripButton.disabled = false;
     }
 }
 
@@ -232,7 +317,22 @@ function resetAssignmentView() {
     elements.status.textContent = "A procurar viagens para ti.";
     elements.empty.hidden = false;
     elements.trip.hidden = true;
+    elements.countdownBlock.hidden = false;
+    elements.responseActions.hidden = false;
+    elements.startPanel.hidden = true;
+    elements.cancelTripButton.hidden = true;
+    elements.startPin.value = "";
     setActionBusy(false);
+}
+
+function statusCopy(assignment) {
+    if (assignment.status === "ACCEPTED") {
+        return "Vai até à localização do cliente.";
+    }
+    if (assignment.status === "IN_PROGRESS") {
+        return "Viagem em curso.";
+    }
+    return "Tens uma viagem para responder.";
 }
 
 function buildRouteLayer(geometry) {

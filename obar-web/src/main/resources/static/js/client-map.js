@@ -11,6 +11,7 @@ const state = {
         destination: null
     },
     activeTripId: null,
+    activeTripPoll: null,
     tripLocked: false
 };
 
@@ -43,6 +44,8 @@ const elements = {
     price: document.querySelector("[data-price]"),
     message: document.querySelector("[data-ride-message]"),
     waitingPanel: document.querySelector("[data-waiting-panel]"),
+    tripPinBlock: document.querySelector("[data-trip-pin-block]"),
+    tripPin: document.querySelector("[data-trip-pin]"),
     cancelTripButton: document.querySelector("[data-cancel-trip-button]")
 };
 
@@ -227,6 +230,7 @@ async function requestTrip() {
         });
         state.activeTripId = trip.tripId;
         setTripLockedState(trip.status);
+        renderTripPin(trip);
         setMessage("");
     } catch (error) {
         setMessage(error.message);
@@ -266,16 +270,25 @@ async function cancelTrip() {
         return;
     }
 
+    const reason = window.prompt("Indica o motivo do cancelamento:");
+    if (!reason || !reason.trim()) {
+        setMessage("Indica o motivo do cancelamento.");
+        return;
+    }
+
     setBusy(true);
     elements.cancelTripButton.disabled = true;
-    setMessage("A cancelar pedido...");
+    setMessage("A cancelar viagem...");
     try {
         await fetchJson(`/api/trips/${state.activeTripId}/cancel`, {
-            method: "POST"
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reason.trim() })
         });
         state.activeTripId = null;
         setTripLockedState(null);
-        setMessage("Pedido cancelado. Podes escolher outro destino ou pedir novamente.");
+        stopActiveTripPolling();
+        setMessage("Viagem cancelada. Podes escolher outro destino ou pedir novamente.");
     } catch (error) {
         setMessage(error.message);
         elements.cancelTripButton.disabled = false;
@@ -335,6 +348,7 @@ async function renderActiveTrip(trip) {
     setMarker("origin", state.origin, "Origem");
     setMarker("destination", state.destination, "Destino");
     setTripLockedState(trip.status);
+    renderTripPin(trip);
 
     elements.distance.textContent = `${trip.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${trip.durationMin} min`;
@@ -456,7 +470,13 @@ function setTripLockedState(status) {
     elements.vehicleCategory.disabled = isLocked;
     elements.scheduledAt.disabled = isLocked;
     elements.locateButton.hidden = isLocked || Boolean(state.origin);
-    elements.cancelTripButton.hidden = status === "IN_PROGRESS";
+    elements.cancelTripButton.hidden = !isLocked;
+    if (isLocked) {
+        startActiveTripPolling();
+    } else {
+        stopActiveTripPolling();
+        renderTripPin(null);
+    }
     renderSuggestions("origin", []);
     renderSuggestions("destination", []);
     updateWaitingCopy(status);
@@ -467,7 +487,7 @@ function updateWaitingCopy(status) {
     const detail = elements.waitingPanel.querySelector("p");
     if (status === "ACCEPTED") {
         title.textContent = "Motorista a caminho";
-        detail.textContent = "A viagem foi aceite. Aguarda a chegada do motorista.";
+        detail.textContent = "A viagem foi aceite. Diz o PIN ao motorista quando ele chegar.";
     } else if (status === "IN_PROGRESS") {
         title.textContent = "Viagem em curso";
         detail.textContent = "A tua viagem está em progresso.";
@@ -475,6 +495,45 @@ function updateWaitingCopy(status) {
         title.textContent = "À espera de motorista";
         detail.textContent = "A procurar um motorista disponível para aceitar a viagem.";
     }
+}
+
+async function refreshActiveTrip() {
+    if (!state.tripLocked) {
+        return;
+    }
+
+    try {
+        const activeTrip = await fetchJson("/api/trips/active");
+        await renderActiveTrip(activeTrip);
+    } catch (error) {
+        if (error.status === 404) {
+            state.activeTripId = null;
+            setTripLockedState(null);
+            setMessage("");
+            return;
+        }
+        setMessage(error.message);
+    }
+}
+
+function startActiveTripPolling() {
+    if (state.activeTripPoll) {
+        return;
+    }
+    state.activeTripPoll = window.setInterval(refreshActiveTrip, 3000);
+}
+
+function stopActiveTripPolling() {
+    if (state.activeTripPoll) {
+        window.clearInterval(state.activeTripPoll);
+        state.activeTripPoll = null;
+    }
+}
+
+function renderTripPin(trip) {
+    const pin = trip && trip.startPin ? trip.startPin : "";
+    elements.tripPinBlock.hidden = !pin;
+    elements.tripPin.textContent = pin || "0000";
 }
 
 function setMessage(message) {

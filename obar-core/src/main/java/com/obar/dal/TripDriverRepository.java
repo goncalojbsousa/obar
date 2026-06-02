@@ -68,14 +68,20 @@ public class TripDriverRepository extends BaseRepository<TripDriver, Integer> {
                             + "JOIN FETCH td.trip t "
                             + "JOIN FETCH t.client "
                             + "JOIN FETCH t.route "
+                            + "JOIN FETCH td.driver "
                             + "WHERE td.driver.id = :driverId "
-                            + "AND td.status = :status "
-                            + "AND t.status = :tripStatus "
+                            + "AND td.status IN (:assignmentStatuses) "
+                            + "AND t.status IN (:tripStatuses) "
                             + "ORDER BY td.assignedAt DESC",
                     TripDriver.class)
                     .setParameter("driverId", driverId)
-                    .setParameter("status", TripDriverStatus.ASSIGNED)
-                    .setParameter("tripStatus", com.obar.model.enums.TripStatus.PENDING)
+                    .setParameter("assignmentStatuses", List.of(
+                            TripDriverStatus.ASSIGNED,
+                            TripDriverStatus.ACCEPTED))
+                    .setParameter("tripStatuses", List.of(
+                            com.obar.model.enums.TripStatus.PENDING,
+                            com.obar.model.enums.TripStatus.ACCEPTED,
+                            com.obar.model.enums.TripStatus.IN_PROGRESS))
                     .setMaxResults(1)
                     .uniqueResultOptional();
         }

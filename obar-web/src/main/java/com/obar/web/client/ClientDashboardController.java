@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 @Controller
@@ -43,7 +44,9 @@ public class ClientDashboardController {
     }
 
     @PostMapping("/app/scheduled/{tripId}/cancel")
-    public String cancelScheduledTrip(@PathVariable Integer tripId, HttpSession session) {
+    public String cancelScheduledTrip(@PathVariable Integer tripId,
+            @RequestParam("reason") String reason,
+            HttpSession session) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
         Trip trip = tripService.findById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Viagem não encontrada."));
@@ -53,7 +56,7 @@ public class ClientDashboardController {
         if (trip.getStatus() != TripStatus.PENDING && trip.getStatus() != TripStatus.ACCEPTED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta viagem já não pode ser cancelada.");
         }
-        tripService.cancelTrip(tripId, "CLIENT", "Cancelado pelo cliente a partir das viagens agendadas.");
+        tripService.cancelTrip(tripId, "CLIENT", reason);
         return "redirect:/app/scheduled";
     }
 }

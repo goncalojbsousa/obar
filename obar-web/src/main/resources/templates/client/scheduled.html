@@ -68,6 +68,11 @@
                     </p>
                     <form th:if="${trip.canCancel()}" th:action="@{/app/scheduled/{id}/cancel(id=${trip.id()})}"
                         method="post">
+                        <label class="cancel-reason-field">
+                            Motivo do cancelamento
+                            <input type="text" name="reason" required minlength="3" maxlength="255"
+                                placeholder="Indica o motivo">
+                        </label>
                         <button class="ghost-button danger-button" type="submit">Cancelar</button>
                     </form>
                 </article>

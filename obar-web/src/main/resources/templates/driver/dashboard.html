@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="driver-trip-card" data-driver-trip hidden>
-                    <div class="countdown-block">
+                    <div class="countdown-block" data-countdown-block>
                         <span>Tempo para responder</span>
                         <strong data-countdown>00:30</strong>
                     </div>
@@ -89,7 +89,18 @@
                         <strong data-client-name>Cliente</strong>
                     </div>
 
-                    <div class="driver-actions">
+                    <div class="driver-start-panel" data-start-panel hidden>
+                        <label class="driver-pin-field">
+                            PIN do cliente
+                            <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" data-start-pin>
+                        </label>
+                        <button class="primary-button" type="button" data-start-trip>Começar viagem</button>
+                    </div>
+
+                    <button class="ghost-button danger-button driver-cancel-button" type="button" data-cancel-trip
+                        hidden>Cancelar viagem</button>
+
+                    <div class="driver-actions" data-response-actions>
                         <button class="primary-button" type="button" data-accept-trip>Aceitar</button>
                         <button class="ghost-button danger-button" type="button" data-reject-trip>Rejeitar</button>
                     </div>

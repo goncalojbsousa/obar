@@ -75,4 +75,7 @@ public class Trip {
 
     @Column(name = "final_price")
     private BigDecimal finalPrice;
+
+    @Column(name = "start_pin", length = 4)
+    private String startPin;
 }

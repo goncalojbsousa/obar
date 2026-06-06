@@ -104,6 +104,8 @@ public class VehiclesController implements AdminSectionController {
     @FXML
     private Label vehicleModalTitleLabel;
     @FXML
+    private Label vehicleModalSubtitleLabel;
+    @FXML
     private Label vehicleModalErrorLabel;
     @FXML
     private VBox vehicleFormSection;
@@ -191,7 +193,8 @@ public class VehiclesController implements AdminSectionController {
     public void handleAddVehicle() {
         modalMode = ModalMode.CREATE;
         modalTarget = null;
-        vehicleModalTitleLabel.setText("Novo veiculo");
+        setVehicleModalHeading("Adicionar veiculo", "Novo veiculo na frota");
+        modalSaveButton.setText("Adicionar");
         showOnlyVehicleForm();
         clearVehicleForm();
         setModalVisible(true);
@@ -207,7 +210,8 @@ public class VehiclesController implements AdminSectionController {
 
         modalMode = ModalMode.EDIT;
         modalTarget = selectedVehicle;
-        vehicleModalTitleLabel.setText("Editar veiculo");
+        setVehicleModalHeading("Editar veiculo", "Atualize os dados do veiculo");
+        modalSaveButton.setText("Guardar");
         showOnlyVehicleForm();
         fillVehicleForm(selectedVehicle);
         setModalVisible(true);
@@ -223,7 +227,7 @@ public class VehiclesController implements AdminSectionController {
 
         modalMode = ModalMode.DEACTIVATE_CONFIRM;
         modalTarget = selectedVehicle;
-        vehicleModalTitleLabel.setText("Desativar veiculo");
+        setVehicleModalHeading("Desativar veiculo", "Confirme a alteracao de estado");
         vehicleConfirmMessageLabel.setText("Desativar " + selectedVehicle.getVehicleName()
                 + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Confirmar");
@@ -240,7 +244,7 @@ public class VehiclesController implements AdminSectionController {
 
         modalMode = ModalMode.REACTIVATE_CONFIRM;
         modalTarget = selectedVehicle;
-        vehicleModalTitleLabel.setText("Ativar veiculo");
+        setVehicleModalHeading("Ativar veiculo", "Confirme a alteracao de estado");
         vehicleConfirmMessageLabel.setText("Voltar a ativar " + selectedVehicle.getVehicleName()
                 + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Confirmar");
@@ -257,7 +261,7 @@ public class VehiclesController implements AdminSectionController {
 
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTarget = selectedVehicle;
-        vehicleModalTitleLabel.setText("Apagar veiculo");
+        setVehicleModalHeading("Apagar veiculo", "Esta acao remove o veiculo");
         vehicleConfirmMessageLabel.setText("Apagar definitivamente " + selectedVehicle.getVehicleName()
                 + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Apagar");
@@ -446,6 +450,11 @@ public class VehiclesController implements AdminSectionController {
         AdminModalIncludeController.setVisible(vehicleConfirmSection, false);
         AdminModalIncludeController.setVisible(modalSaveButton, true);
         AdminModalIncludeController.setVisible(modalDeactivateButton, false);
+    }
+
+    private void setVehicleModalHeading(String title, String subtitle) {
+        vehicleModalTitleLabel.setText(title == null ? "" : title);
+        vehicleModalSubtitleLabel.setText(subtitle == null ? "" : subtitle);
     }
 
     private void showOnlyConfirmAction(Button actionButton, String actionText) {

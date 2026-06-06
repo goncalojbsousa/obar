@@ -544,72 +544,7 @@
     -fx-border-color: rgba(184, 34, 34, 0.45);
 }
 
-.vehicle-modal-card {
-    -fx-background-color: #18181b;
-    -fx-border-color: rgba(255, 106, 47, 0.55);
-    -fx-border-width: 1.4;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.48), 28, 0.20, 0, 10);
-}
-
-.vehicle-modal-card .modal-title {
-    -fx-text-fill: #ff8a55;
-}
-
-.vehicle-modal-card .meta-title {
-    -fx-text-fill: #ff9a66;
-    -fx-font-size: 11px;
-    -fx-font-weight: 800;
-}
-
-.vehicle-modal-card .text-field,
-.vehicle-modal-card .combo-box {
-    -fx-background-color: #0c0d10;
-    -fx-text-fill: #f4f7ff;
-    -fx-prompt-text-fill: #a7afc0;
-    -fx-border-color: #3a3d46;
-    -fx-border-width: 1.2;
-}
-
-.vehicle-modal-card .text-field:focused,
-.vehicle-modal-card .combo-box:focused {
-    -fx-border-color: #ff7a3d;
-    -fx-background-color: #101116;
-}
-
-.vehicle-modal-card .combo-box .list-cell {
-    -fx-text-fill: #f4f7ff;
-}
-
-.vehicle-modal-card .combo-box-popup .list-view {
-    -fx-background-color: #15161b;
-    -fx-border-color: rgba(255, 106, 47, 0.45);
-}
-
-.vehicle-modal-card .combo-box-popup .list-cell {
-    -fx-background-color: #15161b;
-    -fx-text-fill: #f4f7ff;
-}
-
-.vehicle-modal-card .combo-box-popup .list-cell:hover,
-.vehicle-modal-card .combo-box-popup .list-cell:selected {
-    -fx-background-color: rgba(255, 106, 47, 0.22);
-    -fx-text-fill: #ffffff;
-}
-
-.vehicle-modal-card .check-box {
-    -fx-text-fill: #f1f4fb;
-    -fx-font-weight: 700;
-}
-
-.vehicle-modal-card .vehicle-category-combo {
-    -fx-pref-width: 180;
-    -fx-max-width: 180;
-}
-
-.vehicle-modal-card .meta-value {
-    -fx-text-fill: #eef2fb;
-    -fx-font-size: 13px;
-}
+/* .vehicle-modal-card is defined in the VEHICLE MODAL section. */
 
 .period-chip,
 .period-chip-active {
@@ -892,3 +827,210 @@
     -fx-border-color: #e8642a;
 }
 
+/* VEHICLE MODAL */
+
+/* Main card */
+.vehicle-modal-card {
+    -fx-background-color: #121214;
+    -fx-border-color: #2b2b33;
+    -fx-border-width: 1 1 1 0;
+    -fx-border-radius: 0 14 14 0;
+    -fx-background-radius: 0 14 14 0;
+    -fx-padding: 0;
+    -fx-pref-width: 797;
+    -fx-max-width: 797;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 32, 0.22, 0, 12);
+}
+
+.vehicle-modal-stripe {
+    -fx-background-color: #ff601e;
+}
+
+/* Header */
+.vehicle-modal-header {
+    -fx-padding: 28 40 24 40;
+    -fx-border-color: transparent transparent #2b2b33 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Orange icon box */
+.vehicle-modal-icon-box {
+    -fx-background-color: rgba(255, 96, 30, 0.15);
+    -fx-border-color: rgba(255, 96, 30, 0.30);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+}
+
+.vehicle-modal-icon-label {
+    -fx-text-fill: #ff601e;
+    -fx-font-size: 9px;
+    -fx-font-weight: 900;
+}
+
+/* Main title */
+.vehicle-modal-card .modal-title {
+    -fx-text-fill: #f5f5f6;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+/* Subtitle */
+.vehicle-modal-subtitle {
+    -fx-text-fill: #7b7b85;
+    -fx-font-size: 12px;
+}
+
+/* Close button */
+.vehicle-modal-close {
+    -fx-background-color: transparent;
+    -fx-border-color: #2b2b33;
+    -fx-border-radius: 7;
+    -fx-background-radius: 7;
+    -fx-text-fill: #7b7b85;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-max-width: 32;
+    -fx-max-height: 32;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.vehicle-modal-close:hover {
+    -fx-background-color: #1b1b20;
+    -fx-text-fill: #f5f5f6;
+    -fx-border-color: #3a3a44;
+}
+
+/* Field labels */
+.vehicle-field-label {
+    -fx-text-fill: #7b7b85;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+.vehicle-modal-body {
+    -fx-padding: 32 40 26 40;
+}
+
+.vehicle-field-box {
+    -fx-background-color: #1b1b20;
+    -fx-border-color: #2b2b33;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-pref-height: 46;
+    -fx-min-height: 46;
+    -fx-padding: 0 12;
+}
+
+.vehicle-field-box:hover {
+    -fx-border-color: #ff601e;
+    -fx-background-color: #1d1d22;
+}
+
+.vehicle-field-icon {
+    -fx-text-fill: #696974;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-min-width: 28;
+    -fx-alignment: center;
+}
+
+.vehicle-modal-card .vehicle-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-text-fill: #f5f5f6;
+    -fx-prompt-text-fill: #85858f;
+    -fx-font-size: 15px;
+    -fx-pref-height: 38;
+    -fx-padding: 0;
+}
+
+.vehicle-modal-card .vehicle-field:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.vehicle-modal-card .vehicle-field.combo-box > .list-cell {
+    -fx-text-fill: #f5f5f6;
+    -fx-background-color: transparent;
+    -fx-font-size: 15px;
+    -fx-padding: 0 8;
+}
+
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view {
+    -fx-background-color: #1b1b20;
+    -fx-border-color: rgba(255, 96, 30, 0.40);
+}
+
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: #1b1b20;
+    -fx-text-fill: #f5f5f6;
+}
+
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
+    -fx-background-color: rgba(255, 96, 30, 0.20);
+    -fx-text-fill: #ffffff;
+}
+
+/* Checkbox */
+.vehicle-modal-checkbox {
+    -fx-text-fill: #f5f5f6;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+/* Footer */
+.vehicle-modal-footer {
+    -fx-padding: 20 40 32 40;
+    -fx-border-color: #2b2b33 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.vehicle-modal-cancel {
+    -fx-background-color: transparent;
+    -fx-border-color: #2b2b33;
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-text-fill: #f5f5f6;
+    -fx-font-weight: 700;
+    -fx-font-size: 14px;
+    -fx-pref-height: 46;
+    -fx-cursor: hand;
+    -fx-min-width: 120;
+}
+
+.vehicle-modal-cancel:hover {
+    -fx-background-color: #1b1b20;
+    -fx-border-color: #3a3a44;
+}
+
+.vehicle-modal-save {
+    -fx-background-color: #ff601e;
+    -fx-border-color: transparent;
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-pref-height: 46;
+    -fx-cursor: hand;
+    -fx-min-width: 120;
+}
+
+.vehicle-modal-save:hover {
+    -fx-background-color: #ff7535;
+}
+
+/* Vehicle table status badges */
+.users-table .table-cell.status-active {
+    -fx-text-fill: #56e39a;
+}
+
+.users-table .table-cell.status-inactive {
+    -fx-text-fill: #93a0b7;
+}

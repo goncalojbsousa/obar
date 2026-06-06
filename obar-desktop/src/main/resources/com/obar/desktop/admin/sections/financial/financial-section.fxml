@@ -28,9 +28,9 @@
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <Label text="Relatorio Financeiro" styleClass="title-2" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button fx:id="exportPdfButton" text="Exportar PDF" onAction="#handleExportSection" styleClass="flat" />
-                    <Button fx:id="exportCsvButton" text="Exportar CSV" onAction="#handleExportSection" styleClass="flat" />
-                    <Button text="Editar IVA" onAction="#handleEditTaxRate" styleClass="flat" />
+                    <Button fx:id="exportPdfButton" text="⇩ Exportar PDF" onAction="#handleExportSection" styleClass="export-button" />
+                    <Button fx:id="exportCsvButton" text="⇩ Exportar CSV" onAction="#handleExportSection" styleClass="flat" />
+                    <Button text="✎ Editar IVA" onAction="#handleEditTaxRate" styleClass="flat" />
                 </HBox>
 
                 <!-- Row 2: Period chips -->

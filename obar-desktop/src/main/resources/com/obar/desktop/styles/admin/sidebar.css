@@ -57,18 +57,23 @@
     -fx-background-color: transparent;
     -fx-text-fill: #aeb5c8;
     -fx-font-weight: 600;
+    -fx-font-size: 13px;
     -fx-alignment: center-left;
     -fx-background-radius: 10;
-    -fx-padding: 10 12 10 12;
+    -fx-padding: 10 12 10 14;
 }
 
 .sidebar-item-active {
     -fx-background-color: rgba(255, 106, 47, 0.2);
     -fx-text-fill: #ff7f4b;
     -fx-font-weight: 700;
+    -fx-font-size: 13px;
     -fx-alignment: center-left;
     -fx-background-radius: 10;
-    -fx-padding: 10 12 10 12;
+    -fx-border-color: transparent transparent transparent #ff6a2f;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 10;
+    -fx-padding: 10 12 10 11;
 }
 
 .sidebar-item:hover,

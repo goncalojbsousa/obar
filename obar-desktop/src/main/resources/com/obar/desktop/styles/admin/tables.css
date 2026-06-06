@@ -3,7 +3,8 @@
 .users-table {
     -fx-background-color: #111113;
     -fx-control-inner-background: #111113;
-    -fx-border-color: #232326;
+    -fx-border-color: #ff6a2f #232326 #232326 #232326;
+    -fx-border-width: 2 1 1 1;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-padding: 4;
@@ -17,11 +18,12 @@
 .users-table .column-header,
 .users-table .filler {
     -fx-background-color: transparent;
-    -fx-border-color: transparent;
+    -fx-border-color: transparent transparent rgba(255, 106, 47, 0.22) transparent;
+    -fx-border-width: 0 0 1 0;
 }
 
 .users-table .column-header .label {
-    -fx-text-fill: #76819b;
+    -fx-text-fill: #8993ad;
     -fx-font-size: 10px;
     -fx-font-weight: 700;
 }

@@ -39,6 +39,7 @@
                     <Button fx:id="deactivateVehicleButton" text="Desativar" onAction="#handleDeactivateVehicle" styleClass="danger" />
                     <Button fx:id="reactivateVehicleButton" text="Ativar" onAction="#handleReactivateVehicle" />
                     <Button text="Apagar" onAction="#handleDeleteVehicle" styleClass="danger" />
+                    <Button text="Exportar PDF" onAction="#handleExportPdf" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 veiculos" styleClass="admin-subtitle" />
                 </HBox>

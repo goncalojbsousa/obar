@@ -1,11 +1,14 @@
 package com.obar.desktop.admin.sections.trips;
 
+import static com.obar.desktop.admin.shared.AdminPdfExportService.column;
+
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
+import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.desktop.admin.shared.AdminParseUtils;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
@@ -23,6 +26,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Controller for the Trips admin section.
@@ -34,6 +41,9 @@ import java.time.LocalDateTime;
  * </p>
  */
 public class TripsController implements AdminSectionController {
+
+    private static final DateTimeFormatter EXPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     private enum ModalMode {
         NONE, CREATE, EDIT, DELETE_CONFIRM
@@ -134,6 +144,7 @@ public class TripsController implements AdminSectionController {
 
     private final ObservableList<AdminTripDTO> allTrips = FXCollections.observableArrayList();
     private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
+    private final AdminPdfExportService pdfExportService = new AdminPdfExportService();
 
     private AdminService adminService;
     private TripStatus activeStatusFilter;
@@ -239,6 +250,21 @@ public class TripsController implements AdminSectionController {
                 "Tem a certeza que deseja apagar a viagem #" + selected.getId()
                         + "?\nRota: " + AdminFormatUtils.fallback(selected.getOriginAddress())
                         + " -> " + AdminFormatUtils.fallback(selected.getDestinationAddress()) + ".");
+    }
+
+    @FXML
+    public void handleExportPdf() {
+        try {
+            Path exportPath = pdfExportService.exportTable(
+                    "OBAR - Viagens",
+                    "Dados atualmente mostrados na dashboard: " + filteredTrips.size() + " de " + allTrips.size(),
+                    "admin_viagens",
+                    tripExportColumns(),
+                    List.copyOf(filteredTrips));
+            showFeedback("PDF exportado: " + exportPath.toAbsolutePath(), false);
+        } catch (Exception exception) {
+            showFeedback("Falha ao exportar PDF: " + exception.getMessage(), true);
+        }
     }
 
     @FXML
@@ -498,6 +524,33 @@ public class TripsController implements AdminSectionController {
         setDetailVisible(true);
     }
 
+    private List<AdminPdfExportService.PdfColumn<AdminTripDTO>> tripExportColumns() {
+        return List.of(
+                column("ID", 0.6f, trip -> formatId(trip.getId())),
+                column("Cliente ID", 0.8f, trip -> formatId(trip.getClientId())),
+                column("Cliente", 1.4f, AdminTripDTO::getClientName),
+                column("Motorista ID", 0.8f, trip -> formatId(trip.getDriverId())),
+                column("Motorista", 1.4f, AdminTripDTO::getDriverName),
+                column("Veiculo ID", 0.8f, trip -> formatId(trip.getVehicleId())),
+                column("Marca", 1f, AdminTripDTO::getVehicleBrand),
+                column("Modelo", 1f, AdminTripDTO::getVehicleModel),
+                column("Matricula", 1f, AdminTripDTO::getVehicleLicensePlate),
+                column("Categoria", 0.9f, AdminTripDTO::getVehicleCategory),
+                column("Estado", 1f, trip -> AdminFormatUtils.prettyTripStatus(trip.getStatus())),
+                column("Tipo", 0.9f, trip -> AdminFormatUtils.prettyTripType(trip.getTripType())),
+                column("Estimado", 0.9f, trip -> formatMoney(trip.getEstimatedPrice())),
+                column("Final", 0.9f, trip -> formatMoney(trip.getFinalPrice())),
+                column("Distancia", 0.9f, trip -> formatDistance(trip.getDistanceKm())),
+                column("Origem", 2.1f, AdminTripDTO::getOriginAddress),
+                column("Destino", 2.1f, AdminTripDTO::getDestinationAddress),
+                column("Pedido em", 1.4f, trip -> formatDate(trip.getRequestTime())),
+                column("Inicio", 1.4f, trip -> formatDate(trip.getStartTime())),
+                column("Fim", 1.4f, trip -> formatDate(trip.getEndTime())),
+                column("Cancelado por", 1.1f, AdminTripDTO::getCancelledBy),
+                column("Motivo cancel.", 1.4f, AdminTripDTO::getCancelReason),
+                column("Notas", 1.5f, AdminTripDTO::getNotes));
+    }
+
     private void finishModalWithSuccess(String message) {
         closeModal();
         reloadTrips();
@@ -540,5 +593,21 @@ public class TripsController implements AdminSectionController {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private String formatId(Integer id) {
+        return id == null ? "-" : "#" + id;
+    }
+
+    private String formatDate(LocalDateTime value) {
+        return value == null ? "-" : EXPORT_DATE_FORMAT.format(value);
+    }
+
+    private String formatDistance(Float distanceKm) {
+        return distanceKm == null ? "-" : distanceKm + " km";
+    }
+
+    private String formatMoney(java.math.BigDecimal value) {
+        return value == null ? "-" : "EUR " + value;
     }
 }

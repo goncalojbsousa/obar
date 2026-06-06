@@ -38,6 +38,7 @@
                 <HBox spacing="8.0">
                     <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
                     <Button fx:id="deleteUserButton" text="Bloquear/Apagar" onAction="#handleDeleteUser" styleClass="danger" />
+                    <Button text="Exportar PDF" onAction="#handleExportPdf" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 clientes" styleClass="admin-subtitle" />
                 </HBox>

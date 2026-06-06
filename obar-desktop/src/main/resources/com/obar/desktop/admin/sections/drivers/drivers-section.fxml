@@ -40,6 +40,7 @@
                     <Button fx:id="deleteUserButton" text="Bloquear/Apagar" onAction="#handleDeleteUser" styleClass="danger" />
                     <Button fx:id="approveDriverButton" text="✓ Aprovar" onAction="#handleApproveDriver" styleClass="approve-button" />
                     <Button fx:id="rejectDriverButton" text="✕ Rejeitar" onAction="#handleRejectDriver" styleClass="danger" />
+                    <Button text="Exportar PDF" onAction="#handleExportPdf" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 motoristas" styleClass="admin-subtitle" />
                 </HBox>

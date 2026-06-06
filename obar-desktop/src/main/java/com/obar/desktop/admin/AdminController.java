@@ -8,6 +8,7 @@ import com.obar.desktop.admin.sections.drivers.DriversController;
 import com.obar.desktop.admin.sections.drivers.PendingDriversController;
 import com.obar.desktop.admin.sections.financial.FinancialController;
 import com.obar.desktop.admin.sections.trips.TripsController;
+import com.obar.desktop.admin.sections.vehicles.VehiclesController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
@@ -24,6 +25,7 @@ public class AdminController {
 
     private enum AdminSection {
         DRIVERS("Motoristas"),
+        VEHICLES("Veiculos"),
         PENDING_DRIVERS("Aprovações Pendentes"),
         CLIENTS("Clientes"),
         TRIPS("Viagens"),
@@ -51,6 +53,8 @@ public class AdminController {
     @FXML
     private Button motoristasSectionButton;
     @FXML
+    private Button veiculosSectionButton;
+    @FXML
     private Button pendingDriversSectionButton;
     @FXML
     private Button clientesSectionButton;
@@ -62,6 +66,8 @@ public class AdminController {
     @FXML
     private StackPane driversSection;
     @FXML
+    private StackPane vehiclesSection;
+    @FXML
     private javafx.scene.layout.HBox pendingDriversSection;
     @FXML
     private StackPane clientsSection;
@@ -72,6 +78,8 @@ public class AdminController {
 
     @FXML
     private DriversController driversSectionController;
+    @FXML
+    private VehiclesController vehiclesSectionController;
     @FXML
     private PendingDriversController pendingDriversSectionController;
     @FXML
@@ -105,6 +113,11 @@ public class AdminController {
     @FXML
     public void handleMotoristasSection() {
         switchSection(AdminSection.DRIVERS);
+    }
+
+    @FXML
+    public void handleVeiculosSection() {
+        switchSection(AdminSection.VEHICLES);
     }
 
     @FXML
@@ -149,6 +162,7 @@ public class AdminController {
 
     private void configureSectionControllers() {
         wireSectionController(driversSectionController);
+        wireSectionController(vehiclesSectionController);
         wireSectionController(pendingDriversSectionController);
         wireSectionController(clientsSectionController);
         wireSectionController(tripsSectionController);
@@ -168,12 +182,14 @@ public class AdminController {
         }
 
         setSectionVisible(driversSection, section == AdminSection.DRIVERS);
+        setSectionVisible(vehiclesSection, section == AdminSection.VEHICLES);
         setSectionVisible(pendingDriversSection, section == AdminSection.PENDING_DRIVERS);
         setSectionVisible(clientsSection, section == AdminSection.CLIENTS);
         setSectionVisible(tripsSection, section == AdminSection.TRIPS);
         setSectionVisible(financialSection, section == AdminSection.FINANCIAL);
 
         setButtonState(motoristasSectionButton, section == AdminSection.DRIVERS);
+        setButtonState(veiculosSectionButton, section == AdminSection.VEHICLES);
         setButtonState(pendingDriversSectionButton, section == AdminSection.PENDING_DRIVERS);
         setButtonState(clientesSectionButton, section == AdminSection.CLIENTS);
         setButtonState(viagensSectionButton, section == AdminSection.TRIPS);
@@ -188,6 +204,7 @@ public class AdminController {
     private AdminSectionController getActiveSectionController() {
         return switch (currentSection) {
             case DRIVERS -> driversSectionController;
+            case VEHICLES -> vehiclesSectionController;
             case PENDING_DRIVERS -> pendingDriversSectionController;
             case CLIENTS -> clientsSectionController;
             case TRIPS -> tripsSectionController;

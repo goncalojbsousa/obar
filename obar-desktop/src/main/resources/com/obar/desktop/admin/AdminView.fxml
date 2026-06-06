@@ -44,6 +44,9 @@
                 <Button fx:id="motoristasSectionButton" text="Motoristas"
                     onAction="#handleMotoristasSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item-active" />
+                <Button fx:id="veiculosSectionButton" text="Veiculos"
+                    onAction="#handleVeiculosSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
                 <Button fx:id="clientesSectionButton" text="Clientes"
                     onAction="#handleClientesSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
@@ -84,6 +87,7 @@
         <center>
             <StackPane fx:id="contentArea">
                 <fx:include fx:id="driversSection" source="sections/drivers/drivers-section.fxml" />
+                <fx:include fx:id="vehiclesSection" source="sections/vehicles/vehicles-section.fxml" />
                 <fx:include fx:id="pendingDriversSection" source="sections/drivers/pending-drivers-section.fxml" />
                 <fx:include fx:id="clientsSection" source="sections/clients/clients-section.fxml" />
                 <fx:include fx:id="tripsSection" source="sections/trips/trips-section.fxml" />

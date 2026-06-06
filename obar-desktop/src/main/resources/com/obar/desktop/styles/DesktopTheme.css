@@ -544,6 +544,73 @@
     -fx-border-color: rgba(184, 34, 34, 0.45);
 }
 
+.vehicle-modal-card {
+    -fx-background-color: #18181b;
+    -fx-border-color: rgba(255, 106, 47, 0.55);
+    -fx-border-width: 1.4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.48), 28, 0.20, 0, 10);
+}
+
+.vehicle-modal-card .modal-title {
+    -fx-text-fill: #ff8a55;
+}
+
+.vehicle-modal-card .meta-title {
+    -fx-text-fill: #ff9a66;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+.vehicle-modal-card .text-field,
+.vehicle-modal-card .combo-box {
+    -fx-background-color: #0c0d10;
+    -fx-text-fill: #f4f7ff;
+    -fx-prompt-text-fill: #a7afc0;
+    -fx-border-color: #3a3d46;
+    -fx-border-width: 1.2;
+}
+
+.vehicle-modal-card .text-field:focused,
+.vehicle-modal-card .combo-box:focused {
+    -fx-border-color: #ff7a3d;
+    -fx-background-color: #101116;
+}
+
+.vehicle-modal-card .combo-box .list-cell {
+    -fx-text-fill: #f4f7ff;
+}
+
+.vehicle-modal-card .combo-box-popup .list-view {
+    -fx-background-color: #15161b;
+    -fx-border-color: rgba(255, 106, 47, 0.45);
+}
+
+.vehicle-modal-card .combo-box-popup .list-cell {
+    -fx-background-color: #15161b;
+    -fx-text-fill: #f4f7ff;
+}
+
+.vehicle-modal-card .combo-box-popup .list-cell:hover,
+.vehicle-modal-card .combo-box-popup .list-cell:selected {
+    -fx-background-color: rgba(255, 106, 47, 0.22);
+    -fx-text-fill: #ffffff;
+}
+
+.vehicle-modal-card .check-box {
+    -fx-text-fill: #f1f4fb;
+    -fx-font-weight: 700;
+}
+
+.vehicle-modal-card .vehicle-category-combo {
+    -fx-pref-width: 180;
+    -fx-max-width: 180;
+}
+
+.vehicle-modal-card .meta-value {
+    -fx-text-fill: #eef2fb;
+    -fx-font-size: 13px;
+}
+
 .period-chip,
 .period-chip-active {
     -fx-font-size: 11px;

@@ -36,8 +36,9 @@
                 </HBox>
 
                 <HBox spacing="8.0">
-                    <Button fx:id="editTripButton" text="Editar" onAction="#handleEditTrip" />
-                    <Button fx:id="deleteTripButton" text="Apagar" onAction="#handleDeleteTrip" styleClass="danger" />
+                    <Button fx:id="editTripButton" text="✎ Editar" onAction="#handleEditTrip" />
+                    <Button fx:id="deleteTripButton" text="× Apagar" onAction="#handleDeleteTrip" styleClass="danger" />
+                    <Button text="⇩ Exportar PDF" onAction="#handleExportPdf" styleClass="export-button" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 viagens" styleClass="admin-subtitle" />
                 </HBox>

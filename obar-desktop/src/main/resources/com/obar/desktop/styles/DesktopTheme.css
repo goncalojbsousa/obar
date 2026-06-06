@@ -59,6 +59,18 @@
     -fx-border-color: #232326;
 }
 
+.admin-content .button.export-button {
+    -fx-background-color: rgba(255, 106, 47, 0.08);
+    -fx-text-fill: #f2d2c2;
+    -fx-border-color: rgba(255, 106, 47, 0.52);
+    -fx-font-weight: 700;
+}
+
+.admin-content .button.export-button:hover {
+    -fx-background-color: rgba(255, 106, 47, 0.16);
+    -fx-border-color: #ff6a2f;
+}
+
 .admin-content .button.danger,
 .admin-sidebar .button.danger {
     -fx-background-color: rgba(184, 34, 34, 0.26);
@@ -81,9 +93,10 @@
 }
 
 .filter-chip-active {
-    -fx-background-color: rgba(255, 106, 47, 0.2);
+    -fx-background-color: rgba(255, 106, 47, 0.14);
     -fx-text-fill: #ff8755;
-    -fx-border-color: rgba(255, 106, 47, 0.45);
+    -fx-border-color: rgba(255, 106, 47, 0.28) rgba(255, 106, 47, 0.28) #ff6a2f rgba(255, 106, 47, 0.28);
+    -fx-border-width: 1 1 2 1;
 }
 
 .feedback-success {

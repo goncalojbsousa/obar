@@ -35,10 +35,11 @@
                 </HBox>
 
                 <HBox spacing="8.0">
-                    <Button text="Editar" onAction="#handleEditVehicle" />
-                    <Button fx:id="deactivateVehicleButton" text="Desativar" onAction="#handleDeactivateVehicle" styleClass="danger" />
-                    <Button fx:id="reactivateVehicleButton" text="Ativar" onAction="#handleReactivateVehicle" />
-                    <Button text="Apagar" onAction="#handleDeleteVehicle" styleClass="danger" />
+                    <Button text="✎ Editar" onAction="#handleEditVehicle" />
+                    <Button fx:id="deactivateVehicleButton" text="− Desativar" onAction="#handleDeactivateVehicle" styleClass="danger" />
+                    <Button fx:id="reactivateVehicleButton" text="↺ Ativar" onAction="#handleReactivateVehicle" />
+                    <Button text="× Apagar" onAction="#handleDeleteVehicle" styleClass="danger" />
+                    <Button text="⇩ Exportar PDF" onAction="#handleExportPdf" styleClass="export-button" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 veiculos" styleClass="admin-subtitle" />
                 </HBox>
@@ -91,10 +92,10 @@
                 <Label text="Cor" styleClass="meta-title" />
                 <Label fx:id="detailColorLabel" text="-" styleClass="meta-value" />
                 <VBox spacing="8.0" styleClass="detail-actions">
-                    <Button text="Editar veiculo" onAction="#handleEditVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
-                    <Button fx:id="detailDeactivateVehicleButton" text="Desativar veiculo" onAction="#handleDeactivateVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
-                    <Button fx:id="detailReactivateVehicleButton" text="Ativar veiculo" onAction="#handleReactivateVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
-                    <Button text="Apagar veiculo" onAction="#handleDeleteVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                    <Button text="✎ Editar veiculo" onAction="#handleEditVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button fx:id="detailDeactivateVehicleButton" text="− Desativar veiculo" onAction="#handleDeactivateVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                    <Button fx:id="detailReactivateVehicleButton" text="↺ Ativar veiculo" onAction="#handleReactivateVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button text="× Apagar veiculo" onAction="#handleDeleteVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
                 </VBox>
                 <Region VBox.vgrow="ALWAYS" />
             </VBox>

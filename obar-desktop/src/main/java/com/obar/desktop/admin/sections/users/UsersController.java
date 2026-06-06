@@ -1,11 +1,14 @@
 package com.obar.desktop.admin.sections.users;
 
+import static com.obar.desktop.admin.shared.AdminPdfExportService.column;
+
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
+import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.UserType;
 import javafx.beans.property.SimpleStringProperty;
@@ -22,6 +25,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -34,6 +40,9 @@ import java.util.Locale;
  * </p>
  */
 public abstract class UsersController implements AdminSectionController {
+
+    private static final DateTimeFormatter EXPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     public record UserSectionConfig(
             UserType type,
@@ -154,6 +163,7 @@ public abstract class UsersController implements AdminSectionController {
 
     private final ObservableList<AdminUserDTO> allUsers = FXCollections.observableArrayList();
     private final FilteredList<AdminUserDTO> filteredUsers = new FilteredList<>(allUsers, user -> true);
+    private final AdminPdfExportService pdfExportService = new AdminPdfExportService();
 
     private AdminService adminService;
     private AccountStatus activeStatusFilter;
@@ -261,6 +271,21 @@ public abstract class UsersController implements AdminSectionController {
         sharedModalController.getModalDeleteMessageLabel().setText(alreadyBlocked
                 ? "Apagar " + AdminFormatUtils.fallback(selected.getName()) + "? Esta acao e permanente."
                 : "Bloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica bloqueada.");
+    }
+
+    @FXML
+    public void handleExportPdf() {
+        try {
+            Path exportPath = pdfExportService.exportTable(
+                    "OBAR - " + sectionConfig().sectionTitle(),
+                    "Dados atualmente mostrados na dashboard: " + filteredUsers.size() + " de " + allUsers.size(),
+                    "admin_" + sectionConfig().sectionTitle(),
+                    userExportColumns(),
+                    List.copyOf(filteredUsers));
+            showFeedback("PDF exportado: " + exportPath.toAbsolutePath(), false);
+        } catch (Exception exception) {
+            showFeedback("Falha ao exportar PDF: " + exception.getMessage(), true);
+        }
     }
 
     @FXML
@@ -549,6 +574,33 @@ public abstract class UsersController implements AdminSectionController {
                 : AdminFormatUtils.fallback(user.getEmail());
     }
 
+    private List<AdminPdfExportService.PdfColumn<AdminUserDTO>> userExportColumns() {
+        if (sectionConfig().type() == UserType.DRIVER) {
+            return List.of(
+                    column("ID", 0.8f, user -> formatId(user.getId())),
+                    column("Nome", 2.1f, AdminUserDTO::getName),
+                    column("Email", 2.4f, AdminUserDTO::getEmail),
+                    column("Telefone", 1.3f, AdminUserDTO::getPhone),
+                    column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.getStatus())),
+                    column("Licenca", 1.4f, AdminUserDTO::getLicenseNumber),
+                    column("Avaliacao", 1f, user -> AdminFormatUtils.starRating(user.getAverageRating())),
+                    column("Viagens", 0.9f, user -> String.valueOf(AdminFormatUtils.defaultInteger(user.getTotalTrips()))),
+                    column("Disponivel", 1f, user -> Boolean.TRUE.equals(user.getAvailable()) ? "Sim" : "Nao"),
+                    column("Registado em", 1.6f, user -> formatDate(user.getCreatedAt())),
+                    column("Nota", 1.8f, AdminUserDTO::getApprovalNote));
+        }
+
+        return List.of(
+                column("ID", 0.8f, user -> formatId(user.getId())),
+                column("Nome", 2.2f, AdminUserDTO::getName),
+                column("Email", 2.5f, AdminUserDTO::getEmail),
+                column("Telefone", 1.4f, AdminUserDTO::getPhone),
+                column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.getStatus())),
+                column("NIF", 1.4f, AdminUserDTO::getTaxNumber),
+                column("Metodo pagamento", 1.5f, user -> formatId(user.getDefaultPaymentMethodId())),
+                column("Registado em", 1.6f, user -> formatDate(user.getCreatedAt())));
+    }
+
     private String volumeValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
                 ? String.valueOf(AdminFormatUtils.defaultInteger(user.getTotalTrips()))
@@ -611,5 +663,13 @@ public abstract class UsersController implements AdminSectionController {
         if (label != null) {
             label.setText(text == null ? "-" : text);
         }
+    }
+
+    private String formatId(Integer id) {
+        return id == null ? "-" : "#" + id;
+    }
+
+    private String formatDate(LocalDateTime value) {
+        return value == null ? "-" : EXPORT_DATE_FORMAT.format(value);
     }
 }

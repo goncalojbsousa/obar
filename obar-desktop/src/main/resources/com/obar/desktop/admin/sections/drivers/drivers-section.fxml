@@ -36,10 +36,11 @@
                     <Button fx:id="filterPendingButton" text="Pendentes" onAction="#handleFilterPending" styleClass="filter-chip" />
                 </HBox>
                 <HBox spacing="8.0">
-                    <Button fx:id="editUserButton" text="Editar" onAction="#handleEditUser" />
-                    <Button fx:id="deleteUserButton" text="Bloquear/Apagar" onAction="#handleDeleteUser" styleClass="danger" />
+                    <Button fx:id="editUserButton" text="✎ Editar" onAction="#handleEditUser" />
+                    <Button fx:id="deleteUserButton" text="× Bloquear/Apagar" onAction="#handleDeleteUser" styleClass="danger" />
                     <Button fx:id="approveDriverButton" text="✓ Aprovar" onAction="#handleApproveDriver" styleClass="approve-button" />
                     <Button fx:id="rejectDriverButton" text="✕ Rejeitar" onAction="#handleRejectDriver" styleClass="danger" />
+                    <Button text="⇩ Exportar PDF" onAction="#handleExportPdf" styleClass="export-button" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 motoristas" styleClass="admin-subtitle" />
                 </HBox>
@@ -104,10 +105,10 @@
                 <Label fx:id="detailExtraOneTitleLabel" text="Nota de aprovacao" styleClass="meta-title" />
                 <Label fx:id="detailExtraOneValueLabel" text="-" styleClass="meta-value" />
                 <VBox spacing="8.0" styleClass="detail-actions">
-                    <Button text="Editar dados" onAction="#handleEditUser" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button text="✎ Editar dados" onAction="#handleEditUser" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
                     <Button fx:id="detailApproveButton" text="✓ Aprovar motorista" onAction="#handleApproveDriver" styleClass="approve-button" maxWidth="1.7976931348623157E308" />
                     <Button fx:id="detailRejectButton" text="✕ Rejeitar motorista" onAction="#handleRejectDriver" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
-                    <Button text="Bloquear conta" onAction="#handleDeleteUser" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                    <Button text="× Bloquear conta" onAction="#handleDeleteUser" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
                 </VBox>
                 <Region VBox.vgrow="ALWAYS" />
             </VBox>

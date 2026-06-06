@@ -1,11 +1,14 @@
 package com.obar.desktop.admin.sections.vehicles;
 
+import static com.obar.desktop.admin.shared.AdminPdfExportService.column;
+
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminVehicleCommand;
 import com.obar.bll.admin.AdminVehicleDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
+import com.obar.desktop.admin.shared.AdminPdfExportService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,6 +26,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -140,6 +145,7 @@ public class VehiclesController implements AdminSectionController {
 
     private final ObservableList<AdminVehicleDTO> allVehicles = FXCollections.observableArrayList();
     private final FilteredList<AdminVehicleDTO> filteredVehicles = new FilteredList<>(allVehicles, vehicle -> true);
+    private final AdminPdfExportService pdfExportService = new AdminPdfExportService();
 
     private AdminService adminService;
     private Boolean activeFilter;
@@ -266,6 +272,22 @@ public class VehiclesController implements AdminSectionController {
                 + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Apagar");
         setModalVisible(true);
+    }
+
+    @FXML
+    public void handleExportPdf() {
+        try {
+            Path exportPath = pdfExportService.exportTable(
+                    "OBAR - Veiculos",
+                    "Dados atualmente mostrados na dashboard: " + filteredVehicles.size() + " de "
+                            + allVehicles.size(),
+                    "admin_veiculos",
+                    vehicleExportColumns(),
+                    List.copyOf(filteredVehicles));
+            showFeedback("PDF exportado: " + exportPath.toAbsolutePath(), false);
+        } catch (Exception exception) {
+            showFeedback("Falha ao exportar PDF: " + exception.getMessage(), true);
+        }
     }
 
     @FXML
@@ -560,8 +582,28 @@ public class VehiclesController implements AdminSectionController {
         return vehicle.getDriverId() == null ? driverName : "#" + vehicle.getDriverId() + " | " + driverName;
     }
 
+    private List<AdminPdfExportService.PdfColumn<AdminVehicleDTO>> vehicleExportColumns() {
+        return List.of(
+                column("ID", 0.7f, vehicle -> formatId(vehicle.getId())),
+                column("Veiculo", 1.8f, AdminVehicleDTO::getVehicleName),
+                column("Marca", 1.2f, AdminVehicleDTO::getBrand),
+                column("Modelo", 1.2f, AdminVehicleDTO::getModel),
+                column("Matricula", 1.1f, AdminVehicleDTO::getLicensePlate),
+                column("Motorista", 1.8f, VehiclesController::formatDriver),
+                column("Categoria", 1f, AdminVehicleDTO::getCategory),
+                column("Ano", 0.8f, vehicle -> formatInteger(vehicle.getYear())),
+                column("Cor", 1f, AdminVehicleDTO::getColor),
+                column("Tarifa base", 1f, vehicle -> formatMoney(vehicle.getBaseFare())),
+                column("Preco/km", 1f, vehicle -> formatMoney(vehicle.getPricePerKm())),
+                column("Estado", 0.9f, vehicle -> isActive(vehicle) ? "Ativo" : "Inativo"));
+    }
+
     private static String formatInteger(Integer value) {
         return value == null ? "-" : value.toString();
+    }
+
+    private static String formatId(Integer value) {
+        return value == null ? "-" : "#" + value;
     }
 
     private static String formatMoney(BigDecimal value) {

@@ -11,23 +11,7 @@
 </head>
 
 <body class="client-page">
-    <header class="topbar">
-        <a class="brand" th:href="@{/app}">Obar</a>
-        <nav class="client-nav" aria-label="Navegação do cliente">
-            <a class="active" th:href="@{/app}">Nova Viagem</a>
-            <a th:href="@{/app/scheduled}">Agendadas</a>
-            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
-            <a href="#" aria-disabled="true">Pagamentos</a>
-        </nav>
-        <div class="user-area">
-            <span class="user-avatar" aria-hidden="true"
-                th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
-            <span th:text="${currentUser.name()}">Cliente</span>
-            <form th:action="@{/logout}" method="post">
-                <button class="ghost-button" type="submit">Sair</button>
-            </form>
-        </div>
-    </header>
+    <header th:replace="~{fragments/client-navbar :: navbar('new')}"></header>
 
     <main class="client-shell">
         <section class="ride-request" aria-label="Pedir viagem">
@@ -40,13 +24,13 @@
                 <div class="ride-form">
                     <label class="search-field">
                         Origem
-                        <input type="search" autocomplete="off" placeholder="A obter localização atual..."
+                        <input type="search" autocomplete="off" placeholder="A obter localiza&#x00E7;&#x00E3;o atual..."
                             data-origin-input>
                         <div class="suggestions-list" data-origin-suggestions hidden></div>
-                        <span class="field-note" data-origin-status>Localização ainda não definida.</span>
+                        <span class="field-note" data-origin-status>Localiza&#x00E7;&#x00E3;o ainda n&#x00E3;o definida.</span>
                     </label>
 
-                    <button class="ghost-button" type="button" data-locate-button hidden>Usar localização atual</button>
+                    <button class="ghost-button" type="button" data-locate-button hidden>Usar localiza&#x00E7;&#x00E3;o atual</button>
 
                     <label class="search-field">
                         Destino
@@ -56,7 +40,7 @@
                     </label>
 
                     <label class="search-field vehicle-category-field">
-                        Tipo de veículo
+                        Tipo de ve&#x00ED;culo
                         <select data-vehicle-category>
                             <option th:each="category : ${vehicleCategories}" th:value="${category}"
                                 th:text="${category}">STANDARD</option>
@@ -71,16 +55,16 @@
 
                 <div class="estimate-panel" data-estimate-panel hidden>
                     <div>
-                        <span>Distância</span>
+                        <span>Dist&#x00E2;ncia</span>
                         <strong data-distance>0 km</strong>
                     </div>
                     <div>
-                        <span>Duração</span>
+                        <span>Dura&#x00E7;&#x00E3;o</span>
                         <strong data-duration>0 min</strong>
                     </div>
                     <div>
-                        <span>Preço</span>
-                        <strong data-price>0,00 €</strong>
+                        <span>Pre&#x00E7;o</span>
+                        <strong data-price>0,00 &#x20AC;</strong>
                     </div>
                     <button class="primary-button" type="button" data-request-button disabled>Pedir viagem</button>
                     <button class="ghost-button" type="button" data-schedule-button disabled>Agendar viagem</button>
@@ -90,10 +74,10 @@
                     <div class="waiting-indicator" aria-hidden="true"></div>
                     <div>
                         <span class="field-title">Pedido enviado</span>
-                        <strong data-waiting-title>À espera de motorista</strong>
-                        <p>A procurar um motorista disponível para aceitar a viagem.</p>
+                        <strong data-waiting-title>&#x00C0; espera de motorista</strong>
+                        <p>A procurar um motorista dispon&#x00ED;vel para aceitar a viagem.</p>
                         <div class="trip-pin" data-trip-pin-block hidden>
-                            <span>PIN para começar</span>
+                            <span>PIN para come&#x00E7;ar</span>
                             <strong data-trip-pin>0000</strong>
                         </div>
                     </div>

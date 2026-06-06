@@ -1,0 +1,126 @@
+/* Admin sidebar and brand styles. */
+
+.admin-sidebar {
+    -fx-background-color: #111113;
+    -fx-border-color: rgba(255, 255, 255, 0.04);
+    -fx-border-width: 0 1 0 0;
+}
+
+.admin-sidebar .label {
+    -fx-text-fill: #f3f6ff;
+}
+
+.admin-sidebar .brand-white {
+    -fx-text-fill: #f4f5f8;
+}
+
+.admin-sidebar .brand-orange {
+    -fx-text-fill: #ff6a2f;
+}
+
+.brand-block {
+    -fx-padding: 2 0 8 0;
+}
+
+
+.brand-white,
+.brand-orange {
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+    -fx-font-family: "Arial Black";
+}
+
+.brand-white {
+    -fx-text-fill: #f4f5f8;
+}
+
+.brand-orange {
+    -fx-text-fill: #ff6a2f;
+}
+
+.brand-caption {
+    -fx-padding: 0 0 0 2;
+    -fx-font-size: 9px;
+    -fx-font-weight: 600;
+    -fx-letter-spacing: 0.6px;
+}
+
+.sidebar-group-title {
+    -fx-padding: 16 0 0 0;
+    -fx-text-fill: #697188;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.8px;
+}
+
+.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #aeb5c8;
+    -fx-font-weight: 600;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+}
+
+.sidebar-item-active {
+    -fx-background-color: rgba(255, 106, 47, 0.2);
+    -fx-text-fill: #ff7f4b;
+    -fx-font-weight: 700;
+    -fx-alignment: center-left;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+}
+
+.sidebar-item:hover,
+.sidebar-item-active:hover {
+    -fx-background-color: rgba(255, 106, 47, 0.26);
+}
+
+.sidebar-user-card {
+    -fx-background-color: #111113;
+    -fx-background-radius: 12;
+    -fx-border-color: #232326;
+    -fx-border-radius: 12;
+    -fx-padding: 10 14;
+    -fx-max-width: 1000000;
+}
+
+.sidebar-user-avatar {
+    -fx-background-color: #ff7a2d;
+    -fx-background-radius: 18;
+    -fx-min-width: 30;
+    -fx-min-height: 30;
+    -fx-max-width: 30;
+    -fx-max-height: 30;
+    -fx-alignment: center;
+    -fx-text-fill: #fff4ed;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+}
+
+.sidebar-user-name {
+    -fx-text-fill: #edf1f7;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+.sidebar-user-role {
+    -fx-text-fill: #7d8596;
+    -fx-font-size: 10px;
+}
+
+.sidebar-user-card:hover {
+    -fx-background-color: #1a1a1e;
+    -fx-border-color: #3a3a3e;
+    -fx-cursor: hand;
+}
+
+.sidebar-logout-icon {
+    -fx-text-fill: #55607a;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.sidebar-user-card:hover .sidebar-logout-icon {
+    -fx-text-fill: #ff7a4b;
+}

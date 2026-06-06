@@ -25,6 +25,7 @@ public class AdminService {
     private final AdminUserManagementService userManagementService;
     private final AdminTripManagementService tripManagementService;
     private final AdminFinancialService financialService;
+    private final AdminVehicleManagementService vehicleManagementService;
 
     public AdminService() {
         this(
@@ -85,6 +86,7 @@ public class AdminService {
                 routeRepository,
                 vehicleRepository);
         this.financialService = new AdminFinancialService(paymentRepository, taxRateRepository);
+        this.vehicleManagementService = new AdminVehicleManagementService(userRepository, vehicleRepository);
     }
 
     public List<AdminUserDTO> listPendingDrivers() {
@@ -129,6 +131,30 @@ public class AdminService {
 
     public void deleteTrip(Integer tripId) {
         tripManagementService.deleteTrip(tripId);
+    }
+
+    public List<AdminVehicleDTO> listVehicles() {
+        return vehicleManagementService.listVehicles();
+    }
+
+    public AdminVehicleDTO createVehicle(AdminVehicleCommand command) {
+        return vehicleManagementService.createVehicle(command);
+    }
+
+    public AdminVehicleDTO updateVehicle(Integer vehicleId, AdminVehicleCommand command) {
+        return vehicleManagementService.updateVehicle(vehicleId, command);
+    }
+
+    public void deactivateVehicle(Integer vehicleId) {
+        vehicleManagementService.deactivateVehicle(vehicleId);
+    }
+
+    public void reactivateVehicle(Integer vehicleId) {
+        vehicleManagementService.reactivateVehicle(vehicleId);
+    }
+
+    public void deleteVehicle(Integer vehicleId) {
+        vehicleManagementService.deleteVehicle(vehicleId);
     }
 
     public AdminFinancialOverviewDTO getFinancialOverview(AdminFinancialPeriod period) {

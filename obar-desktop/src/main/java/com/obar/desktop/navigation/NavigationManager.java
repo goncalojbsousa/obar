@@ -8,6 +8,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Centralized desktop-layer navigation utility for switching JavaFX screens.
@@ -16,7 +17,14 @@ public final class NavigationManager {
 
     private static final double WINDOW_WIDTH = 900;
     private static final double WINDOW_HEIGHT = 640;
-    private static final String DESKTOP_STYLESHEET = "/com/obar/desktop/styles/DesktopTheme.css";
+    private static final List<String> DESKTOP_STYLESHEETS = List.of(
+            "/com/obar/desktop/styles/DesktopTheme.css",
+            "/com/obar/desktop/styles/admin/sidebar.css",
+            "/com/obar/desktop/styles/admin/tables.css",
+            "/com/obar/desktop/styles/admin/details.css",
+            "/com/obar/desktop/styles/admin/financial.css",
+            "/com/obar/desktop/styles/admin/approvals.css",
+            "/com/obar/desktop/styles/admin/modals.css");
 
     private static Stage primaryStage;
     private static DesktopApplicationContext applicationContext;
@@ -94,14 +102,16 @@ public final class NavigationManager {
             return;
         }
 
-        java.net.URL stylesheetUrl = NavigationManager.class.getResource(DESKTOP_STYLESHEET);
-        if (stylesheetUrl == null) {
-            return;
-        }
+        for (String stylesheetPath : DESKTOP_STYLESHEETS) {
+            java.net.URL stylesheetUrl = NavigationManager.class.getResource(stylesheetPath);
+            if (stylesheetUrl == null) {
+                continue;
+            }
 
-        String stylesheet = stylesheetUrl.toExternalForm();
-        if (!scene.getStylesheets().contains(stylesheet)) {
-            scene.getStylesheets().add(stylesheet);
+            String stylesheet = stylesheetUrl.toExternalForm();
+            if (!scene.getStylesheets().contains(stylesheet)) {
+                scene.getStylesheets().add(stylesheet);
+            }
         }
     }
 }

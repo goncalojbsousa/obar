@@ -496,7 +496,7 @@ public abstract class UsersController implements AdminSectionController {
 
     private void showOnlyUserForm() {
         UserSectionConfig config = sectionConfig();
-        sharedModalController.getModalReferenceLabel().setText(config.referenceTitle());
+        sharedModalController.getModalReferenceLabel().setText(config.referenceTitle().toUpperCase(Locale.ROOT));
         sharedModalController.getModalReferenceField().setPromptText(config.referencePrompt());
         AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), true);
         AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);

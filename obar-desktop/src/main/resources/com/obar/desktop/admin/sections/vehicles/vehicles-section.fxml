@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.obar.desktop.admin.sections.vehicles.VehiclesController">
+    <VBox spacing="14.0" styleClass="admin-content">
+        <padding>
+            <Insets top="24.0" right="26.0" bottom="24.0" left="26.0" />
+        </padding>
+        <HBox spacing="16.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label text="Veiculos" styleClass="title-2" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="+ Novo Veiculo" onAction="#handleAddVehicle" styleClass="accent" />
+                </HBox>
+
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <TextField fx:id="searchField" promptText="Pesquisar por marca, matricula, motorista, categoria..." HBox.hgrow="ALWAYS" />
+                    <Button fx:id="filterAllButton" text="Todos" onAction="#handleFilterAll" styleClass="filter-chip-active" />
+                    <Button fx:id="filterActiveButton" text="Ativos" onAction="#handleFilterActive" styleClass="filter-chip" />
+                    <Button fx:id="filterInactiveButton" text="Inativos" onAction="#handleFilterInactive" styleClass="filter-chip" />
+                </HBox>
+
+                <HBox spacing="8.0">
+                    <Button text="Editar" onAction="#handleEditVehicle" />
+                    <Button fx:id="deactivateVehicleButton" text="Desativar" onAction="#handleDeactivateVehicle" styleClass="danger" />
+                    <Button fx:id="reactivateVehicleButton" text="Ativar" onAction="#handleReactivateVehicle" />
+                    <Button text="Apagar" onAction="#handleDeleteVehicle" styleClass="danger" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="listInfoLabel" text="A mostrar 0 veiculos" styleClass="admin-subtitle" />
+                </HBox>
+
+                <TableView fx:id="vehiclesTable" VBox.vgrow="ALWAYS" styleClass="users-table">
+                    <columns>
+                        <TableColumn fx:id="vehicleIdColumn" text="ID" prefWidth="70.0" />
+                        <TableColumn fx:id="vehicleColumn" text="Veiculo" prefWidth="190.0" />
+                        <TableColumn fx:id="licensePlateColumn" text="Matricula" prefWidth="115.0" />
+                        <TableColumn fx:id="driverColumn" text="Motorista" prefWidth="200.0" />
+                        <TableColumn fx:id="categoryColumn" text="Categoria" prefWidth="110.0" />
+                        <TableColumn fx:id="yearColumn" text="Ano" prefWidth="75.0" />
+                        <TableColumn fx:id="activeColumn" text="Estado" prefWidth="95.0" />
+                    </columns>
+                </TableView>
+
+                <Label fx:id="feedbackLabel" text="Ready." styleClass="feedback-success" />
+            </VBox>
+
+            <VBox fx:id="detailPanel" spacing="10.0" styleClass="detail-panel" prefWidth="360.0" minWidth="330.0" visible="false" managed="false">
+                <HBox.margin>
+                    <Insets top="-24.0" right="-26.0" bottom="-24.0" left="0.0" />
+                </HBox.margin>
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="detailTitleLabel" text="Detalhe do veiculo" styleClass="detail-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="X" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
+                </HBox>
+                <Label fx:id="detailVehicleLabel" text="Sem selecao" styleClass="detail-name" />
+                <Label fx:id="detailLicensePlateLabel" text="-" styleClass="admin-subtitle" />
+                <HBox spacing="6.0">
+                    <Label fx:id="detailStatusLabel" text="-" styleClass="status-pill" />
+                </HBox>
+                <HBox spacing="8.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailBaseFareLabel" text="-" styleClass="metric-value" />
+                        <Label text="Tarifa base" styleClass="metric-title" />
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="2.0" styleClass="metric-card">
+                        <Label fx:id="detailPricePerKmLabel" text="-" styleClass="metric-value" />
+                        <Label text="Preco por km" styleClass="metric-title" />
+                    </VBox>
+                </HBox>
+                <Label text="Motorista" styleClass="meta-title" />
+                <Label fx:id="detailDriverLabel" text="-" styleClass="meta-value" />
+                <Label text="Categoria" styleClass="meta-title" />
+                <Label fx:id="detailCategoryLabel" text="-" styleClass="meta-value" />
+                <Label text="Ano" styleClass="meta-title" />
+                <Label fx:id="detailYearLabel" text="-" styleClass="meta-value" />
+                <Label text="Cor" styleClass="meta-title" />
+                <Label fx:id="detailColorLabel" text="-" styleClass="meta-value" />
+                <VBox spacing="8.0" styleClass="detail-actions">
+                    <Button text="Editar veiculo" onAction="#handleEditVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button fx:id="detailDeactivateVehicleButton" text="Desativar veiculo" onAction="#handleDeactivateVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                    <Button fx:id="detailReactivateVehicleButton" text="Ativar veiculo" onAction="#handleReactivateVehicle" styleClass="detail-action" maxWidth="1.7976931348623157E308" />
+                    <Button text="Apagar veiculo" onAction="#handleDeleteVehicle" styleClass="detail-action-danger" maxWidth="1.7976931348623157E308" />
+                </VBox>
+                <Region VBox.vgrow="ALWAYS" />
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <StackPane fx:id="vehicleModalOverlay" styleClass="modal-overlay" visible="false" managed="false">
+        <HBox minWidth="800.0" prefWidth="800.0" maxWidth="800.0" maxHeight="-Infinity" StackPane.alignment="CENTER">
+            <Region minWidth="3.0" prefWidth="3.0" maxWidth="3.0" styleClass="vehicle-modal-stripe" />
+            <VBox spacing="0.0" styleClass="vehicle-modal-card" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="vehicle-modal-header">
+                <HBox alignment="CENTER" styleClass="vehicle-modal-icon-box" minWidth="38.0" minHeight="38.0" maxWidth="38.0" maxHeight="38.0">
+                    <Label text="&#x1F698;" styleClass="vehicle-modal-icon-label" />
+                </HBox>
+                <VBox spacing="2.0">
+                    <Label fx:id="vehicleModalTitleLabel" text="Adicionar veiculo" styleClass="modal-title" />
+                    <Label fx:id="vehicleModalSubtitleLabel" text="Novo veiculo na frota" styleClass="vehicle-modal-subtitle" />
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="X" onAction="#handleModalCancel" styleClass="vehicle-modal-close" />
+            </HBox>
+
+            <Label fx:id="vehicleModalErrorLabel" text="" styleClass="feedback-error" visible="false" managed="false" />
+
+            <VBox fx:id="vehicleFormSection" spacing="18.0" styleClass="vehicle-modal-body">
+                <HBox spacing="12.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="MARCA" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F3ED;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="brandField" promptText="Toyota" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="MODELO" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F698;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="modelField" promptText="Corolla" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="ANO" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F4C5;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="yearField" promptText="2022" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="12.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="MATRICULA" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F194;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="licensePlateField" promptText="AA-00-BB" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="CATEGORIA" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F3F7;" styleClass="vehicle-field-icon" />
+                            <ComboBox fx:id="categoryComboBox" promptText="Selecionar" styleClass="vehicle-field" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="COR" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x25CF;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="colorField" promptText="Branco, Preto..." styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="12.0">
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="MOTORISTA ID" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x1F464;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="driverIdField" promptText="ID do motorista" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="TARIFA BASE" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="&#x20AC;" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="baseFareField" promptText="ex: 3.50" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" spacing="5.0">
+                        <Label text="PRECO POR KM" styleClass="vehicle-field-label" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="vehicle-field-box" maxWidth="1.7976931348623157E308">
+                            <Label text="KM" styleClass="vehicle-field-icon" />
+                            <TextField fx:id="pricePerKmField" promptText="ex: 0.90" styleClass="vehicle-field" HBox.hgrow="ALWAYS" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <CheckBox fx:id="activeCheckBox" text="Veiculo ativo" selected="true" styleClass="vehicle-modal-checkbox" />
+            </VBox>
+
+            <VBox fx:id="vehicleConfirmSection" spacing="8.0" visible="false" managed="false">
+                <Label fx:id="vehicleConfirmMessageLabel" text="" styleClass="meta-value" wrapText="true" />
+            </VBox>
+
+            <HBox alignment="CENTER" spacing="12.0" styleClass="vehicle-modal-footer">
+                <Button text="Cancelar" onAction="#handleModalCancel" styleClass="vehicle-modal-cancel" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                <Button fx:id="modalSaveButton" text="Adicionar" onAction="#handleModalSave" styleClass="vehicle-modal-save" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                <Button fx:id="modalDeactivateButton" text="Confirmar" onAction="#handleModalDeactivate" styleClass="danger" visible="false" managed="false" />
+            </HBox>
+            </VBox>
+        </HBox>
+    </StackPane>
+</StackPane>

@@ -1,5 +1,7 @@
 package com.obar.desktop.admin.shared;
 
+import java.util.Locale;
+
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -26,6 +28,10 @@ public class AdminModalIncludeController {
     private StackPane modalOverlay;
     @FXML
     private Label modalTitleLabel;
+    @FXML
+    private Label modalSubtitleLabel;
+    @FXML
+    private Label modalIconLabel;
     @FXML
     private Label modalErrorLabel;
 
@@ -87,6 +93,8 @@ public class AdminModalIncludeController {
     @FXML
     private Label modalDeleteMessageLabel;
     @FXML
+    private Button modalCloseButton;
+    @FXML
     private Button modalCancelButton;
     @FXML
     private Button modalSaveButton;
@@ -99,6 +107,10 @@ public class AdminModalIncludeController {
 
     public Label getModalTitleLabel() {
         return modalTitleLabel;
+    }
+
+    public Label getModalSubtitleLabel() {
+        return modalSubtitleLabel;
     }
 
     public Label getModalErrorLabel() {
@@ -230,16 +242,17 @@ public class AdminModalIncludeController {
     }
 
     public void prepareForForm(String title) {
-        setTitle(title);
+        configureHeading(title, false);
         setVisible(modalDeleteSection, false);
         setVisible(modalSaveButton, true);
         setVisible(modalDeleteConfirmButton, false);
+        setButtonText(modalSaveButton, isCreateTitle(title) ? "Adicionar" : "Guardar");
         clearError();
         show();
     }
 
     public void prepareForDeleteConfirm(String title) {
-        setTitle(title);
+        configureHeading(title, true);
         setVisible(modalDeleteSection, true);
         setVisible(modalSaveButton, false);
         setVisible(modalDeleteConfirmButton, true);
@@ -277,6 +290,7 @@ public class AdminModalIncludeController {
     }
 
     public void bindActions(Runnable onCancel, Runnable onSave, Runnable onDeleteConfirm) {
+        bindAction(modalCloseButton, onCancel);
         bindAction(modalCancelButton, onCancel);
         bindAction(modalSaveButton, onSave);
         bindAction(modalDeleteConfirmButton, onDeleteConfirm);
@@ -287,6 +301,74 @@ public class AdminModalIncludeController {
             return;
         }
         button.setOnAction(event -> action.run());
+    }
+
+    private void configureHeading(String title, boolean deleteAction) {
+        setTitle(title);
+        if (modalSubtitleLabel != null) {
+            modalSubtitleLabel.setText(resolveSubtitle(title, deleteAction));
+        }
+        if (modalIconLabel != null) {
+            modalIconLabel.setText(resolveIcon(title, deleteAction));
+        }
+    }
+
+    private String resolveSubtitle(String title, boolean deleteAction) {
+        if (deleteAction) {
+            return "Confirmar acao no sistema";
+        }
+
+        String normalizedTitle = normalize(title);
+        boolean createAction = isCreateTitle(title);
+        if (normalizedTitle.contains("motorista")) {
+            return createAction ? "Novo motorista na equipa" : "Atualizar dados do motorista";
+        }
+        if (normalizedTitle.contains("cliente")) {
+            return createAction ? "Novo cliente na plataforma" : "Atualizar dados do cliente";
+        }
+        if (normalizedTitle.contains("viagem")) {
+            return createAction ? "Nova viagem no sistema" : "Atualizar dados da viagem";
+        }
+        if (normalizedTitle.contains("taxa")) {
+            return "Atualizar dados financeiros";
+        }
+        return createAction ? "Novo registo no sistema" : "Atualizar dados do registo";
+    }
+
+    private String resolveIcon(String title, boolean deleteAction) {
+        if (deleteAction) {
+            return "X";
+        }
+
+        String normalizedTitle = normalize(title);
+        if (normalizedTitle.contains("motorista")) {
+            return "\uD83D\uDC64";
+        }
+        if (normalizedTitle.contains("cliente")) {
+            return "\uD83D\uDC65";
+        }
+        if (normalizedTitle.contains("viagem")) {
+            return "\uD83D\uDCCD";
+        }
+        if (normalizedTitle.contains("taxa")) {
+            return "\u20AC";
+        }
+        return "+";
+    }
+
+    private boolean isCreateTitle(String title) {
+        String normalizedTitle = normalize(title);
+        return normalizedTitle.startsWith("novo ") || normalizedTitle.startsWith("nova ");
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    }
+
+    private void setButtonText(Button button, String text) {
+        if (button != null) {
+            button.setText(text);
+        }
     }
 
     public static void setVisible(Node node, boolean visible) {

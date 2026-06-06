@@ -827,10 +827,10 @@
     -fx-border-color: #e8642a;
 }
 
-/* VEHICLE MODAL */
+/* ADMIN FORM MODALS */
 
-/* Main card */
-.vehicle-modal-card {
+.vehicle-modal-card,
+.admin-form-modal-card {
     -fx-background-color: #121214;
     -fx-border-color: #2b2b33;
     -fx-border-width: 1 1 1 0;
@@ -842,19 +842,20 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 32, 0.22, 0, 12);
 }
 
-.vehicle-modal-stripe {
+.vehicle-modal-stripe,
+.admin-form-modal-stripe {
     -fx-background-color: #ff601e;
 }
 
-/* Header */
-.vehicle-modal-header {
+.vehicle-modal-header,
+.admin-form-modal-header {
     -fx-padding: 28 40 24 40;
     -fx-border-color: transparent transparent #2b2b33 transparent;
     -fx-border-width: 0 0 1 0;
 }
 
-/* Orange icon box */
-.vehicle-modal-icon-box {
+.vehicle-modal-icon-box,
+.admin-form-modal-icon-box {
     -fx-background-color: rgba(255, 96, 30, 0.15);
     -fx-border-color: rgba(255, 96, 30, 0.30);
     -fx-border-radius: 8;
@@ -862,27 +863,34 @@
     -fx-alignment: center;
 }
 
-.vehicle-modal-icon-label {
+.vehicle-modal-icon-label,
+.admin-form-modal-icon-label {
     -fx-text-fill: #ff601e;
     -fx-font-size: 9px;
     -fx-font-weight: 900;
 }
 
-/* Main title */
-.vehicle-modal-card .modal-title {
+.vehicle-modal-card .modal-title,
+.admin-form-modal-card .modal-title {
     -fx-text-fill: #f5f5f6;
     -fx-font-size: 16px;
     -fx-font-weight: 700;
 }
 
-/* Subtitle */
-.vehicle-modal-subtitle {
+.vehicle-modal-subtitle,
+.admin-form-modal-subtitle {
     -fx-text-fill: #7b7b85;
     -fx-font-size: 12px;
 }
 
-/* Close button */
-.vehicle-modal-close {
+.admin-form-modal-error {
+    -fx-text-fill: #ff8f8f;
+    -fx-font-weight: 700;
+    -fx-padding: 12 40 0 40;
+}
+
+.vehicle-modal-close,
+.admin-form-modal-close {
     -fx-background-color: transparent;
     -fx-border-color: #2b2b33;
     -fx-border-radius: 7;
@@ -898,24 +906,27 @@
     -fx-cursor: hand;
 }
 
-.vehicle-modal-close:hover {
+.vehicle-modal-close:hover,
+.admin-form-modal-close:hover {
     -fx-background-color: #1b1b20;
     -fx-text-fill: #f5f5f6;
     -fx-border-color: #3a3a44;
 }
 
-/* Field labels */
-.vehicle-field-label {
+.vehicle-field-label,
+.admin-form-field-label {
     -fx-text-fill: #7b7b85;
     -fx-font-size: 11px;
     -fx-font-weight: 800;
 }
 
-.vehicle-modal-body {
+.vehicle-modal-body,
+.admin-form-modal-body {
     -fx-padding: 32 40 26 40;
 }
 
-.vehicle-field-box {
+.vehicle-field-box,
+.admin-form-field-box {
     -fx-background-color: #1b1b20;
     -fx-border-color: #2b2b33;
     -fx-border-radius: 8;
@@ -925,12 +936,14 @@
     -fx-padding: 0 12;
 }
 
-.vehicle-field-box:hover {
+.vehicle-field-box:hover,
+.admin-form-field-box:hover {
     -fx-border-color: #ff601e;
     -fx-background-color: #1d1d22;
 }
 
-.vehicle-field-icon {
+.vehicle-field-icon,
+.admin-form-field-icon {
     -fx-text-fill: #696974;
     -fx-font-size: 12px;
     -fx-font-weight: 800;
@@ -938,7 +951,8 @@
     -fx-alignment: center;
 }
 
-.vehicle-modal-card .vehicle-field {
+.vehicle-modal-card .vehicle-field,
+.admin-form-modal-card .admin-form-field {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-background-radius: 0;
@@ -950,48 +964,54 @@
     -fx-padding: 0;
 }
 
-.vehicle-modal-card .vehicle-field:focused {
+.vehicle-modal-card .vehicle-field:focused,
+.admin-form-modal-card .admin-form-field:focused {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
 
-.vehicle-modal-card .vehicle-field.combo-box > .list-cell {
+.vehicle-modal-card .vehicle-field.combo-box > .list-cell,
+.admin-form-modal-card .admin-form-field.combo-box > .list-cell {
     -fx-text-fill: #f5f5f6;
     -fx-background-color: transparent;
     -fx-font-size: 15px;
     -fx-padding: 0 8;
 }
 
-.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view {
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view,
+.admin-form-modal-card .admin-form-field.combo-box-popup > .list-view {
     -fx-background-color: #1b1b20;
     -fx-border-color: rgba(255, 96, 30, 0.40);
 }
 
-.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell,
+.admin-form-modal-card .admin-form-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
     -fx-background-color: #1b1b20;
     -fx-text-fill: #f5f5f6;
 }
 
-.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
+.vehicle-modal-card .vehicle-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover,
+.admin-form-modal-card .admin-form-field.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
     -fx-background-color: rgba(255, 96, 30, 0.20);
     -fx-text-fill: #ffffff;
 }
 
-/* Checkbox */
-.vehicle-modal-checkbox {
+.vehicle-modal-checkbox,
+.admin-form-modal-checkbox {
     -fx-text-fill: #f5f5f6;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
 }
 
-/* Footer */
-.vehicle-modal-footer {
+.vehicle-modal-footer,
+.admin-form-modal-footer {
     -fx-padding: 20 40 32 40;
     -fx-border-color: #2b2b33 transparent transparent transparent;
     -fx-border-width: 1 0 0 0;
 }
 
-.vehicle-modal-cancel {
+.vehicle-modal-cancel,
+.admin-form-modal-cancel {
     -fx-background-color: transparent;
     -fx-border-color: #2b2b33;
     -fx-border-radius: 9;
@@ -1004,12 +1024,15 @@
     -fx-min-width: 120;
 }
 
-.vehicle-modal-cancel:hover {
+.vehicle-modal-cancel:hover,
+.admin-form-modal-cancel:hover {
     -fx-background-color: #1b1b20;
     -fx-border-color: #3a3a44;
 }
 
-.vehicle-modal-save {
+.vehicle-modal-save,
+.admin-form-modal-save,
+.admin-form-modal-delete {
     -fx-background-color: #ff601e;
     -fx-border-color: transparent;
     -fx-border-radius: 9;
@@ -1022,7 +1045,9 @@
     -fx-min-width: 120;
 }
 
-.vehicle-modal-save:hover {
+.vehicle-modal-save:hover,
+.admin-form-modal-save:hover,
+.admin-form-modal-delete:hover {
     -fx-background-color: #ff7535;
 }
 

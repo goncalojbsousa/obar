@@ -49,7 +49,7 @@
             </span>
             <span>Motorista</span>
         </a>
-        <a href="#" aria-disabled="true" th:classappend="${activePage == 'profile'} ? ' active'">
+        <a th:href="@{/app/profile}" th:classappend="${activePage == 'profile'} ? ' active'">
             <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"></path>

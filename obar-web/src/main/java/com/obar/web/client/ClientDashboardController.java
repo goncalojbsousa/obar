@@ -1,8 +1,10 @@
 package com.obar.web.client;
 
 import com.obar.bll.TripService;
+import com.obar.bll.UserService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Trip;
+import com.obar.model.User;
 import com.obar.model.enums.TripStatus;
 import com.obar.web.maps.utils.VehicleCategoryCatalog;
 import com.obar.web.session.WebSessionHelper;
@@ -20,9 +22,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class ClientDashboardController {
 
     private final TripService tripService;
+    private final UserService userService;
 
-    public ClientDashboardController(TripService tripService) {
+    public ClientDashboardController(TripService tripService, UserService userService) {
         this.tripService = tripService;
+        this.userService = userService;
     }
 
     @GetMapping("/app")
@@ -41,6 +45,16 @@ public class ClientDashboardController {
                 .map(ScheduledTripView::from)
                 .toList());
         return "client/scheduled";
+    }
+
+    @GetMapping("/app/profile")
+    public String profile(HttpSession session, Model model) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        User client = userService.findById(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente nao encontrado."));
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("clientProfile", ClientProfileView.from(client, tripService.findByClient(currentUser.id())));
+        return "client/profile";
     }
 
     @PostMapping("/app/scheduled/{tripId}/cancel")

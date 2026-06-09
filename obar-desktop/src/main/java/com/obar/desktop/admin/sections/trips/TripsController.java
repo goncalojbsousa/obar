@@ -82,13 +82,6 @@ public class TripsController implements AdminSectionController {
     @FXML
     private Button pendingTripsFilterButton;
     @FXML
-    private Button addTripButton;
-    @FXML
-    private Button editTripButton;
-    @FXML
-    private Button deleteTripButton;
-
-    @FXML
     private VBox detailPanel;
     @FXML
     private Label detailInitialsLabel;

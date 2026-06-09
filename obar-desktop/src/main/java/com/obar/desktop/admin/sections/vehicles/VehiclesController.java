@@ -28,7 +28,6 @@ import javafx.scene.layout.VBox;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Controller for the admin vehicle management section.

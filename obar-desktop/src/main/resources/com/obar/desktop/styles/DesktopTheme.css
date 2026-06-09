@@ -27,7 +27,10 @@
     -fx-background-radius: 10;
     -fx-border-radius: 10;
     -fx-border-color: #232326;
-    -fx-padding: 10 12;
+    -fx-padding: 8 12;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
 }
 
 .admin-content .button {
@@ -60,15 +63,38 @@
 }
 
 .admin-content .button.export-button {
-    -fx-background-color: rgba(255, 106, 47, 0.08);
-    -fx-text-fill: #f2d2c2;
-    -fx-border-color: rgba(255, 106, 47, 0.52);
-    -fx-font-weight: 700;
+    -fx-background-color: rgba(255, 106, 47, 0.10);
+    -fx-text-fill: #ffe7da;
+    -fx-border-color: rgba(255, 106, 47, 0.34);
+    -fx-font-weight: 600;
+    -fx-padding: 9 14;
 }
 
 .admin-content .button.export-button:hover {
     -fx-background-color: rgba(255, 106, 47, 0.16);
-    -fx-border-color: #ff6a2f;
+    -fx-border-color: rgba(255, 106, 47, 0.52);
+}
+
+.admin-content .button.delete-button {
+    -fx-background-color: #141414;
+    -fx-text-fill: #ffb4a8;
+    -fx-border-color: #5f2a25;
+}
+
+.admin-content .button.delete-button:hover {
+    -fx-background-color: #1d1514;
+    -fx-border-color: #d45a4c;
+}
+
+.admin-content .button.unlock-button {
+    -fx-background-color: rgba(64, 186, 128, 0.12);
+    -fx-text-fill: #a8f0c7;
+    -fx-border-color: rgba(64, 186, 128, 0.34);
+}
+
+.admin-content .button.unlock-button:hover {
+    -fx-background-color: rgba(64, 186, 128, 0.18);
+    -fx-border-color: rgba(64, 186, 128, 0.52);
 }
 
 .admin-content .button.danger,
@@ -78,25 +104,38 @@
     -fx-border-color: rgba(184, 34, 34, 0.45);
 }
 
-.filter-chip,
-.filter-chip-active {
+.admin-content .button.filter-chip,
+.admin-content .button.filter-chip-active {
     -fx-font-size: 11px;
-    -fx-padding: 7 10;
+    -fx-padding: 7 12;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-}
-
-.filter-chip {
     -fx-background-color: #111113;
-    -fx-text-fill: #8992a8;
     -fx-border-color: #232326;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
 }
 
-.filter-chip-active {
-    -fx-background-color: rgba(255, 106, 47, 0.14);
-    -fx-text-fill: #ff8755;
-    -fx-border-color: rgba(255, 106, 47, 0.28) rgba(255, 106, 47, 0.28) #ff6a2f rgba(255, 106, 47, 0.28);
-    -fx-border-width: 1 1 2 1;
+.admin-content .button.filter-chip {
+    -fx-text-fill: #8992a8;
+}
+
+.admin-content .button.filter-chip:hover {
+    -fx-background-color: #17171A;
+    -fx-border-color: #2d2d34;
+}
+
+.admin-content .button.filter-chip-active {
+    -fx-text-fill: #f6f9ff;
+    -fx-border-color: #232326 #232326 #ff7a35 #232326;
+    -fx-border-width: 1 1 3 1;
+    -fx-padding: 7 12 5 12;
+}
+
+.admin-content .button.filter-chip-active:hover {
+    -fx-background-color: #17171A;
+    -fx-border-color: #2d2d34 #2d2d34 #ff7a35 #2d2d34;
 }
 
 .feedback-success {

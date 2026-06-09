@@ -23,7 +23,7 @@
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <Label text="Viagens" styleClass="title-2" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button fx:id="addTripButton" text="+ Nova Viagem" onAction="#handleAddTrip" styleClass="accent" />
+                    <Button text="+ Nova Viagem" onAction="#handleAddTrip" styleClass="accent" />
                 </HBox>
 
                 <HBox spacing="8.0" alignment="CENTER_LEFT">
@@ -36,8 +36,8 @@
                 </HBox>
 
                 <HBox spacing="8.0">
-                    <Button fx:id="editTripButton" text="✎ Editar" onAction="#handleEditTrip" />
-                    <Button fx:id="deleteTripButton" text="× Apagar" onAction="#handleDeleteTrip" styleClass="danger" />
+                    <Button text="✎ Editar" onAction="#handleEditTrip" />
+                    <Button text="× Apagar" onAction="#handleDeleteTrip" styleClass="danger" />
                     <Button text="⇩ Exportar PDF" onAction="#handleExportPdf" styleClass="export-button" />
                     <Region HBox.hgrow="ALWAYS" />
                     <Label fx:id="listInfoLabel" text="A mostrar 0 viagens" styleClass="admin-subtitle" />

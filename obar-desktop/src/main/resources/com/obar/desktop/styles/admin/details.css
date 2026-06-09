@@ -226,7 +226,9 @@
 
 .detail-action,
 
-.detail-action-danger {
+.detail-action-danger,
+
+.detail-action-unlock {
 
     -fx-pref-height: 38;
 
@@ -287,6 +289,26 @@
     -fx-border-color: rgba(220, 60, 60, 0.55);
 
     -fx-text-fill: #ffaaaa;
+
+}
+
+.detail-action-unlock {
+
+    -fx-background-color: rgba(64, 186, 128, 0.12);
+
+    -fx-border-color: rgba(64, 186, 128, 0.34);
+
+    -fx-text-fill: #a8f0c7;
+
+}
+
+.detail-action-unlock:hover {
+
+    -fx-background-color: rgba(64, 186, 128, 0.18);
+
+    -fx-border-color: rgba(64, 186, 128, 0.52);
+
+    -fx-text-fill: #c0f7d7;
 
 }
 

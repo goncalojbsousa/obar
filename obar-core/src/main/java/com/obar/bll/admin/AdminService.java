@@ -113,8 +113,16 @@ public class AdminService {
         userManagementService.rejectDriver(userId, rejectionNote);
     }
 
-    public boolean blockOrDeleteUser(Integer userId) {
-        return userManagementService.blockOrDeleteUser(userId);
+    public void blockUser(Integer userId) {
+        userManagementService.blockUser(userId);
+    }
+
+    public void unblockUser(Integer userId) {
+        userManagementService.unblockUser(userId);
+    }
+
+    public void deleteUser(Integer userId) {
+        userManagementService.deleteUser(userId);
     }
 
     public List<AdminTripDTO> listTrips() {

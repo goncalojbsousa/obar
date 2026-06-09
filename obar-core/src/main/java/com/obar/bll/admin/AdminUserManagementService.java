@@ -123,7 +123,7 @@ final class AdminUserManagementService {
         userRepository.update(user);
     }
 
-    boolean blockOrDeleteUser(Integer userId) {
+    void blockUser(Integer userId) {
         if (userId == null) {
             throw new IllegalArgumentException("Registo invalido.");
         }
@@ -131,17 +131,35 @@ final class AdminUserManagementService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Registo invalido."));
 
-        if (user.getStatus() == AccountStatus.BLOCKED) {
-            userRepository.deleteById(userId);
-            return true;
-        }
-
         user.setStatus(AccountStatus.BLOCKED);
         if (user.getType() == UserType.DRIVER) {
             user.setAvailable(false);
         }
         userRepository.update(user);
-        return false;
+    }
+
+    void unblockUser(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Registo invalido.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Registo invalido."));
+
+        user.setStatus(AccountStatus.ACTIVE);
+        if (user.getType() == UserType.DRIVER) {
+            user.setAvailable(true);
+        }
+        userRepository.update(user);
+    }
+
+    void deleteUser(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("Registo invalido.");
+        }
+        userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Registo invalido."));
+        userRepository.deleteById(userId);
     }
 
     private User findPendingDriverForDecision(Integer userId) {

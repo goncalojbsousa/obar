@@ -3,7 +3,6 @@ package com.obar.desktop.app;
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.auth.AuthService;
 import com.obar.desktop.admin.AdminController;
-import com.obar.desktop.auth.ChangePasswordController;
 import com.obar.desktop.auth.LoginController;
 import com.obar.desktop.auth.RegisterController;
 
@@ -26,14 +25,6 @@ public final class DesktopApplicationContext {
         this.adminService = new AdminService();
     }
 
-    public AuthService getAuthenticationService() {
-        return authenticationService;
-    }
-
-    public AdminService getAdminService() {
-        return adminService;
-    }
-
     /**
      * Creates JavaFX controllers requested by {@link javafx.fxml.FXMLLoader}.
      * Controllers that need core services receive them through their
@@ -42,9 +33,6 @@ public final class DesktopApplicationContext {
     public Object createController(Class<?> controllerType) {
         if (controllerType == LoginController.class) {
             return new LoginController(authenticationService);
-        }
-        if (controllerType == ChangePasswordController.class) {
-            return new ChangePasswordController(authenticationService);
         }
         if (controllerType == RegisterController.class) {
             return new RegisterController(authenticationService);

@@ -9,30 +9,14 @@
 </head>
 
 <body class="client-page scheduled-page">
-    <header class="topbar">
-        <a class="brand" th:href="@{/app}">Obar</a>
-        <nav class="client-nav" aria-label="Navegação do cliente">
-            <a th:href="@{/app}">Nova Viagem</a>
-            <a class="active" th:href="@{/app/scheduled}">Agendadas</a>
-            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
-            <a href="#" aria-disabled="true">Pagamentos</a>
-        </nav>
-        <div class="user-area">
-            <span class="user-avatar" aria-hidden="true"
-                th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
-            <span th:text="${currentUser.name()}">Cliente</span>
-            <form th:action="@{/logout}" method="post">
-                <button class="ghost-button" type="submit">Sair</button>
-            </form>
-        </div>
-    </header>
+    <header th:replace="~{fragments/client-navbar :: navbar('scheduled')}"></header>
 
     <main class="client-shell scheduled-shell">
         <section class="scheduled-trips" aria-label="Viagens agendadas">
             <div class="scheduled-header">
                 <div>
                     <h1>Viagens Agendadas</h1>
-                    <p class="muted">Pedidos marcados para uma data e hora específicas.</p>
+                    <p class="muted">Pedidos marcados para uma data e hora espec&#x00ED;ficas.</p>
                 </div>
                 <a class="primary-button inline-action" th:href="@{/app}">Nova viagem</a>
             </div>
@@ -58,13 +42,13 @@
                     <div class="scheduled-meta">
                         <span th:text="${trip.vehicleCategory()}">STANDARD</span>
                         <span th:text="${trip.status()}">PENDING</span>
-                        <span th:text="${#numbers.formatCurrency(trip.estimatedPrice())}">0,00 €</span>
+                        <span th:text="${#numbers.formatCurrency(trip.estimatedPrice())}">0,00 &#x20AC;</span>
                     </div>
                     <p class="muted" th:if="${trip.driverName() != null}">
                         Motorista:
                         <span th:text="${trip.driverName()}">Motorista</span>
-                        <span th:if="${trip.vehicleDisplay() != null}"> · </span>
-                        <span th:if="${trip.vehicleDisplay() != null}" th:text="${trip.vehicleDisplay()}">Veículo</span>
+                        <span th:if="${trip.vehicleDisplay() != null}"> &#x00B7; </span>
+                        <span th:if="${trip.vehicleDisplay() != null}" th:text="${trip.vehicleDisplay()}">Ve&#x00ED;culo</span>
                     </p>
                     <form th:if="${trip.canCancel()}" th:action="@{/app/scheduled/{id}/cancel(id=${trip.id()})}"
                         method="post">

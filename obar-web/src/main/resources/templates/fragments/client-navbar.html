@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+<header th:fragment="navbar(activePage)" class="topbar app-navbar">
+    <a class="brand app-navbar-brand" th:href="${activePage == 'driver'} ? @{/driver} : @{/app}"
+       aria-label="OBAR">
+        <span class="brand-mark" aria-hidden="true">O</span><span class="brand-text">bar</span>
+    </a>
+
+    <nav class="client-nav" aria-label="Navega&#x00E7;&#x00E3;o principal">
+        <a th:href="@{/app}" th:classappend="${activePage == 'new'} ? ' active'">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 10.8 12 4l9 6.8"></path>
+                    <path d="M5.5 10.2V20h4.7v-5.7h3.6V20h4.7v-9.8"></path>
+                </svg>
+            </span>
+            <span>In&#x00ED;cio</span>
+        </a>
+        <a th:href="@{/app/scheduled}" th:classappend="${activePage == 'scheduled'} ? ' active'">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6.8 17.5H5.2a1.8 1.8 0 0 1-1.8-1.8v-3.1l2.1-5A2.4 2.4 0 0 1 7.7 6h8.6a2.4 2.4 0 0 1 2.2 1.6l2.1 5v3.1a1.8 1.8 0 0 1-1.8 1.8h-1.6"></path>
+                    <path d="M7 13h10"></path>
+                    <path d="M8.3 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                    <path d="M15.7 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                </svg>
+            </span>
+            <span>Viagens</span>
+        </a>
+        <a href="#" aria-disabled="true">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3.5" y="6.5" width="17" height="11" rx="2"></rect>
+                    <path d="M3.5 10h17"></path>
+                    <path d="M7 14.5h3.5"></path>
+                </svg>
+            </span>
+            <span>Pagamentos</span>
+        </a>
+        <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}"
+           th:classappend="${activePage == 'driver'} ? ' active'">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 12.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path>
+                    <path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path>
+                </svg>
+            </span>
+            <span>Motorista</span>
+        </a>
+        <a th:href="@{/app/profile}" th:classappend="${activePage == 'profile'} ? ' active'">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"></path>
+                    <path d="M4.8 20.5a7.2 7.2 0 0 1 14.4 0"></path>
+                </svg>
+            </span>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <div class="user-area app-user-area">
+        <details class="account-menu">
+            <summary class="account-menu-summary">
+                <span class="user-avatar" aria-hidden="true"
+                      th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
+                <span class="user-name" th:text="${currentUser.name()}">Cliente</span>
+                <span class="account-chevron" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="m7 10 5 5 5-5"></path>
+                    </svg>
+                </span>
+            </summary>
+            <div class="account-dropdown">
+                <a href="#" aria-disabled="true">Perfil</a>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit">Sair</button>
+                </form>
+            </div>
+        </details>
+    </div>
+</header>
+</body>
+
+</html>

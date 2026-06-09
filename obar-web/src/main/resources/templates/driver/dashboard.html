@@ -11,22 +11,7 @@
 </head>
 
 <body class="client-page driver-page">
-    <header class="topbar">
-        <a class="brand" th:href="@{/driver}">Obar</a>
-        <nav class="client-nav" aria-label="Navegação do motorista">
-            <a th:href="@{/app}">Nova Viagem</a>
-            <a th:href="@{/app/scheduled}">Agendadas</a>
-            <a class="active" th:href="@{/driver}">Motorista</a>
-        </nav>
-        <div class="user-area">
-            <span class="user-avatar" aria-hidden="true"
-                th:text="${#strings.substring(currentUser.name(),0,1)}">M</span>
-            <span th:text="${currentUser.name()}">Motorista</span>
-            <form th:action="@{/logout}" method="post">
-                <button class="ghost-button" type="submit">Sair</button>
-            </form>
-        </div>
-    </header>
+    <header th:replace="~{fragments/client-navbar :: navbar('driver')}"></header>
 
     <main class="client-shell">
         <section class="driver-workspace" aria-label="Painel do motorista">
@@ -36,14 +21,14 @@
 
             <aside class="driver-sidebar">
                 <div>
-                    <h1>Viagens atribuídas</h1>
+                    <h1>Viagens atribu&#x00ED;das</h1>
                     <p class="muted" data-driver-status>A procurar viagens para ti.</p>
                 </div>
 
                 <div class="driver-empty" data-driver-empty>
                     <div class="waiting-indicator" aria-hidden="true"></div>
                     <div>
-                        <strong>Sem viagem atribuída</strong>
+                        <strong>Sem viagem atribu&#x00ED;da</strong>
                         <p>Enquanto aguardas, o mapa mostra motoristas online e clientes com pedidos ativos.</p>
                     </div>
                 </div>
@@ -75,8 +60,8 @@
                             <strong data-duration>0 min</strong>
                         </div>
                         <div>
-                            <span>Preço</span>
-                            <strong data-price>0,00 €</strong>
+                            <span>Pre&#x00E7;o</span>
+                            <strong data-price>0,00 &#x20AC;</strong>
                         </div>
                         <div>
                             <span>Categoria</span>
@@ -94,7 +79,7 @@
                             PIN do cliente
                             <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" data-start-pin>
                         </label>
-                        <button class="primary-button" type="button" data-start-trip>Começar viagem</button>
+                        <button class="primary-button" type="button" data-start-trip>Come&#x00E7;ar viagem</button>
                     </div>
 
                     <button class="ghost-button danger-button driver-cancel-button" type="button" data-cancel-trip

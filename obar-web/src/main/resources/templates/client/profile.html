@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Perfil | Obar</title>
+    <link rel="stylesheet" th:href="@{/css/web.css}">
+</head>
+
+<body class="client-page profile-page">
+    <header th:replace="~{fragments/client-navbar :: navbar('profile')}"></header>
+
+    <main class="client-shell profile-shell">
+        <aside class="profile-card profile-identity-card">
+            <div class="profile-avatar-large" th:text="${clientProfile.initials()}">C</div>
+            <h1 th:text="${clientProfile.name()}">Cliente</h1>
+            <p>Cliente desde <span th:text="${clientProfile.memberSince()}">-</span></p>
+
+            <dl class="profile-contact-list">
+                <div>
+                    <dt>Email</dt>
+                    <dd th:text="${clientProfile.email()}">cliente@email.com</dd>
+                </div>
+                <div>
+                    <dt>Telefone</dt>
+                    <dd th:text="${clientProfile.phone()}">-</dd>
+                </div>
+                <div>
+                    <dt>NIF</dt>
+                    <dd th:text="${clientProfile.taxNumber()}">-</dd>
+                </div>
+                <div>
+                    <dt>Estado</dt>
+                    <dd><span class="profile-status-pill" th:text="${clientProfile.accountStatus()}">Ativa</span></dd>
+                </div>
+            </dl>
+
+            <a class="profile-primary-link" th:href="@{/app}">Nova viagem</a>
+        </aside>
+
+        <section class="profile-main">
+            <div class="profile-title">
+                <div>
+                    <span>Perfil</span>
+                    <h2>A tua conta Obar</h2>
+                </div>
+                <a th:href="@{/app/scheduled}">Ver viagens agendadas</a>
+            </div>
+
+            <section class="profile-card profile-panel">
+                <div class="profile-panel-title">
+                    <span class="profile-panel-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"></path>
+                            <path d="M4.8 20.5a7.2 7.2 0 0 1 14.4 0"></path>
+                        </svg>
+                    </span>
+                    <h3>Dados pessoais</h3>
+                </div>
+                <div class="profile-info-grid">
+                    <div>
+                        <span>Nome completo</span>
+                        <strong th:text="${clientProfile.name()}">Cliente</strong>
+                    </div>
+                    <div>
+                        <span>Email</span>
+                        <strong th:text="${clientProfile.email()}">cliente@email.com</strong>
+                    </div>
+                    <div>
+                        <span>Telefone</span>
+                        <strong th:text="${clientProfile.phone()}">-</strong>
+                    </div>
+                    <div>
+                        <span>NIF</span>
+                        <strong th:text="${clientProfile.taxNumber()}">-</strong>
+                    </div>
+                </div>
+            </section>
+
+            <div class="profile-stat-grid">
+                <article class="profile-card profile-stat-card">
+                    <span>Total de viagens</span>
+                    <strong th:text="${clientProfile.totalTrips()}">0</strong>
+                </article>
+                <article class="profile-card profile-stat-card">
+                    <span>Conclu&#x00ED;das</span>
+                    <strong th:text="${clientProfile.completedTrips()}">0</strong>
+                </article>
+                <article class="profile-card profile-stat-card">
+                    <span>Agendadas</span>
+                    <strong th:text="${clientProfile.scheduledTrips()}">0</strong>
+                </article>
+            </div>
+
+            <section class="profile-card profile-panel">
+                <div class="profile-panel-title">
+                    <span class="profile-panel-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6.8 17.5H5.2a1.8 1.8 0 0 1-1.8-1.8v-3.1l2.1-5A2.4 2.4 0 0 1 7.7 6h8.6a2.4 2.4 0 0 1 2.2 1.6l2.1 5v3.1a1.8 1.8 0 0 1-1.8 1.8h-1.6"></path>
+                            <path d="M7 13h10"></path>
+                            <path d="M8.3 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                            <path d="M15.7 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                        </svg>
+                    </span>
+                    <h3>&#x00DA;ltima viagem</h3>
+                </div>
+                <div class="profile-last-trip">
+                    <div>
+                        <span>Data</span>
+                        <strong th:text="${clientProfile.lastTripDate()}">-</strong>
+                    </div>
+                    <div>
+                        <span>Rota</span>
+                        <strong th:text="${clientProfile.lastTripRoute()}">Ainda sem viagens</strong>
+                    </div>
+                    <div>
+                        <span>Estado</span>
+                        <strong th:text="${clientProfile.lastTripStatus()}">-</strong>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+</body>
+
+</html>

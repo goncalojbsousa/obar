@@ -92,6 +92,16 @@ public class FinancialController implements AdminSectionController {
     @FXML
     private Button exportPdfButton;
     @FXML
+    private Button allPaymentsFilterButton;
+    @FXML
+    private Button processedPaymentsFilterButton;
+    @FXML
+    private Button failedPaymentsFilterButton;
+    @FXML
+    private Button refundedPaymentsFilterButton;
+    @FXML
+    private Button pendingPaymentsFilterButton;
+    @FXML
     private Button periodDayButton;
     @FXML
     private Button periodWeekButton;
@@ -522,23 +532,43 @@ public class FinancialController implements AdminSectionController {
                 + " Pend: " + pending
                 + " Falh: " + failed
                 + " Reemb: " + refunded);
+        updatePaymentFilterChips();
     }
 
     private long countPayments(PaymentStatus status) {
         return allPayments.stream().filter(payment -> payment.getStatus() == status).count();
     }
 
+    private void updatePaymentFilterChips() {
+        updateChip(allPaymentsFilterButton, activePaymentStatusFilter == null);
+        updateChip(processedPaymentsFilterButton, activePaymentStatusFilter == PaymentStatus.PROCESSED);
+        updateChip(failedPaymentsFilterButton, activePaymentStatusFilter == PaymentStatus.FAILED);
+        updateChip(refundedPaymentsFilterButton, activePaymentStatusFilter == PaymentStatus.REFUNDED);
+        updateChip(pendingPaymentsFilterButton, activePaymentStatusFilter == PaymentStatus.PENDING);
+    }
+
+    private void updateChip(Button button, boolean active) {
+        if (button == null) {
+            return;
+        }
+        button.getStyleClass().removeAll("filter-chip", "filter-chip-active");
+        button.getStyleClass().add(active ? "filter-chip-active" : "filter-chip");
+    }
+
     private void setPeriodButtons() {
-        if (periodDayButton != null)
-            periodDayButton.setDisable(activePeriod == AdminFinancialPeriod.DAY);
-        if (periodWeekButton != null)
-            periodWeekButton.setDisable(activePeriod == AdminFinancialPeriod.WEEK);
-        if (periodMonthButton != null)
-            periodMonthButton.setDisable(activePeriod == AdminFinancialPeriod.MONTH);
-        if (periodYearButton != null)
-            periodYearButton.setDisable(activePeriod == AdminFinancialPeriod.YEAR);
-        if (periodAllButton != null)
-            periodAllButton.setDisable(activePeriod == AdminFinancialPeriod.ALL);
+        updatePeriodChip(periodDayButton, activePeriod == AdminFinancialPeriod.DAY);
+        updatePeriodChip(periodWeekButton, activePeriod == AdminFinancialPeriod.WEEK);
+        updatePeriodChip(periodMonthButton, activePeriod == AdminFinancialPeriod.MONTH);
+        updatePeriodChip(periodYearButton, activePeriod == AdminFinancialPeriod.YEAR);
+        updatePeriodChip(periodAllButton, activePeriod == AdminFinancialPeriod.ALL);
+    }
+
+    private void updatePeriodChip(Button button, boolean active) {
+        if (button == null) {
+            return;
+        }
+        button.getStyleClass().removeAll("period-chip", "period-chip-active");
+        button.getStyleClass().add(active ? "period-chip-active" : "period-chip");
     }
 
     private void showOnlyTaxRateForm() {

@@ -58,10 +58,6 @@ public final class NavigationManager {
         setScene("/com/obar/desktop/auth/LoginView.fxml");
     }
 
-    public static void navigateToChangePassword() {
-        setScene("/com/obar/desktop/auth/ChangePasswordView.fxml");
-    }
-
     public static void navigateToRegister() {
         setScene("/com/obar/desktop/auth/RegisterView.fxml");
     }

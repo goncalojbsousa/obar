@@ -159,17 +159,6 @@
     -fx-padding: 11 12;
 }
 
-.forgot-link {
-    -fx-text-fill: #ff6a2e;
-    -fx-font-size: 13px;
-    -fx-font-weight: 600;
-    -fx-border-color: transparent;
-}
-
-.forgot-link:hover {
-    -fx-text-fill: #ff8455;
-}
-
 .login-submit {
     -fx-background-color: linear-gradient(to right, #ff6a2f, #ff5317);
     -fx-text-fill: #fff6f1;
@@ -190,30 +179,6 @@
 .or-label {
     -fx-text-fill: #5d6578;
     -fx-font-size: 12px;
-}
-
-.login-card .button.role-active,
-.login-card .button.role-idle {
-    -fx-padding: 10 12;
-    -fx-font-weight: 700;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-}
-
-.login-card .button.role-active {
-    -fx-background-color: rgba(255, 96, 30, 0.18);
-    -fx-border-color: rgba(255, 96, 30, 0.55);
-    -fx-text-fill: #ff8959;
-}
-
-.login-card .button.role-idle {
-    -fx-background-color: #101421;
-    -fx-border-color: #232a3d;
-    -fx-text-fill: #647089;
-}
-
-.login-card .button.role-idle:hover {
-    -fx-background-color: #161c2d;
 }
 
 .login-error {

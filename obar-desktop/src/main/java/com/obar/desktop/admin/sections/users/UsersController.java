@@ -61,7 +61,7 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     private enum ModalMode {
-        NONE, CREATE, EDIT, DELETE_CONFIRM
+        NONE, CREATE, EDIT, BLOCK_CONFIRM, UNBLOCK_CONFIRM, DELETE_CONFIRM
     }
 
     @FXML
@@ -93,9 +93,7 @@ public abstract class UsersController implements AdminSectionController {
     @FXML
     protected Button addUserButton;
     @FXML
-    protected Button editUserButton;
-    @FXML
-    protected Button deleteUserButton;
+    protected Button blockUserButton;
     @FXML
     protected Button filterAllButton;
     @FXML
@@ -157,6 +155,8 @@ public abstract class UsersController implements AdminSectionController {
     protected Label detailExtraThreeTitleLabel;
     @FXML
     protected Label detailExtraThreeValueLabel;
+    @FXML
+    protected Button detailBlockUserButton;
 
     @FXML
     protected AdminModalIncludeController sharedModalController;
@@ -197,6 +197,7 @@ public abstract class UsersController implements AdminSectionController {
 
         setDetailVisible(false);
         updateFilterChipStyles();
+        updateBlockActionButtons(null);
         updateCountLabels();
     }
 
@@ -256,6 +257,24 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     @FXML
+    public void handleBlockUser() {
+        AdminUserDTO selected = getSelectedUser();
+        if (selected == null) {
+            showFeedback("Selecione um registo primeiro.", true);
+            return;
+        }
+        boolean isBlocked = selected.getStatus() == AccountStatus.BLOCKED;
+        modalMode = isBlocked ? ModalMode.UNBLOCK_CONFIRM : ModalMode.BLOCK_CONFIRM;
+        modalTarget = selected;
+
+        sharedModalController.prepareForDeleteConfirm(isBlocked ? "Desbloquear conta" : "Bloquear conta");
+        hideAllModalForms();
+        sharedModalController.getModalDeleteMessageLabel().setText(isBlocked
+                ? "Desbloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica ativa novamente."
+                : "Bloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica bloqueada.");
+    }
+
+    @FXML
     public void handleDeleteUser() {
         AdminUserDTO selected = getSelectedUser();
         if (selected == null) {
@@ -265,12 +284,10 @@ public abstract class UsersController implements AdminSectionController {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTarget = selected;
 
-        boolean alreadyBlocked = selected.getStatus() == AccountStatus.BLOCKED;
-        sharedModalController.prepareForDeleteConfirm(alreadyBlocked ? "Apagar registo" : "Bloquear conta");
+        sharedModalController.prepareForDeleteConfirm("Apagar registo");
         hideAllModalForms();
-        sharedModalController.getModalDeleteMessageLabel().setText(alreadyBlocked
-                ? "Apagar " + AdminFormatUtils.fallback(selected.getName()) + "? Esta acao e permanente."
-                : "Bloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica bloqueada.");
+        sharedModalController.getModalDeleteMessageLabel().setText(
+                "Apagar " + AdminFormatUtils.fallback(selected.getName()) + "? Esta acao e permanente.");
     }
 
     @FXML
@@ -301,7 +318,9 @@ public abstract class UsersController implements AdminSectionController {
 
     @FXML
     public void handleModalSave() {
-        if (modalMode == ModalMode.DELETE_CONFIRM) {
+        if (modalMode == ModalMode.BLOCK_CONFIRM
+                || modalMode == ModalMode.UNBLOCK_CONFIRM
+                || modalMode == ModalMode.DELETE_CONFIRM) {
             return;
         }
 
@@ -346,8 +365,19 @@ public abstract class UsersController implements AdminSectionController {
             return;
         }
         try {
-            boolean deleted = adminService.blockOrDeleteUser(modalTarget.getId());
-            finishModalWithSuccess(deleted ? "Registo removido com sucesso." : "Conta bloqueada com sucesso.");
+            if (modalMode == ModalMode.DELETE_CONFIRM) {
+                adminService.deleteUser(modalTarget.getId());
+                finishModalWithSuccess("Registo removido com sucesso.");
+                return;
+            }
+            if (modalMode == ModalMode.UNBLOCK_CONFIRM) {
+                adminService.unblockUser(modalTarget.getId());
+                finishModalWithSuccess("Conta desbloqueada com sucesso.");
+                return;
+            }
+
+            adminService.blockUser(modalTarget.getId());
+            finishModalWithSuccess("Conta bloqueada com sucesso.");
         } catch (Exception exception) {
             sharedModalController.showError("Falha ao atualizar registo: " + exception.getMessage());
         }
@@ -492,6 +522,7 @@ public abstract class UsersController implements AdminSectionController {
 
     private void showUserDetails(AdminUserDTO user) {
         if (user == null) {
+            updateBlockActionButtons(null);
             setDetailVisible(false);
             return;
         }
@@ -516,7 +547,28 @@ public abstract class UsersController implements AdminSectionController {
         setLabelText(detailReferenceTitleLabel, config.referenceTitle());
         setLabelText(detailReferenceValueLabel, referenceValue(user));
         clearExtraDetailLabels();
+        updateBlockActionButtons(user);
         setDetailVisible(true);
+    }
+
+    private void updateBlockActionButtons(AdminUserDTO user) {
+        boolean isBlocked = user != null && user.getStatus() == AccountStatus.BLOCKED;
+        String text = isBlocked ? "Desbloquear" : "Bloquear";
+        String detailText = isBlocked ? "Desbloquear conta" : "Bloquear conta";
+
+        configureBlockButton(blockUserButton, isBlocked, (isBlocked ? "\u2713 " : "\u26D4 ") + text);
+        configureBlockButton(detailBlockUserButton, isBlocked, (isBlocked ? "\u2713 " : "\u26D4 ") + detailText);
+    }
+
+    private void configureBlockButton(Button button, boolean unlockMode, String text) {
+        if (button == null) {
+            return;
+        }
+        button.setText(text);
+        button.getStyleClass().removeAll("danger", "unlock-button", "detail-action-danger", "detail-action-unlock");
+        button.getStyleClass().add(unlockMode
+                ? (button == detailBlockUserButton ? "detail-action-unlock" : "unlock-button")
+                : (button == detailBlockUserButton ? "detail-action-danger" : "danger"));
     }
 
     private void showOnlyUserForm() {

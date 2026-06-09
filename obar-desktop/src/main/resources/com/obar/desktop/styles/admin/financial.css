@@ -1,43 +1,38 @@
 /* Financial dashboard styles. */
 
-.period-chip,
-
-.period-chip-active {
-
+.admin-content .button.period-chip,
+.admin-content .button.period-chip-active {
     -fx-font-size: 11px;
-
     -fx-font-weight: 700;
-
     -fx-padding: 6 12;
-
     -fx-background-radius: 16;
-
     -fx-border-radius: 16;
-
-}
-
-
-
-.period-chip {
-
     -fx-background-color: #111113;
-
-    -fx-text-fill: #808aa0;
-
     -fx-border-color: #232326;
-
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
 }
 
+.admin-content .button.period-chip {
+    -fx-text-fill: #808aa0;
+}
 
+.admin-content .button.period-chip:hover {
+    -fx-background-color: #17171A;
+    -fx-border-color: #2d2d34;
+}
 
-.period-chip-active {
+.admin-content .button.period-chip-active {
+    -fx-text-fill: #f6f9ff;
+    -fx-border-color: #232326 #232326 #ff7a35 #232326;
+    -fx-border-width: 1 1 3 1;
+    -fx-padding: 6 12 4 12;
+}
 
-    -fx-background-color: rgba(255, 106, 47, 0.23);
-
-    -fx-text-fill: #ff8b5e;
-
-    -fx-border-color: rgba(255, 106, 47, 0.5);
-
+.admin-content .button.period-chip-active:hover {
+    -fx-background-color: #17171A;
+    -fx-border-color: #2d2d34 #2d2d34 #ff7a35 #2d2d34;
 }
 
 

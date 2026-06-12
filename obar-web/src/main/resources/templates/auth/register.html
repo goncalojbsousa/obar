@@ -5,59 +5,102 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Criar conta | Obar</title>
-    <link rel="stylesheet" th:href="@{/css/web.css}">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/login.css">
 </head>
 
-<body class="auth-page">
-    <main class="auth-shell">
-        <section class="auth-panel wide">
-            <a class="brand" th:href="@{/login}">Obar</a>
-            <h1>Criar conta cliente</h1>
-            <p class="muted">Cria uma conta cliente para pedir viagens pela web.</p>
+<body class="login-auth-page">
+    <main class="login-auth-shell">
+        <section class="login-hero" aria-label="Obar">
+            <a class="brand login-brand" th:href="@{/login}" aria-label="OBAR">
+                <span class="brand-mark" aria-hidden="true">O</span><span class="brand-text">bar</span>
+            </a>
 
-            <p class="alert" th:if="${error}" th:text="${error}"></p>
+            <div class="login-hero-copy">
+                <h1>A tua viagem,<span>no teu ritmo.</span></h1>
+                <p>Pede viagens, acompanha pedidos e gere os teus dados de cliente.</p>
+            </div>
 
-            <form class="form-stack" th:action="@{/register}" th:object="${registerForm}" method="post">
-                <div class="two-columns">
-                    <label>
-                        Nome
-                        <input type="text" th:field="*{name}" autocomplete="name" required autofocus>
-                    </label>
+            <div class="login-route-preview" aria-hidden="true">
+                <div class="login-route-line">
+                    <span class="login-route-dot origin"></span>
+                    <span class="login-route-track"></span>
+                    <span class="login-route-dot destination"></span>
+                </div>
+                <div class="login-stats-row">
+                    <div>
+                        <strong>2.4k+</strong>
+                        <span>VIAGENS ESTE MES</span>
+                    </div>
+                    <div>
+                        <strong>98%</strong>
+                        <span>SATISFACAO</span>
+                    </div>
+                    <div>
+                        <strong>4.8</strong>
+                        <span>AVALIACAO MEDIA</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                    <label>
-                        Email
-                        <input type="email" th:field="*{email}" autocomplete="email" required>
-                    </label>
+        <section class="login-form-side" aria-label="Criar conta Obar">
+            <div class="login-card register-card">
+                <nav class="login-segment" aria-label="Autenticacao">
+                    <a th:href="@{/login}">Entrar</a>
+                    <a class="active" th:href="@{/register}">Criar conta</a>
+                </nav>
+
+                <div class="login-heading">
+                    <h1 id="register-title">Criar conta cliente</h1>
+                    <p>Cria uma conta cliente para pedir viagens pela web.</p>
                 </div>
 
-                <div class="two-columns">
-                    <label>
-                        Telefone
-                        <input type="tel" th:field="*{phone}" autocomplete="tel">
-                    </label>
+                <p class="login-alert" th:if="${error}" th:text="${error}"></p>
 
-                    <label>
-                        NIF
-                        <input type="text" th:field="*{taxNumber}" inputmode="numeric">
-                    </label>
-                </div>
+                <form class="login-form register-form" th:action="@{/register}" th:object="${registerForm}"
+                    method="post">
+                    <div class="register-fields-grid">
+                        <label class="login-field">
+                            <span>Nome</span>
+                            <input type="text" th:field="*{name}" placeholder="O teu nome" autocomplete="name" required
+                                autofocus>
+                        </label>
 
-                <div class="two-columns">
-                    <label>
-                        Palavra-passe
-                        <input type="password" th:field="*{password}" autocomplete="new-password" required>
-                    </label>
+                        <label class="login-field">
+                            <span>Email</span>
+                            <input type="email" th:field="*{email}" placeholder="o.teu@email.com" autocomplete="email"
+                                required>
+                        </label>
 
-                    <label>
-                        Confirmar palavra-passe
-                        <input type="password" th:field="*{confirmPassword}" autocomplete="new-password" required>
-                    </label>
-                </div>
+                        <label class="login-field">
+                            <span>Telefone</span>
+                            <input type="tel" th:field="*{phone}" placeholder="912 345 678" autocomplete="tel">
+                        </label>
 
-                <button class="primary-button" type="submit">Criar conta</button>
-            </form>
+                        <label class="login-field">
+                            <span>NIF</span>
+                            <input type="text" th:field="*{taxNumber}" placeholder="123456789" inputmode="numeric">
+                        </label>
 
-            <p class="switch-link">Ja tens conta? <a th:href="@{/login}">Entrar</a></p>
+                        <label class="login-field">
+                            <span>Palavra-passe</span>
+                            <input type="password" th:field="*{password}" placeholder="********"
+                                autocomplete="new-password" required>
+                        </label>
+
+                        <label class="login-field">
+                            <span>Confirmar palavra-passe</span>
+                            <input type="password" th:field="*{confirmPassword}" placeholder="********"
+                                autocomplete="new-password" required>
+                        </label>
+                    </div>
+
+                    <button class="login-submit" type="submit">Criar conta</button>
+                </form>
+
+                <p class="login-security-note">Acesso seguro para clientes Obar</p>
+            </div>
         </section>
     </main>
 </body>

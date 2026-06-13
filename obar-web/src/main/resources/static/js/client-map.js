@@ -57,6 +57,11 @@ const elements = {
     summaryPrice: document.querySelector("[data-summary-price]"),
     summaryNotesBlock: document.querySelector("[data-summary-notes-block]"),
     summaryNotes: document.querySelector("[data-summary-notes]"),
+    driverDetails: document.querySelector("[data-driver-details]"),
+    driverAvatar: document.querySelector("[data-driver-avatar]"),
+    driverName: document.querySelector("[data-driver-name]"),
+    vehicleName: document.querySelector("[data-vehicle-name]"),
+    vehicleLicensePlate: document.querySelector("[data-vehicle-license-plate]"),
     driverArrivalBlock: document.querySelector("[data-driver-arrival-block]"),
     driverArrival: document.querySelector("[data-driver-arrival]"),
     tripPinBlock: document.querySelector("[data-trip-pin-block]"),
@@ -659,6 +664,28 @@ function renderTripSummary(trip) {
     elements.summaryPrice.textContent = formatCurrency(trip.estimatedPrice || 0);
     elements.summaryNotesBlock.hidden = !notes;
     elements.summaryNotes.textContent = notes;
+    renderDriverDetails(trip);
+}
+
+function renderDriverDetails(trip) {
+    const hasDriver = Boolean(trip.driverName);
+    elements.driverDetails.hidden = !hasDriver;
+    if (!hasDriver) {
+        return;
+    }
+
+    elements.driverName.textContent = trip.driverName;
+    elements.vehicleName.textContent = [trip.vehicleBrand, trip.vehicleModel].filter(Boolean).join(" ") || "Veículo";
+    elements.vehicleLicensePlate.textContent = trip.vehicleLicensePlate || "Matrícula por confirmar";
+    setAvatar(elements.driverAvatar, trip.driverName, trip.driverPhotoUrl, "M");
+}
+
+function setAvatar(element, name, photoUrl, fallback) {
+    const hasPhoto = Boolean(photoUrl);
+    element.textContent = hasPhoto ? "" : (name?.trim().substring(0, 1).toUpperCase() || fallback);
+    element.style.backgroundImage = hasPhoto
+        ? `url("${photoUrl.replaceAll('"', "%22")}")`
+        : "";
 }
 
 async function refreshActiveTrip() {

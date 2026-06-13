@@ -450,6 +450,64 @@
     white-space: pre-wrap;
 }
 
+.active-trip-driver {
+    align-items: center;
+    background: linear-gradient(135deg, rgba(255, 96, 30, 0.16), rgba(255, 96, 30, 0.04));
+    border: 1px solid rgba(255, 96, 30, 0.3);
+    border-radius: 8px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 12px;
+}
+
+.active-trip-driver[hidden] {
+    display: none;
+}
+
+.active-trip-avatar {
+    align-items: center;
+    background: var(--brand);
+    background-position: center;
+    background-size: cover;
+    border-radius: 999px;
+    color: #fff;
+    display: flex;
+    font-size: 1.05rem;
+    font-weight: 900;
+    height: 52px;
+    justify-content: center;
+    width: 52px;
+}
+
+.active-trip-driver-copy > span {
+    color: #8c8c96;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.active-trip-driver-copy > strong {
+    color: #f5f5f6;
+}
+
+.active-trip-driver-copy p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 4px 0 0;
+}
+
+.active-trip-driver-copy p span {
+    color: #d4d4d8;
+}
+
+.active-trip-driver-copy p b {
+    color: var(--brand);
+}
+
 .active-trip-progress {
     display: grid;
     gap: 8px;

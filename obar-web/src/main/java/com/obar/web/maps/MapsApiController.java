@@ -11,6 +11,7 @@ import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Route;
 import com.obar.model.Trip;
 import com.obar.model.User;
+import com.obar.model.Vehicle;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.web.maps.client.MapsServiceClient;
@@ -238,6 +239,8 @@ public class MapsApiController {
 
     private ActiveTripResponse toActiveTripResponse(Trip trip) {
         Route route = trip.getRoute();
+        User driver = trip.getDriver();
+        Vehicle vehicle = trip.getVehicle();
         return new ActiveTripResponse(
                 trip.getId(),
                 route.getId(),
@@ -254,6 +257,11 @@ public class MapsApiController {
                 trip.getTaxRateApplied(),
                 trip.getVehicleCategory(),
                 trip.getNotes(),
+                driver == null ? null : driver.getName(),
+                driver == null ? null : driver.getPhotoUrl(),
+                vehicle == null ? null : vehicle.getBrand(),
+                vehicle == null ? null : vehicle.getModel(),
+                vehicle == null ? null : vehicle.getLicensePlate(),
                 trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
                 driverArrivalMin(trip));
     }
@@ -318,6 +326,11 @@ public class MapsApiController {
             BigDecimal taxRate,
             String vehicleCategory,
             String notes,
+            String driverName,
+            String driverPhotoUrl,
+            String vehicleBrand,
+            String vehicleModel,
+            String vehicleLicensePlate,
             String startPin,
             Integer driverArrivalMin) {
     }

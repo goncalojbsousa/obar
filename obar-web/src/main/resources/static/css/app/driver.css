@@ -89,6 +89,28 @@
     line-height: 1.35;
 }
 
+.driver-trip-client {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.driver-client-avatar {
+    align-items: center;
+    background: var(--brand);
+    background-position: center;
+    background-size: cover;
+    border-radius: 999px;
+    color: #fff;
+    display: flex;
+    font-size: 1rem;
+    font-weight: 900;
+    height: 50px;
+    justify-content: center;
+    width: 50px;
+}
+
 .driver-trip-client small {
     color: #fbbf24;
     display: block;

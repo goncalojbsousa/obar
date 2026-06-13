@@ -2,6 +2,7 @@ package com.obar.bll;
 
 import com.obar.dal.TripRepository;
 import com.obar.dal.TripDriverRepository;
+import com.obar.dal.RouteRepository;
 import com.obar.dal.UserRepository;
 import com.obar.dal.VehicleRepository;
 import com.obar.model.Route;
@@ -13,6 +14,7 @@ import com.obar.model.enums.TripDriverStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -32,6 +34,7 @@ public class TripService {
 
     private final TripRepository tripRepository = new TripRepository();
     private final TripDriverRepository tripDriverRepository = new TripDriverRepository();
+    private final RouteRepository routeRepository = new RouteRepository();
     private final UserRepository userRepository = new UserRepository();
     private final VehicleRepository vehicleRepository = new VehicleRepository();
 
@@ -98,7 +101,7 @@ public class TripService {
         return tripRepository.update(trip);
     }
 
-    public Trip completeTrip(Integer tripId) {
+    public Trip completeTrip(Integer tripId, double distanceKm, int durationMin, BigDecimal finalPrice) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Viagem não encontrada."));
 
@@ -106,6 +109,11 @@ public class TripService {
             throw new IllegalStateException("Viagem não está em progresso.");
         }
 
+        Route route = trip.getRoute();
+        route.setDistanceKm((float) distanceKm);
+        route.setEstimatedDurationMin(durationMin);
+        trip.setRoute(routeRepository.update(route));
+        trip.setFinalPrice(finalPrice);
         trip.setStatus(TripStatus.COMPLETED);
         trip.setEndTime(LocalDateTime.now());
         Trip completedTrip = tripRepository.update(trip);

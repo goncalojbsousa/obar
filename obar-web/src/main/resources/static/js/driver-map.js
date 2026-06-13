@@ -8,6 +8,7 @@ const state = {
     assignmentMarkers: L.layerGroup(),
     assignmentPoll: null,
     snapshotPoll: null,
+    locationPoll: null,
     countdownTimer: null,
     currentLocation: null,
     online: false
@@ -37,6 +38,7 @@ const elements = {
     destinationAddress: document.querySelector("[data-destination-address]"),
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
+    priceBlock: document.querySelector("[data-price-block]"),
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
     clientName: document.querySelector("[data-client-name]"),
@@ -97,6 +99,11 @@ async function initializeDriverMap() {
     state.snapshotPoll = window.setInterval(() => {
         if (!state.assignment) {
             loadSnapshot();
+        }
+    }, 10000);
+    state.locationPoll = window.setInterval(() => {
+        if (state.assignment && state.assignment.status === "ACCEPTED") {
+            updateCurrentLocation({ silent: true });
         }
     }, 10000);
 }
@@ -211,6 +218,7 @@ function renderAssignment(assignment) {
     elements.destinationAddress.textContent = assignment.destinationAddress;
     elements.distance.textContent = `${assignment.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${assignment.durationMin} min`;
+    elements.priceBlock.hidden = assignment.routeMode === "PICKUP";
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;
@@ -307,10 +315,14 @@ async function completeTrip() {
 
     elements.completeButton.disabled = true;
     try {
+        const point = await updateCurrentLocation({ silent: true });
+        if (!point) {
+            throw new Error("Ativa a localização para calcular o preço final da viagem.");
+        }
         const result = await fetchJson("/api/driver/assignment/complete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ rating })
+            body: JSON.stringify({ rating, lat: point.lat, lng: point.lng })
         });
         resetAssignmentView();
         setMessage(result.message);

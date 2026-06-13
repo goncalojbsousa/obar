@@ -85,6 +85,10 @@ public class MapsApiController {
         User client = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
+        if (Boolean.TRUE.equals(client.getOnline())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Fica offline antes de pedires uma viagem.");
+        }
         if (tripType == TripType.IMMEDIATE && hasActiveTrip(client.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Já tens uma viagem ativa ou à espera de motorista.");
@@ -206,7 +210,33 @@ public class MapsApiController {
                 route.getEstimatedDurationMin(),
                 trip.getEstimatedPrice(),
                 trip.getVehicleCategory(),
-                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null);
+                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
+                driverArrivalMin(trip));
+    }
+
+    private Integer driverArrivalMin(Trip trip) {
+        User driver = trip.getDriver();
+        Route route = trip.getRoute();
+        if (trip.getStatus() != TripStatus.ACCEPTED
+                || driver == null
+                || driver.getCurrentLatitude() == null
+                || driver.getCurrentLongitude() == null) {
+            return null;
+        }
+
+        try {
+            return mapsServiceClient.estimate(new RouteEstimateRequest(
+                    driver.getCurrentLatitude(),
+                    driver.getCurrentLongitude(),
+                    route.getOriginLatitude(),
+                    route.getOriginLongitude(),
+                    "Localização do motorista",
+                    route.getOriginAddress(),
+                    trip.getVehicleCategory(),
+                    null)).durationMin();
+        } catch (ResponseStatusException exception) {
+            return null;
+        }
     }
 
     private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {

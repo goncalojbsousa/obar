@@ -6,6 +6,7 @@ import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Trip;
 import com.obar.model.User;
 import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.UserType;
 import com.obar.web.maps.utils.VehicleCategoryCatalog;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
@@ -32,6 +33,12 @@ public class ClientDashboardController {
     @GetMapping("/app")
     public String dashboard(HttpSession session, Model model) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        if (currentUser.type() == UserType.DRIVER
+                && userService.findById(currentUser.id())
+                        .map(User::getOnline)
+                        .orElse(false)) {
+            return "redirect:/driver";
+        }
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("vehicleCategories", VehicleCategoryCatalog.supported());
         return "client/dashboard";

@@ -67,7 +67,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authenticationInterceptor())
-                .addPathPatterns("/app/**", "/api/**");
+                .addPathPatterns("/app/**", "/driver", "/driver/**", "/api/**");
     }
 
     private HandlerInterceptor authenticationInterceptor() {

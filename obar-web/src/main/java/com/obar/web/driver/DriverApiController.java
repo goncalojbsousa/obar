@@ -100,12 +100,39 @@ public class DriverApiController {
                 if (request.rating() == null || request.rating() < 1 || request.rating() > 5) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe uma nota entre 1 e 5.");
                 }
+                if (request.lat() == null || request.lng() == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Ativa a localização para calcular o preço final da viagem.");
+                }
                 if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
                         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta viagem pertence a outro motorista.");
                 }
 
                 try {
-                        Trip completedTrip = tripService.completeTrip(trip.getId());
+                        Route route = trip.getRoute();
+                        RouteEstimateResponse finalEstimate = mapsServiceClient.estimate(new RouteEstimateRequest(
+                                        route.getOriginLatitude(),
+                                        route.getOriginLongitude(),
+                                        request.lat(),
+                                        request.lng(),
+                                        route.getOriginAddress(),
+                                        "Local de conclusão",
+                                        trip.getVehicleCategory(),
+                                        null));
+                        int actualDurationMin = Math.max(1, (int) Math.ceil(
+                                        Duration.between(trip.getStartTime(), LocalDateTime.now()).toSeconds() / 60.0));
+                        userService.updateDriverCurrentLocation(
+                                        currentUser.id(),
+                                        request.lat().floatValue(),
+                                        request.lng().floatValue());
+                        Trip completedTrip = tripService.completeTrip(
+                                        trip.getId(),
+                                        finalEstimate.distanceKm(),
+                                        actualDurationMin,
+                                        mapsServiceClient.calculatePrice(
+                                                        finalEstimate.distanceKm(),
+                                                        actualDurationMin,
+                                                        trip.getVehicleCategory()));
                         Review review = new Review();
                         review.setTrip(completedTrip);
                         review.setReviewer(assignment.getDriver());
@@ -117,7 +144,7 @@ public class DriverApiController {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
                 }
 
-                return new DriverActionResponse("Viagem concluída e cliente avaliado.");
+                return new DriverActionResponse("Viagem concluída. Preço final atualizado e cliente avaliado.");
         }
 
         @PostMapping("/api/driver/assignment/reject")

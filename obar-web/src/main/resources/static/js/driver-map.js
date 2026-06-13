@@ -307,10 +307,14 @@ async function completeTrip() {
 
     elements.completeButton.disabled = true;
     try {
+        const point = await updateCurrentLocation({ silent: true });
+        if (!point) {
+            throw new Error("Ativa a localização para calcular o preço final da viagem.");
+        }
         const result = await fetchJson("/api/driver/assignment/complete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ rating })
+            body: JSON.stringify({ rating, lat: point.lat, lng: point.lng })
         });
         resetAssignmentView();
         setMessage(result.message);

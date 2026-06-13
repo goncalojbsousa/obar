@@ -213,7 +213,7 @@ public class MapsServiceClient {
         JsonNode summary = feature.path("properties").path("summary");
         double distanceKm = summary.path("distance").asDouble(0) / 1000.0;
         int durationMin = Math.max(1, (int) Math.ceil(summary.path("duration").asDouble(0) / 60.0));
-        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin, request.vehicleCategory());
+        BigDecimal estimatedPrice = calculatePrice(distanceKm, durationMin, request.vehicleCategory());
 
         return new RouteEstimateResponse(
                 round(distanceKm, 2),
@@ -241,7 +241,7 @@ public class MapsServiceClient {
 
         double distanceKm = route.path("distance").asDouble(0) / 1000.0;
         int durationMin = Math.max(1, (int) Math.ceil(route.path("duration").asDouble(0) / 60.0));
-        BigDecimal estimatedPrice = estimatePrice(distanceKm, durationMin, request.vehicleCategory());
+        BigDecimal estimatedPrice = calculatePrice(distanceKm, durationMin, request.vehicleCategory());
 
         return new RouteEstimateResponse(
                 round(distanceKm, 2),
@@ -290,7 +290,7 @@ public class MapsServiceClient {
         return value >= -180 && value <= 180;
     }
 
-    private BigDecimal estimatePrice(double distanceKm, int durationMin, String vehicleCategory) {
+    public BigDecimal calculatePrice(double distanceKm, int durationMin, String vehicleCategory) {
         PriceProfile profile = priceProfile(vehicleCategory);
         BigDecimal price = profile.baseFare()
                 .add(BigDecimal.valueOf(distanceKm).multiply(profile.pricePerKm()))

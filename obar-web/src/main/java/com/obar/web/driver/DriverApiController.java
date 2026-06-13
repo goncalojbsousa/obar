@@ -1,6 +1,7 @@
 package com.obar.web.driver;
 
 import com.obar.bll.ReviewService;
+import com.obar.bll.TaxRateService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.auth.AuthenticatedUserDto;
@@ -36,13 +37,15 @@ public class DriverApiController {
         private final ReviewService reviewService;
         private final UserService userService;
         private final MapsServiceClient mapsServiceClient;
+        private final TaxRateService taxRateService;
 
         public DriverApiController(TripService tripService, ReviewService reviewService, UserService userService,
-                        MapsServiceClient mapsServiceClient) {
+                        MapsServiceClient mapsServiceClient, TaxRateService taxRateService) {
                 this.tripService = tripService;
                 this.reviewService = reviewService;
                 this.userService = userService;
                 this.mapsServiceClient = mapsServiceClient;
+                this.taxRateService = taxRateService;
         }
 
         @GetMapping("/api/driver/assignment")
@@ -55,7 +58,8 @@ public class DriverApiController {
         }
 
         @PostMapping("/api/driver/assignment/accept")
-        public DriverAssignmentResponse acceptAssignment(@RequestBody(required = false) DriverLocationUpdateRequest location,
+        public DriverAssignmentResponse acceptAssignment(
+                        @RequestBody(required = false) DriverLocationUpdateRequest location,
                         HttpSession session) {
                 AuthenticatedUserDto currentUser = requireDriver(session);
                 TripDriver assignment = currentAssignmentEntity(currentUser.id());
@@ -106,7 +110,8 @@ public class DriverApiController {
                                         "Ativa a localização para calcular o preço final da viagem.");
                 }
                 if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
-                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta viagem pertence a outro motorista.");
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                        "Esta viagem pertence a outro motorista.");
                 }
 
                 try {
@@ -130,10 +135,13 @@ public class DriverApiController {
                                         trip.getId(),
                                         finalEstimate.distanceKm(),
                                         actualDurationMin,
-                                        mapsServiceClient.calculatePrice(
-                                                        finalEstimate.distanceKm(),
-                                                        actualDurationMin,
-                                                        trip.getVehicleCategory()));
+                                        taxRateService.quoteAtRate(
+                                                        mapsServiceClient.calculatePrice(
+                                                                        finalEstimate.distanceKm(),
+                                                                        actualDurationMin,
+                                                                        trip.getVehicleCategory()),
+                                                        trip.getTaxRateApplied())
+                                                        .totalAmount());
                         Review review = new Review();
                         review.setTrip(completedTrip);
                         review.setReviewer(assignment.getDriver());
@@ -164,7 +172,8 @@ public class DriverApiController {
                 if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
                         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não podes cancelar esta viagem.");
                 }
-                tripService.cancelTrip(trip.getId(), "DRIVER", requireReason(request == null ? null : request.reason()));
+                tripService.cancelTrip(trip.getId(), "DRIVER",
+                                requireReason(request == null ? null : request.reason()));
                 return new DriverActionResponse("Viagem cancelada.");
         }
 
@@ -284,7 +293,7 @@ public class DriverApiController {
                                 destinationLng,
                                 estimate.distanceKm(),
                                 estimate.durationMin(),
-                                estimate.estimatedPrice(),
+                                pickupRoute ? estimate.estimatedPrice() : trip.getEstimatedPrice(),
                                 trip.getVehicleCategory(),
                                 status,
                                 assignedAt,

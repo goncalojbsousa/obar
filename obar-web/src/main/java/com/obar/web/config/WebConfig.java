@@ -3,6 +3,7 @@ package com.obar.web.config;
 import com.obar.bll.CoreLifecycleService;
 import com.obar.bll.ReviewService;
 import com.obar.bll.RouteService;
+import com.obar.bll.TaxRateService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.VehicleService;
@@ -30,6 +31,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public RouteService routeService() {
         return new RouteService();
+    }
+
+    @Bean
+    public TaxRateService taxRateService() {
+        return new TaxRateService();
     }
 
     @Bean

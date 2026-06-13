@@ -73,6 +73,9 @@ public class Trip {
     @Column(name = "estimated_price")
     private BigDecimal estimatedPrice;
 
+    @Column(name = "tax_rate_applied")
+    private BigDecimal taxRateApplied;
+
     @Column(name = "final_price")
     private BigDecimal finalPrice;
 

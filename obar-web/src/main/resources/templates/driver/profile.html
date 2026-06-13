@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil do Motorista | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=driver-profile-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=weekly-earnings-20260613">
 </head>
 
 <body class="client-page profile-page driver-profile-page">
@@ -14,7 +14,21 @@
 
     <main class="profile-shell driver-profile-shell">
         <aside class="profile-card profile-identity-card driver-profile-identity">
-            <div class="profile-avatar-large" th:text="${driverProfile.initials()}">RM</div>
+            <form class="profile-photo-form" th:action="@{/app/profile/photo}" method="post"
+                enctype="multipart/form-data">
+                <label class="profile-avatar-large photo-upload-trigger" title="Atualizar foto de perfil">
+                    <img th:if="${driverProfile.photoUrl() != null and !driverProfile.photoUrl().isBlank()}"
+                        th:src="${driverProfile.photoUrl()}" alt="Foto de perfil">
+                    <span class="profile-avatar-initials"
+                        th:unless="${driverProfile.photoUrl() != null and !driverProfile.photoUrl().isBlank()}"
+                        th:text="${driverProfile.initials()}">RM</span>
+                    <span class="photo-upload-overlay">Atualizar foto</span>
+                    <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                        aria-label="Atualizar foto de perfil" data-photo-upload required>
+                </label>
+            </form>
+            <p class="profile-upload-message is-success" th:if="${photoSuccess}" th:text="${photoSuccess}"></p>
+            <p class="profile-upload-message is-error" th:if="${photoError}" th:text="${photoError}"></p>
             <h1 th:text="${driverProfile.name()}">Rui Martins</h1>
             <p>Motorista desde <span th:text="${driverProfile.memberSince()}">jun 2024</span></p>
 
@@ -68,9 +82,20 @@
                 </div>
 
                 <div class="driver-vehicle-card" th:if="${driverProfile.vehicle() != null}">
-                    <div class="driver-vehicle-visual" aria-hidden="true">
-                        <span></span>
-                    </div>
+                    <form class="vehicle-photo-form"
+                        th:action="@{/driver/vehicles/{vehicleId}/photo(vehicleId=${driverProfile.vehicle().id()})}"
+                        method="post" enctype="multipart/form-data">
+                        <label class="driver-vehicle-visual photo-upload-trigger" title="Atualizar foto do veiculo">
+                            <img th:if="${driverProfile.vehicle().photoUrl() != null and !driverProfile.vehicle().photoUrl().isBlank()}"
+                                th:src="${driverProfile.vehicle().photoUrl()}" alt="Foto do veiculo">
+                            <span class="vehicle-placeholder"
+                                th:unless="${driverProfile.vehicle().photoUrl() != null and !driverProfile.vehicle().photoUrl().isBlank()}"
+                                aria-hidden="true"></span>
+                            <span class="photo-upload-overlay">Atualizar foto</span>
+                            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                                aria-label="Atualizar foto do veiculo" data-photo-upload required>
+                        </label>
+                    </form>
                     <div class="driver-vehicle-details">
                         <span>Gest&atilde;o do ve&iacute;culo</span>
                         <strong th:text="${driverProfile.vehicle().model()}">Toyota Corolla</strong>
@@ -84,12 +109,12 @@
                     <div class="driver-vehicle-state">
                         <span class="profile-status-pill" th:classappend="${driverProfile.vehicle().active()} ? '' : ' is-offline'"
                             th:text="${driverProfile.vehicle().statusLabel()}">Ativo</span>
-                        <div class="driver-profile-actions">
-                            <a href="#" aria-disabled="true">Editar</a>
-                            <a href="#" aria-disabled="true">Gerir</a>
-                        </div>
                     </div>
                 </div>
+                <p class="profile-upload-message is-success" th:if="${vehiclePhotoSuccess}"
+                    th:text="${vehiclePhotoSuccess}"></p>
+                <p class="profile-upload-message is-error" th:if="${vehiclePhotoError}"
+                    th:text="${vehiclePhotoError}"></p>
 
                 <div class="driver-profile-empty" th:if="${driverProfile.vehicle() == null}">
                     <strong>Sem ve&iacute;culo ativo</strong>
@@ -124,6 +149,31 @@
                             <strong th:text="${#numbers.formatCurrency(driverProfile.totalEarnings())}">3 420 &euro;</strong>
                         </article>
                     </div>
+
+                    <section class="driver-earnings-chart" aria-labelledby="weekly-earnings-title">
+                        <div class="driver-earnings-chart-header">
+                            <div>
+                                <span>Últimos 7 dias</span>
+                                <h4 id="weekly-earnings-title">Ganhos semanais</h4>
+                            </div>
+                            <strong th:text="${#numbers.formatCurrency(driverProfile.weeklyEarnings().total())}">
+                                0,00 €
+                            </strong>
+                        </div>
+                        <div class="driver-earnings-bars">
+                            <div class="driver-earnings-day"
+                                th:each="day : ${driverProfile.weeklyEarnings().days()}">
+                                <span class="driver-earnings-value"
+                                    th:text="${#numbers.formatCurrency(day.amount())}">0,00 €</span>
+                                <div class="driver-earnings-track">
+                                    <span class="driver-earnings-bar"
+                                        th:style="'height:' + ${day.heightPercent()} + '%'"></span>
+                                </div>
+                                <strong th:text="${day.day()}">SEG</strong>
+                                <small th:text="${day.date()}">08 jun</small>
+                            </div>
+                        </div>
+                    </section>
 
                     <div class="driver-activity-strip">
                         <span>Atividade recente</span>
@@ -181,6 +231,7 @@
     </main>
 
     <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+    <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
 </body>
 
 </html>

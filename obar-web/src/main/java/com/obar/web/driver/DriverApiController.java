@@ -1,9 +1,11 @@
 package com.obar.web.driver;
 
+import com.obar.bll.ReviewService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Route;
+import com.obar.model.Review;
 import com.obar.model.Trip;
 import com.obar.model.TripDriver;
 import com.obar.model.User;
@@ -30,12 +32,14 @@ public class DriverApiController {
         private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
 
         private final TripService tripService;
+        private final ReviewService reviewService;
         private final UserService userService;
         private final MapsServiceClient mapsServiceClient;
 
-        public DriverApiController(TripService tripService, UserService userService,
+        public DriverApiController(TripService tripService, ReviewService reviewService, UserService userService,
                         MapsServiceClient mapsServiceClient) {
                 this.tripService = tripService;
+                this.reviewService = reviewService;
                 this.userService = userService;
                 this.mapsServiceClient = mapsServiceClient;
         }
@@ -73,10 +77,47 @@ public class DriverApiController {
         public DriverAssignmentResponse startTrip(@RequestBody DriverStartTripRequest request, HttpSession session) {
                 AuthenticatedUserDto currentUser = requireDriver(session);
                 TripDriver assignment = currentAssignmentEntity(currentUser.id());
-                Trip startedTrip = tripService.startTrip(assignment.getTrip().getId(), currentUser.id(), request.pin());
+                Trip startedTrip;
+                try {
+                        startedTrip = tripService.startTrip(
+                                        assignment.getTrip().getId(),
+                                        currentUser.id(),
+                                        request.pin());
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
                 assignment.setTrip(startedTrip);
                 return toAssignmentResponse(startedTrip, assignment.getAssignedAt(), "IN_PROGRESS",
                                 assignment.getDriver());
+        }
+
+        @PostMapping("/api/driver/assignment/complete")
+        public DriverActionResponse completeTrip(@RequestBody DriverCompleteTripRequest request, HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                Trip trip = assignment.getTrip();
+
+                if (request.rating() == null || request.rating() < 1 || request.rating() > 5) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe uma nota entre 1 e 5.");
+                }
+                if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta viagem pertence a outro motorista.");
+                }
+
+                try {
+                        Trip completedTrip = tripService.completeTrip(trip.getId());
+                        Review review = new Review();
+                        review.setTrip(completedTrip);
+                        review.setReviewer(assignment.getDriver());
+                        review.setReviewed(completedTrip.getClient());
+                        review.setRating(request.rating());
+                        review.setReviewerType("DRIVER");
+                        reviewService.addReview(review);
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
+
+                return new DriverActionResponse("Viagem concluída e cliente avaliado.");
         }
 
         @PostMapping("/api/driver/assignment/reject")
@@ -176,6 +217,7 @@ public class DriverApiController {
                 return new DriverAssignmentResponse(
                                 trip.getId(),
                                 trip.getClient().getName(),
+                                trip.getClient().getAverageRating(),
                                 originAddress,
                                 destinationAddress,
                                 originLat,

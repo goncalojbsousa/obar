@@ -1,6 +1,7 @@
 package com.obar.web.config;
 
 import com.obar.bll.CoreLifecycleService;
+import com.obar.bll.ReviewService;
 import com.obar.bll.RouteService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
@@ -28,6 +29,11 @@ public class WebCoreConfig {
     @Bean
     public TripService tripService() {
         return new TripService();
+    }
+
+    @Bean
+    public ReviewService reviewService() {
+        return new ReviewService();
     }
 
     @Bean

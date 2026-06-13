@@ -204,7 +204,7 @@ public abstract class UsersController implements AdminSectionController {
     private void configureUserModal() {
         sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
                 this::handleModalConfirmDelete);
-        sharedModalController.<AccountStatus>getModalStatusCombo()
+        sharedModalController.modalStatusCombo
                 .setItems(FXCollections.observableArrayList(AccountStatus.values()));
     }
 
@@ -263,15 +263,15 @@ public abstract class UsersController implements AdminSectionController {
             showFeedback("Selecione um registo primeiro.", true);
             return;
         }
-        boolean isBlocked = selected.getStatus() == AccountStatus.BLOCKED;
+        boolean isBlocked = selected.status() == AccountStatus.BLOCKED;
         modalMode = isBlocked ? ModalMode.UNBLOCK_CONFIRM : ModalMode.BLOCK_CONFIRM;
         modalTarget = selected;
 
         sharedModalController.prepareForDeleteConfirm(isBlocked ? "Desbloquear conta" : "Bloquear conta");
         hideAllModalForms();
-        sharedModalController.getModalDeleteMessageLabel().setText(isBlocked
-                ? "Desbloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica ativa novamente."
-                : "Bloquear " + AdminFormatUtils.fallback(selected.getName()) + "? A conta fica bloqueada.");
+        sharedModalController.modalDeleteMessageLabel.setText(isBlocked
+                ? "Desbloquear " + AdminFormatUtils.fallback(selected.name()) + "? A conta fica ativa novamente."
+                : "Bloquear " + AdminFormatUtils.fallback(selected.name()) + "? A conta fica bloqueada.");
     }
 
     @FXML
@@ -286,8 +286,8 @@ public abstract class UsersController implements AdminSectionController {
 
         sharedModalController.prepareForDeleteConfirm("Apagar registo");
         hideAllModalForms();
-        sharedModalController.getModalDeleteMessageLabel().setText(
-                "Apagar " + AdminFormatUtils.fallback(selected.getName()) + "? Esta acao e permanente.");
+        sharedModalController.modalDeleteMessageLabel.setText(
+                "Apagar " + AdminFormatUtils.fallback(selected.name()) + "? Esta acao e permanente.");
     }
 
     @FXML
@@ -324,8 +324,8 @@ public abstract class UsersController implements AdminSectionController {
             return;
         }
 
-        String password = sharedModalController.getModalPasswordField().getText();
-        String confirmPassword = sharedModalController.getModalConfirmPasswordField().getText();
+        String password = sharedModalController.modalPasswordField.getText();
+        String confirmPassword = sharedModalController.modalConfirmPasswordField.getText();
         if (!AdminFormatUtils.fallback(password).equals(AdminFormatUtils.fallback(confirmPassword))) {
             sharedModalController.showError("Password e confirmacao nao coincidem.");
             return;
@@ -333,20 +333,20 @@ public abstract class UsersController implements AdminSectionController {
 
         try {
             AdminUserCommand command = new AdminUserCommand(
-                    sharedModalController.getModalNameField().getText(),
-                    sharedModalController.getModalEmailField().getText(),
-                    sharedModalController.getModalPhoneField().getText(),
-                    sharedModalController.getModalReferenceField().getText(),
-                    sharedModalController.<AccountStatus>getModalStatusCombo().getValue(),
+                    sharedModalController.modalNameField.getText(),
+                    sharedModalController.modalEmailField.getText(),
+                    sharedModalController.modalPhoneField.getText(),
+                    sharedModalController.modalReferenceField.getText(),
+                    sharedModalController.modalStatusCombo.getValue(),
                     password,
                     sectionConfig().type());
 
             if (modalMode == ModalMode.EDIT) {
-                if (modalTarget == null || modalTarget.getId() == null) {
+                if (modalTarget == null || modalTarget.id() == null) {
                     sharedModalController.showError("Registo invalido.");
                     return;
                 }
-                adminService.updateUser(modalTarget.getId(), command);
+                adminService.updateUser(modalTarget.id(), command);
                 finishModalWithSuccess(sectionConfig().badgeLabel() + " atualizado com sucesso.");
                 return;
             }
@@ -360,23 +360,23 @@ public abstract class UsersController implements AdminSectionController {
 
     @FXML
     public void handleModalConfirmDelete() {
-        if (modalTarget == null || modalTarget.getId() == null) {
+        if (modalTarget == null || modalTarget.id() == null) {
             sharedModalController.showError("Registo invalido.");
             return;
         }
         try {
             if (modalMode == ModalMode.DELETE_CONFIRM) {
-                adminService.deleteUser(modalTarget.getId());
+                adminService.deleteUser(modalTarget.id());
                 finishModalWithSuccess("Registo removido com sucesso.");
                 return;
             }
             if (modalMode == ModalMode.UNBLOCK_CONFIRM) {
-                adminService.unblockUser(modalTarget.getId());
+                adminService.unblockUser(modalTarget.id());
                 finishModalWithSuccess("Conta desbloqueada com sucesso.");
                 return;
             }
 
-            adminService.blockUser(modalTarget.getId());
+            adminService.blockUser(modalTarget.id());
             finishModalWithSuccess("Conta bloqueada com sucesso.");
         } catch (Exception exception) {
             sharedModalController.showError("Falha ao atualizar registo: " + exception.getMessage());
@@ -422,19 +422,19 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     private boolean matchesStatus(AdminUserDTO user) {
-        return activeStatusFilter == null || user.getStatus() == activeStatusFilter;
+        return activeStatusFilter == null || user.status() == activeStatusFilter;
     }
 
     private boolean matchesSearch(AdminUserDTO user, String query) {
         if (query.isBlank()) {
             return true;
         }
-        return AdminFormatUtils.normalize(user.getName()).contains(query)
-                || AdminFormatUtils.normalize(user.getEmail()).contains(query)
-                || AdminFormatUtils.normalize(user.getPhone()).contains(query)
-                || AdminFormatUtils.normalize(user.getLicenseNumber()).contains(query)
-                || AdminFormatUtils.normalize(user.getTaxNumber()).contains(query)
-                || AdminFormatUtils.normalize(AdminFormatUtils.prettyStatus(user.getStatus())).contains(query);
+        return AdminFormatUtils.normalize(user.name()).contains(query)
+                || AdminFormatUtils.normalize(user.email()).contains(query)
+                || AdminFormatUtils.normalize(user.phone()).contains(query)
+                || AdminFormatUtils.normalize(user.licenseNumber()).contains(query)
+                || AdminFormatUtils.normalize(user.taxNumber()).contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyStatus(user.status())).contains(query);
     }
 
     private void updateSectionLabels() {
@@ -458,7 +458,7 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     private long count(AccountStatus status) {
-        return allUsers.stream().filter(user -> user.getStatus() == status).count();
+        return allUsers.stream().filter(user -> user.status() == status).count();
     }
 
     private void updateFilterChipStyles() {
@@ -479,18 +479,18 @@ public abstract class UsersController implements AdminSectionController {
 
     private void configureUserTableColumns() {
         userIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getId() == null ? "-" : "#" + cellData.getValue().getId()));
+                cellData.getValue().id() == null ? "-" : "#" + cellData.getValue().id()));
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getName())));
+                AdminFormatUtils.fallback(cellData.getValue().name())));
         emailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getEmail())));
+                AdminFormatUtils.fallback(cellData.getValue().email())));
         statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyStatus(cellData.getValue().getStatus())));
+                AdminFormatUtils.prettyStatus(cellData.getValue().status())));
         metricColumn.setCellValueFactory(cellData -> new SimpleStringProperty(metricValue(cellData.getValue())));
         volumeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(volumeValue(cellData.getValue())));
         referenceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(referenceValue(cellData.getValue())));
         createdAtColumn.setCellValueFactory(cellData -> {
-            LocalDateTime createdAt = cellData.getValue().getCreatedAt();
+            LocalDateTime createdAt = cellData.getValue().createdAt();
             return new SimpleStringProperty(createdAt == null ? "-" : createdAt.toString());
         });
 
@@ -507,10 +507,10 @@ public abstract class UsersController implements AdminSectionController {
                 AdminUserDTO user = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
                         ? getTableView().getItems().get(getIndex())
                         : null;
-                if (user == null || user.getStatus() == null) {
+                if (user == null || user.status() == null) {
                     return;
                 }
-                switch (user.getStatus()) {
+                switch (user.status()) {
                     case ACTIVE -> getStyleClass().add("status-online");
                     case INACTIVE -> getStyleClass().add("status-offline");
                     case BLOCKED -> getStyleClass().add("status-blocked");
@@ -528,14 +528,14 @@ public abstract class UsersController implements AdminSectionController {
         }
 
         UserSectionConfig config = sectionConfig();
-        setLabelText(detailInitialsLabel, AdminFormatUtils.extractInitials(user.getName()));
+        setLabelText(detailInitialsLabel, AdminFormatUtils.extractInitials(user.name()));
         setLabelText(detailTitleLabel, "Detalhe do " + config.badgeLabel().toLowerCase(Locale.ROOT));
-        setLabelText(detailNameLabel, AdminFormatUtils.fallback(user.getName()));
-        setLabelText(detailEmailLabel, AdminFormatUtils.fallback(user.getEmail()));
-        setLabelText(detailStatusLabel, AdminFormatUtils.prettyStatus(user.getStatus()));
+        setLabelText(detailNameLabel, AdminFormatUtils.fallback(user.name()));
+        setLabelText(detailEmailLabel, AdminFormatUtils.fallback(user.email()));
+        setLabelText(detailStatusLabel, AdminFormatUtils.prettyStatus(user.status()));
         setLabelText(detailRoleLabel, config.badgeLabel());
-        setLabelText(detailPhoneValueLabel, AdminFormatUtils.fallback(user.getPhone()));
-        setLabelText(detailCreatedValueLabel, user.getCreatedAt() == null ? "-" : user.getCreatedAt().toString());
+        setLabelText(detailPhoneValueLabel, AdminFormatUtils.fallback(user.phone()));
+        setLabelText(detailCreatedValueLabel, user.createdAt() == null ? "-" : user.createdAt().toString());
         setLabelText(detailCardOneTitleLabel, config.detailCardOneTitle());
         setLabelText(detailCardOneValueLabel, cardOneValue(user));
         setLabelText(detailCardTwoTitleLabel, config.detailCardTwoTitle());
@@ -552,7 +552,7 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     private void updateBlockActionButtons(AdminUserDTO user) {
-        boolean isBlocked = user != null && user.getStatus() == AccountStatus.BLOCKED;
+        boolean isBlocked = user != null && user.status() == AccountStatus.BLOCKED;
         String text = isBlocked ? "Desbloquear" : "Bloquear";
         String detailText = isBlocked ? "Desbloquear conta" : "Bloquear conta";
 
@@ -573,39 +573,39 @@ public abstract class UsersController implements AdminSectionController {
 
     private void showOnlyUserForm() {
         UserSectionConfig config = sectionConfig();
-        sharedModalController.getModalReferenceLabel().setText(config.referenceTitle().toUpperCase(Locale.ROOT));
-        sharedModalController.getModalReferenceField().setPromptText(config.referencePrompt());
-        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), true);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalDeleteSection(), false);
+        sharedModalController.modalReferenceLabel.setText(config.referenceTitle().toUpperCase(Locale.ROOT));
+        sharedModalController.modalReferenceField.setPromptText(config.referencePrompt());
+        AdminModalIncludeController.setVisible(sharedModalController.modalUsersFormSection, true);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTripsFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTaxRateFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalDeleteSection, false);
     }
 
     private void hideAllModalForms() {
-        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalUsersFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTripsFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTaxRateFormSection, false);
     }
 
     private void fillUserForm(AdminUserDTO user) {
-        sharedModalController.getModalNameField().setText(AdminFormatUtils.fallback(user.getName()));
-        sharedModalController.getModalEmailField().setText(AdminFormatUtils.fallback(user.getEmail()));
-        sharedModalController.getModalPhoneField().setText(AdminFormatUtils.fallback(user.getPhone()));
-        sharedModalController.getModalReferenceField()
+        sharedModalController.modalNameField.setText(AdminFormatUtils.fallback(user.name()));
+        sharedModalController.modalEmailField.setText(AdminFormatUtils.fallback(user.email()));
+        sharedModalController.modalPhoneField.setText(AdminFormatUtils.fallback(user.phone()));
+        sharedModalController.modalReferenceField
                 .setText(referenceValue(user).equals("-") ? "" : referenceValue(user));
-        sharedModalController.<AccountStatus>getModalStatusCombo().setValue(user.getStatus());
-        sharedModalController.getModalPasswordField().clear();
-        sharedModalController.getModalConfirmPasswordField().clear();
+        sharedModalController.modalStatusCombo.setValue(user.status());
+        sharedModalController.modalPasswordField.clear();
+        sharedModalController.modalConfirmPasswordField.clear();
     }
 
     private void clearUserForm() {
-        sharedModalController.getModalNameField().clear();
-        sharedModalController.getModalEmailField().clear();
-        sharedModalController.getModalPhoneField().clear();
-        sharedModalController.getModalReferenceField().clear();
-        sharedModalController.<AccountStatus>getModalStatusCombo().setValue(AccountStatus.ACTIVE);
-        sharedModalController.getModalPasswordField().clear();
-        sharedModalController.getModalConfirmPasswordField().clear();
+        sharedModalController.modalNameField.clear();
+        sharedModalController.modalEmailField.clear();
+        sharedModalController.modalPhoneField.clear();
+        sharedModalController.modalReferenceField.clear();
+        sharedModalController.modalStatusCombo.setValue(AccountStatus.ACTIVE);
+        sharedModalController.modalPasswordField.clear();
+        sharedModalController.modalConfirmPasswordField.clear();
     }
 
     private void finishModalWithSuccess(String message) {
@@ -622,70 +622,70 @@ public abstract class UsersController implements AdminSectionController {
 
     private String metricValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? AdminFormatUtils.starRating(user.getAverageRating())
-                : AdminFormatUtils.fallback(user.getEmail());
+                ? AdminFormatUtils.starRating(user.averageRating())
+                : AdminFormatUtils.fallback(user.email());
     }
 
     private List<AdminPdfExportService.PdfColumn<AdminUserDTO>> userExportColumns() {
         if (sectionConfig().type() == UserType.DRIVER) {
             return List.of(
-                    column("ID", 0.8f, user -> formatId(user.getId())),
-                    column("Nome", 2.1f, AdminUserDTO::getName),
-                    column("Email", 2.4f, AdminUserDTO::getEmail),
-                    column("Telefone", 1.3f, AdminUserDTO::getPhone),
-                    column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.getStatus())),
-                    column("Licenca", 1.4f, AdminUserDTO::getLicenseNumber),
-                    column("Avaliacao", 1f, user -> AdminFormatUtils.starRating(user.getAverageRating())),
-                    column("Viagens", 0.9f, user -> String.valueOf(AdminFormatUtils.defaultInteger(user.getTotalTrips()))),
-                    column("Disponivel", 1f, user -> Boolean.TRUE.equals(user.getAvailable()) ? "Sim" : "Nao"),
-                    column("Registado em", 1.6f, user -> formatDate(user.getCreatedAt())),
-                    column("Nota", 1.8f, AdminUserDTO::getApprovalNote));
+                    column("ID", 0.8f, user -> formatId(user.id())),
+                    column("Nome", 2.1f, AdminUserDTO::name),
+                    column("Email", 2.4f, AdminUserDTO::email),
+                    column("Telefone", 1.3f, AdminUserDTO::phone),
+                    column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.status())),
+                    column("Licenca", 1.4f, AdminUserDTO::licenseNumber),
+                    column("Avaliacao", 1f, user -> AdminFormatUtils.starRating(user.averageRating())),
+                    column("Viagens", 0.9f, user -> String.valueOf(AdminFormatUtils.defaultInteger(user.totalTrips()))),
+                    column("Disponivel", 1f, user -> Boolean.TRUE.equals(user.available()) ? "Sim" : "Nao"),
+                    column("Registado em", 1.6f, user -> formatDate(user.createdAt())),
+                    column("Nota", 1.8f, AdminUserDTO::approvalNote));
         }
 
         return List.of(
-                column("ID", 0.8f, user -> formatId(user.getId())),
-                column("Nome", 2.2f, AdminUserDTO::getName),
-                column("Email", 2.5f, AdminUserDTO::getEmail),
-                column("Telefone", 1.4f, AdminUserDTO::getPhone),
-                column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.getStatus())),
-                column("NIF", 1.4f, AdminUserDTO::getTaxNumber),
-                column("Metodo pagamento", 1.5f, user -> formatId(user.getDefaultPaymentMethodId())),
-                column("Registado em", 1.6f, user -> formatDate(user.getCreatedAt())));
+                column("ID", 0.8f, user -> formatId(user.id())),
+                column("Nome", 2.2f, AdminUserDTO::name),
+                column("Email", 2.5f, AdminUserDTO::email),
+                column("Telefone", 1.4f, AdminUserDTO::phone),
+                column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.status())),
+                column("NIF", 1.4f, AdminUserDTO::taxNumber),
+                column("Metodo pagamento", 1.5f, user -> formatId(user.defaultPaymentMethodId())),
+                column("Registado em", 1.6f, user -> formatDate(user.createdAt())));
     }
 
     private String volumeValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? String.valueOf(AdminFormatUtils.defaultInteger(user.getTotalTrips()))
-                : AdminFormatUtils.fallback(user.getPhone());
+                ? String.valueOf(AdminFormatUtils.defaultInteger(user.totalTrips()))
+                : AdminFormatUtils.fallback(user.phone());
     }
 
     private String referenceValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? AdminFormatUtils.fallback(user.getLicenseNumber())
-                : AdminFormatUtils.fallback(user.getTaxNumber());
+                ? AdminFormatUtils.fallback(user.licenseNumber())
+                : AdminFormatUtils.fallback(user.taxNumber());
     }
 
     private String cardOneValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? AdminFormatUtils.starRating(user.getAverageRating())
-                : AdminFormatUtils.prettyStatus(user.getStatus());
+                ? AdminFormatUtils.starRating(user.averageRating())
+                : AdminFormatUtils.prettyStatus(user.status());
     }
 
     private String cardTwoValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? String.valueOf(AdminFormatUtils.defaultInteger(user.getTotalTrips()))
-                : AdminFormatUtils.fallback(user.getEmail());
+                ? String.valueOf(AdminFormatUtils.defaultInteger(user.totalTrips()))
+                : AdminFormatUtils.fallback(user.email());
     }
 
     private String cardThreeValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? (Boolean.TRUE.equals(user.getAvailable()) ? "Online" : "Offline")
-                : (user.getDefaultPaymentMethodId() == null ? "-" : "#" + user.getDefaultPaymentMethodId());
+                ? (Boolean.TRUE.equals(user.available()) ? "Online" : "Offline")
+                : (user.defaultPaymentMethodId() == null ? "-" : "#" + user.defaultPaymentMethodId());
     }
 
     private String cardFourValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? AdminFormatUtils.prettyStatus(user.getStatus())
+                ? AdminFormatUtils.prettyStatus(user.status())
                 : "Cliente";
     }
 

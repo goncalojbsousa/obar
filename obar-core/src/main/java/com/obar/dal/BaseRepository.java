@@ -7,7 +7,7 @@ import org.hibernate.Transaction;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
+public abstract class BaseRepository<T, ID> {
 
     private final Class<T> entityClass;
 
@@ -19,7 +19,6 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
         return HibernateUtil.getSessionFactory().openSession();
     }
 
-    @Override
     public T save(T entity) {
         Transaction tx = null;
         try (Session session = getSession()) {
@@ -34,14 +33,12 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
         }
     }
 
-    @Override
     public Optional<T> findById(ID id) {
         try (Session session = getSession()) {
             return Optional.ofNullable(session.find(entityClass, id));
         }
     }
 
-    @Override
     public List<T> findAll() {
         try (Session session = getSession()) {
             String query = "FROM " + entityClass.getSimpleName();
@@ -49,7 +46,6 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
         }
     }
 
-    @Override
     public T update(T entity) {
         Transaction tx = null;
         try (Session session = getSession()) {
@@ -64,7 +60,6 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
         }
     }
 
-    @Override
     public void delete(T entity) {
         Transaction tx = null;
         try (Session session = getSession()) {
@@ -78,7 +73,6 @@ public abstract class BaseRepository<T, ID> implements CrudRepository<T, ID> {
         }
     }
 
-    @Override
     public void deleteById(ID id) {
         findById(id).ifPresent(this::delete);
     }

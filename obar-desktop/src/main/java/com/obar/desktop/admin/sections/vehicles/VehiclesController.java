@@ -169,7 +169,8 @@ public class VehiclesController implements AdminSectionController {
         searchField.textProperty().addListener((obs, oldText, newText) -> applyVehicleFilter());
         vehiclesTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, previous, selected) -> showVehicleDetails(selected));
-        filteredVehicles.addListener((javafx.collections.ListChangeListener<AdminVehicleDTO>) change -> updateCountLabels());
+        filteredVehicles
+                .addListener((javafx.collections.ListChangeListener<AdminVehicleDTO>) change -> updateCountLabels());
 
         setDetailVisible(false);
         setModalVisible(false);
@@ -233,8 +234,8 @@ public class VehiclesController implements AdminSectionController {
         modalMode = ModalMode.DEACTIVATE_CONFIRM;
         modalTarget = selectedVehicle;
         setVehicleModalHeading("Desativar veiculo", "Confirme a alteracao de estado");
-        vehicleConfirmMessageLabel.setText("Desativar " + selectedVehicle.getVehicleName()
-                + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
+        vehicleConfirmMessageLabel.setText("Desativar " + selectedVehicle.vehicleName()
+                + " (" + AdminFormatUtils.fallback(selectedVehicle.licensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Confirmar");
         setModalVisible(true);
     }
@@ -250,8 +251,8 @@ public class VehiclesController implements AdminSectionController {
         modalMode = ModalMode.REACTIVATE_CONFIRM;
         modalTarget = selectedVehicle;
         setVehicleModalHeading("Ativar veiculo", "Confirme a alteracao de estado");
-        vehicleConfirmMessageLabel.setText("Voltar a ativar " + selectedVehicle.getVehicleName()
-                + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
+        vehicleConfirmMessageLabel.setText("Voltar a ativar " + selectedVehicle.vehicleName()
+                + " (" + AdminFormatUtils.fallback(selectedVehicle.licensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Confirmar");
         setModalVisible(true);
     }
@@ -267,8 +268,8 @@ public class VehiclesController implements AdminSectionController {
         modalMode = ModalMode.DELETE_CONFIRM;
         modalTarget = selectedVehicle;
         setVehicleModalHeading("Apagar veiculo", "Esta acao remove o veiculo");
-        vehicleConfirmMessageLabel.setText("Apagar definitivamente " + selectedVehicle.getVehicleName()
-                + " (" + AdminFormatUtils.fallback(selectedVehicle.getLicensePlate()) + ")?");
+        vehicleConfirmMessageLabel.setText("Apagar definitivamente " + selectedVehicle.vehicleName()
+                + " (" + AdminFormatUtils.fallback(selectedVehicle.licensePlate()) + ")?");
         showOnlyConfirmAction(modalDeactivateButton, "Apagar");
         setModalVisible(true);
     }
@@ -311,11 +312,11 @@ public class VehiclesController implements AdminSectionController {
         try {
             AdminVehicleCommand command = readVehicleCommand();
             if (modalMode == ModalMode.EDIT) {
-                if (modalTarget == null || modalTarget.getId() == null) {
+                if (modalTarget == null || modalTarget.id() == null) {
                     showModalError("Veiculo invalido.");
                     return;
                 }
-                adminService.updateVehicle(modalTarget.getId(), command);
+                adminService.updateVehicle(modalTarget.id(), command);
                 finishModalWithSuccess("Veiculo atualizado com sucesso.");
                 return;
             }
@@ -329,24 +330,24 @@ public class VehiclesController implements AdminSectionController {
 
     @FXML
     public void handleModalDeactivate() {
-        if (modalTarget == null || modalTarget.getId() == null) {
+        if (modalTarget == null || modalTarget.id() == null) {
             showModalError("Veiculo invalido.");
             return;
         }
 
         try {
             if (modalMode == ModalMode.REACTIVATE_CONFIRM) {
-                adminService.reactivateVehicle(modalTarget.getId());
+                adminService.reactivateVehicle(modalTarget.id());
                 finishModalWithSuccess("Veiculo ativado com sucesso.");
                 return;
             }
             if (modalMode == ModalMode.DELETE_CONFIRM) {
-                adminService.deleteVehicle(modalTarget.getId());
+                adminService.deleteVehicle(modalTarget.id());
                 finishModalWithSuccess("Veiculo apagado com sucesso.");
                 return;
             }
 
-            adminService.deactivateVehicle(modalTarget.getId());
+            adminService.deactivateVehicle(modalTarget.id());
             finishModalWithSuccess("Veiculo desativado com sucesso.");
         } catch (Exception exception) {
             showModalError("Falha ao atualizar veiculo: " + exception.getMessage());
@@ -363,13 +364,14 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private void configureTableColumns() {
-        vehicleIdColumn.setCellValueFactory(data -> text(data.getValue().getId()));
-        vehicleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVehicleName()));
-        licensePlateColumn.setCellValueFactory(data -> text(data.getValue().getLicensePlate()));
+        vehicleIdColumn.setCellValueFactory(data -> text(data.getValue().id()));
+        vehicleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().vehicleName()));
+        licensePlateColumn.setCellValueFactory(data -> text(data.getValue().licensePlate()));
         driverColumn.setCellValueFactory(data -> new SimpleStringProperty(formatDriver(data.getValue())));
-        categoryColumn.setCellValueFactory(data -> text(data.getValue().getCategory()));
-        yearColumn.setCellValueFactory(data -> text(data.getValue().getYear()));
-        activeColumn.setCellValueFactory(data -> new SimpleStringProperty(isActive(data.getValue()) ? "Ativo" : "Inativo"));
+        categoryColumn.setCellValueFactory(data -> text(data.getValue().category()));
+        yearColumn.setCellValueFactory(data -> text(data.getValue().year()));
+        activeColumn
+                .setCellValueFactory(data -> new SimpleStringProperty(isActive(data.getValue()) ? "Ativo" : "Inativo"));
         activeColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -396,12 +398,12 @@ public class VehiclesController implements AdminSectionController {
         if (query.isBlank()) {
             return true;
         }
-        return AdminFormatUtils.normalize(vehicle.getVehicleName()).contains(query)
-                || AdminFormatUtils.normalize(vehicle.getLicensePlate()).contains(query)
-                || AdminFormatUtils.normalize(vehicle.getDriverName()).contains(query)
-                || AdminFormatUtils.normalize(vehicle.getCategory()).contains(query)
-                || AdminFormatUtils.normalize(vehicle.getColor()).contains(query)
-                || AdminFormatUtils.normalize(String.valueOf(vehicle.getDriverId())).contains(query);
+        return AdminFormatUtils.normalize(vehicle.vehicleName()).contains(query)
+                || AdminFormatUtils.normalize(vehicle.licensePlate()).contains(query)
+                || AdminFormatUtils.normalize(vehicle.driverName()).contains(query)
+                || AdminFormatUtils.normalize(vehicle.category()).contains(query)
+                || AdminFormatUtils.normalize(vehicle.color()).contains(query)
+                || AdminFormatUtils.normalize(String.valueOf(vehicle.driverId())).contains(query);
     }
 
     private void showVehicleDetails(AdminVehicleDTO vehicle) {
@@ -411,15 +413,15 @@ public class VehiclesController implements AdminSectionController {
         }
 
         detailTitleLabel.setText("Detalhe do veiculo");
-        detailVehicleLabel.setText(vehicle.getVehicleName());
-        detailLicensePlateLabel.setText(AdminFormatUtils.fallback(vehicle.getLicensePlate()));
+        detailVehicleLabel.setText(vehicle.vehicleName());
+        detailLicensePlateLabel.setText(AdminFormatUtils.fallback(vehicle.licensePlate()));
         detailStatusLabel.setText(isActive(vehicle) ? "Ativo" : "Inativo");
         detailDriverLabel.setText(formatDriver(vehicle));
-        detailCategoryLabel.setText(AdminFormatUtils.fallback(vehicle.getCategory()));
-        detailYearLabel.setText(formatInteger(vehicle.getYear()));
-        detailColorLabel.setText(AdminFormatUtils.fallback(vehicle.getColor()));
-        detailBaseFareLabel.setText(formatMoney(vehicle.getBaseFare()));
-        detailPricePerKmLabel.setText(formatMoney(vehicle.getPricePerKm()));
+        detailCategoryLabel.setText(AdminFormatUtils.fallback(vehicle.category()));
+        detailYearLabel.setText(formatInteger(vehicle.year()));
+        detailColorLabel.setText(AdminFormatUtils.fallback(vehicle.color()));
+        detailBaseFareLabel.setText(formatMoney(vehicle.baseFare()));
+        detailPricePerKmLabel.setText(formatMoney(vehicle.pricePerKm()));
         updateVehicleActionButtons(vehicle);
         setDetailVisible(true);
     }
@@ -439,30 +441,30 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private void fillVehicleForm(AdminVehicleDTO vehicle) {
-        driverIdField.setText(formatInteger(vehicle.getDriverId()));
-        brandField.setText(blankIfMissing(vehicle.getBrand()));
-        modelField.setText(blankIfMissing(vehicle.getModel()));
-        colorField.setText(blankIfMissing(vehicle.getColor()));
-        licensePlateField.setText(blankIfMissing(vehicle.getLicensePlate()));
-        yearField.setText(vehicle.getYear() == null ? "" : vehicle.getYear().toString());
-        categoryComboBox.getSelectionModel().select(blankIfMissing(vehicle.getCategory()));
-        baseFareField.setText(vehicle.getBaseFare() == null ? "" : vehicle.getBaseFare().toString());
-        pricePerKmField.setText(vehicle.getPricePerKm() == null ? "" : vehicle.getPricePerKm().toString());
+        driverIdField.setText(formatInteger(vehicle.driverId()));
+        brandField.setText(blankIfMissing(vehicle.brand()));
+        modelField.setText(blankIfMissing(vehicle.model()));
+        colorField.setText(blankIfMissing(vehicle.color()));
+        licensePlateField.setText(blankIfMissing(vehicle.licensePlate()));
+        yearField.setText(vehicle.year() == null ? "" : vehicle.year().toString());
+        categoryComboBox.getSelectionModel().select(blankIfMissing(vehicle.category()));
+        baseFareField.setText(vehicle.baseFare() == null ? "" : vehicle.baseFare().toString());
+        pricePerKmField.setText(vehicle.pricePerKm() == null ? "" : vehicle.pricePerKm().toString());
         activeCheckBox.setSelected(isActive(vehicle));
         clearModalError();
     }
 
     private AdminVehicleCommand readVehicleCommand() {
         return new AdminVehicleCommand(
-                parseInteger(driverIdField.getText(), "Motorista"),
+                AdminFormatUtils.parseRequiredInteger(driverIdField.getText(), "Motorista"),
                 brandField.getText(),
                 modelField.getText(),
                 colorField.getText(),
                 licensePlateField.getText(),
-                parseOptionalInteger(yearField.getText(), "Ano"),
+                AdminFormatUtils.parseOptionalInteger(yearField.getText(), "Ano"),
                 categoryComboBox.getValue(),
-                parseOptionalMoney(baseFareField.getText(), "Tarifa base"),
-                parseOptionalMoney(pricePerKmField.getText(), "Preco por km"),
+                AdminFormatUtils.parseOptionalDecimal(baseFareField.getText(), "Tarifa base"),
+                AdminFormatUtils.parseOptionalDecimal(pricePerKmField.getText(), "Preco por km"),
                 activeCheckBox.isSelected());
     }
 
@@ -577,23 +579,23 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private static String formatDriver(AdminVehicleDTO vehicle) {
-        String driverName = AdminFormatUtils.fallback(vehicle.getDriverName());
-        return vehicle.getDriverId() == null ? driverName : "#" + vehicle.getDriverId() + " | " + driverName;
+        String driverName = AdminFormatUtils.fallback(vehicle.driverName());
+        return vehicle.driverId() == null ? driverName : "#" + vehicle.driverId() + " | " + driverName;
     }
 
     private List<AdminPdfExportService.PdfColumn<AdminVehicleDTO>> vehicleExportColumns() {
         return List.of(
-                column("ID", 0.7f, vehicle -> formatId(vehicle.getId())),
-                column("Veiculo", 1.8f, AdminVehicleDTO::getVehicleName),
-                column("Marca", 1.2f, AdminVehicleDTO::getBrand),
-                column("Modelo", 1.2f, AdminVehicleDTO::getModel),
-                column("Matricula", 1.1f, AdminVehicleDTO::getLicensePlate),
+                column("ID", 0.7f, vehicle -> formatId(vehicle.id())),
+                column("Veiculo", 1.8f, AdminVehicleDTO::vehicleName),
+                column("Marca", 1.2f, AdminVehicleDTO::brand),
+                column("Modelo", 1.2f, AdminVehicleDTO::model),
+                column("Matricula", 1.1f, AdminVehicleDTO::licensePlate),
                 column("Motorista", 1.8f, VehiclesController::formatDriver),
-                column("Categoria", 1f, AdminVehicleDTO::getCategory),
-                column("Ano", 0.8f, vehicle -> formatInteger(vehicle.getYear())),
-                column("Cor", 1f, AdminVehicleDTO::getColor),
-                column("Tarifa base", 1f, vehicle -> formatMoney(vehicle.getBaseFare())),
-                column("Preco/km", 1f, vehicle -> formatMoney(vehicle.getPricePerKm())),
+                column("Categoria", 1f, AdminVehicleDTO::category),
+                column("Ano", 0.8f, vehicle -> formatInteger(vehicle.year())),
+                column("Cor", 1f, AdminVehicleDTO::color),
+                column("Tarifa base", 1f, vehicle -> formatMoney(vehicle.baseFare())),
+                column("Preco/km", 1f, vehicle -> formatMoney(vehicle.pricePerKm())),
                 column("Estado", 0.9f, vehicle -> isActive(vehicle) ? "Ativo" : "Inativo"));
     }
 
@@ -614,7 +616,7 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private static boolean isActive(AdminVehicleDTO vehicle) {
-        return vehicle != null && !Boolean.FALSE.equals(vehicle.getActive());
+        return vehicle != null && !Boolean.FALSE.equals(vehicle.active());
     }
 
     private static void setButtonText(Button button, String text) {
@@ -631,35 +633,4 @@ public class VehiclesController implements AdminSectionController {
         button.setManaged(visible);
     }
 
-    private static Integer parseInteger(String value, String fieldName) {
-        String safeValue = value == null ? "" : value.trim();
-        if (safeValue.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
-        }
-        return parseOptionalInteger(safeValue, fieldName);
-    }
-
-    private static Integer parseOptionalInteger(String value, String fieldName) {
-        String safeValue = value == null ? "" : value.trim();
-        if (safeValue.isBlank()) {
-            return null;
-        }
-        try {
-            return Integer.valueOf(safeValue);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException(fieldName + " deve ser um numero inteiro.");
-        }
-    }
-
-    private static BigDecimal parseOptionalMoney(String value, String fieldName) {
-        String safeValue = value == null ? "" : value.trim().replace(",", ".");
-        if (safeValue.isBlank()) {
-            return null;
-        }
-        try {
-            return new BigDecimal(safeValue);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException(fieldName + " deve ser um valor numerico.");
-        }
-    }
 }

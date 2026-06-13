@@ -4,12 +4,10 @@ import com.obar.bll.admin.AdminFinancialOverviewDTO;
 import com.obar.bll.admin.AdminFinancialPeriod;
 import com.obar.bll.admin.AdminPaymentByTripDTO;
 import com.obar.bll.admin.AdminService;
-import com.obar.bll.admin.AdminTaxRateCommand;
 import com.obar.bll.admin.AdminTaxRateDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
-import com.obar.desktop.admin.shared.AdminParseUtils;
 import com.obar.model.enums.PaymentStatus;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -29,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -63,7 +62,6 @@ public class FinancialController implements AdminSectionController {
     private PaymentStatus activePaymentStatusFilter;
     private AdminFinancialOverviewDTO currentOverview;
     private FinancialDashboardController dashboardController;
-    private FinancialPaymentDetailPanel paymentDetailPanel;
 
     @FXML
     private TextField searchField;
@@ -225,7 +223,6 @@ public class FinancialController implements AdminSectionController {
         configureTaxRateModal();
         configurePaymentsTableColumns();
         configureDashboard();
-        configurePaymentDetailPanel();
 
         paymentsTable.setItems(filteredPayments);
         searchField.textProperty().addListener((obs, oldText, newText) -> applyPaymentFilter());
@@ -264,39 +261,10 @@ public class FinancialController implements AdminSectionController {
                 methodFourPercentLabel);
     }
 
-    private void configurePaymentDetailPanel() {
-        paymentDetailPanel = new FinancialPaymentDetailPanel(
-                detailPanel,
-                detailInitialsLabel,
-                detailTitleLabel,
-                detailNameLabel,
-                detailEmailLabel,
-                detailStatusLabel,
-                detailRoleLabel,
-                detailPhoneValueLabel,
-                detailCreatedValueLabel,
-                detailCardOneTitleLabel,
-                detailCardOneValueLabel,
-                detailCardTwoTitleLabel,
-                detailCardTwoValueLabel,
-                detailCardThreeTitleLabel,
-                detailCardThreeValueLabel,
-                detailCardFourTitleLabel,
-                detailCardFourValueLabel,
-                detailReferenceTitleLabel,
-                detailReferenceValueLabel,
-                detailExtraOneTitleLabel,
-                detailExtraOneValueLabel,
-                detailExtraTwoTitleLabel,
-                detailExtraTwoValueLabel,
-                detailExtraThreeTitleLabel,
-                detailExtraThreeValueLabel);
-    }
-
     private void configureTaxRateModal() {
         sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
                 this::handleModalConfirmDelete);
-        var taxRateCombo = sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo();
+        var taxRateCombo = sharedModalController.modalTaxRateCombo;
         taxRateCombo.setConverter(new TaxRateStringConverter());
         taxRateCombo.setCellFactory(listView -> new TaxRateListCell());
         taxRateCombo.setButtonCell(new TaxRateListCell());
@@ -327,11 +295,6 @@ public class FinancialController implements AdminSectionController {
     @FXML
     public void handleFinancialPeriodAll() {
         setPeriod(AdminFinancialPeriod.ALL);
-    }
-
-    @FXML
-    public void handlePeriodChanged() {
-        reloadFinancialData();
     }
 
     @FXML
@@ -368,9 +331,9 @@ public class FinancialController implements AdminSectionController {
 
         sharedModalController.prepareForForm("Editar taxa de IVA");
         showOnlyTaxRateForm();
-        sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getItems().setAll(allTaxRates);
-        sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getSelectionModel().selectFirst();
-        fillTaxRateForm(sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getValue());
+        sharedModalController.modalTaxRateCombo.getItems().setAll(allTaxRates);
+        sharedModalController.modalTaxRateCombo.getSelectionModel().selectFirst();
+        fillTaxRateForm(sharedModalController.modalTaxRateCombo.getValue());
     }
 
     @FXML
@@ -408,19 +371,20 @@ public class FinancialController implements AdminSectionController {
     @FXML
     public void handleModalSave() {
         try {
-            AdminTaxRateDTO selected = sharedModalController.<AdminTaxRateDTO>getModalTaxRateCombo().getValue();
-            if (selected == null || selected.getId() == null) {
+            AdminTaxRateDTO selected = sharedModalController.modalTaxRateCombo.getValue();
+            if (selected == null || selected.id() == null) {
                 sharedModalController.showError("Selecione uma taxa de IVA valida.");
                 return;
             }
 
-            BigDecimal rate = AdminParseUtils.parseRequiredDecimal(
-                    sharedModalController.getModalTaxRateValueField().getText(), "Taxa de IVA");
-            adminService.updateTaxRate(selected.getId(), new AdminTaxRateCommand(
-                    sharedModalController.getModalTaxRateNameField().getText(),
+            BigDecimal rate = AdminFormatUtils.parseRequiredDecimal(
+                    sharedModalController.modalTaxRateValueField.getText(), "Taxa de IVA");
+            adminService.updateTaxRate(
+                    selected.id(),
+                    sharedModalController.modalTaxRateNameField.getText(),
                     rate,
-                    sharedModalController.getModalTaxRateDescriptionField().getText(),
-                    sharedModalController.getModalTaxRateActiveCheck().isSelected()));
+                    sharedModalController.modalTaxRateDescriptionField.getText(),
+                    sharedModalController.modalTaxRateActiveCheck.isSelected());
 
             sharedModalController.hide();
             reloadFinancialData();
@@ -472,41 +436,41 @@ public class FinancialController implements AdminSectionController {
     }
 
     private boolean matchesStatus(AdminPaymentByTripDTO payment) {
-        return activePaymentStatusFilter == null || payment.getStatus() == activePaymentStatusFilter;
+        return activePaymentStatusFilter == null || payment.status() == activePaymentStatusFilter;
     }
 
     private boolean matchesSearch(AdminPaymentByTripDTO payment, String query) {
         if (query.isBlank()) {
             return true;
         }
-        String paymentId = payment.getPaymentId() == null ? "" : String.valueOf(payment.getPaymentId());
-        String tripId = payment.getTripId() == null ? "" : String.valueOf(payment.getTripId());
+        String paymentId = payment.paymentId() == null ? "" : String.valueOf(payment.paymentId());
+        String tripId = payment.tripId() == null ? "" : String.valueOf(payment.tripId());
         return AdminFormatUtils.normalize(paymentId).contains(query)
                 || AdminFormatUtils.normalize(tripId).contains(query)
-                || AdminFormatUtils.normalize(payment.getClientName()).contains(query)
-                || AdminFormatUtils.normalize(payment.getDriverName()).contains(query)
-                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentMethod(payment.getPaymentMethodType()))
+                || AdminFormatUtils.normalize(payment.clientName()).contains(query)
+                || AdminFormatUtils.normalize(payment.driverName()).contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()))
                         .contains(query)
-                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentStatus(payment.getStatus()))
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyPaymentStatus(payment.status()))
                         .contains(query);
     }
 
     private void configurePaymentsTableColumns() {
         paymentIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getPaymentId() == null ? "-" : "#" + cellData.getValue().getPaymentId()));
+                cellData.getValue().paymentId() == null ? "-" : "#" + cellData.getValue().paymentId()));
         paymentTripIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getTripId() == null ? "-" : "#" + cellData.getValue().getTripId()));
+                cellData.getValue().tripId() == null ? "-" : "#" + cellData.getValue().tripId()));
         paymentClientColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getClientName())));
+                AdminFormatUtils.fallback(cellData.getValue().clientName())));
         paymentMethodColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyPaymentMethod(cellData.getValue().getPaymentMethodType())));
+                AdminFormatUtils.prettyPaymentMethod(cellData.getValue().paymentMethodType())));
         paymentAmountColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
                 AdminFormatUtils.formatPaymentAmount(cellData.getValue())));
         paymentDateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getPaymentDate() == null ? "-"
-                        : PAYMENT_DATE_FORMAT.format(cellData.getValue().getPaymentDate())));
+                cellData.getValue().paymentDate() == null ? "-"
+                        : PAYMENT_DATE_FORMAT.format(cellData.getValue().paymentDate())));
         paymentStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyPaymentStatus(cellData.getValue().getStatus())));
+                AdminFormatUtils.prettyPaymentStatus(cellData.getValue().status())));
 
         paymentStatusColumn.setCellFactory(column -> new PaymentStatusTableCell());
     }
@@ -536,7 +500,7 @@ public class FinancialController implements AdminSectionController {
     }
 
     private long countPayments(PaymentStatus status) {
-        return allPayments.stream().filter(payment -> payment.getStatus() == status).count();
+        return allPayments.stream().filter(payment -> payment.status() == status).count();
     }
 
     private void updatePaymentFilterChips() {
@@ -572,28 +536,28 @@ public class FinancialController implements AdminSectionController {
     }
 
     private void showOnlyTaxRateForm() {
-        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), true);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalDeleteSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalUsersFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTripsFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTaxRateFormSection, true);
+        AdminModalIncludeController.setVisible(sharedModalController.modalDeleteSection, false);
     }
 
     private void fillTaxRateForm(AdminTaxRateDTO taxRate) {
         if (taxRate == null) {
-            sharedModalController.getModalTaxRateNameField().clear();
-            sharedModalController.getModalTaxRateValueField().clear();
-            sharedModalController.getModalTaxRateDescriptionField().clear();
-            sharedModalController.getModalTaxRateActiveCheck().setSelected(false);
+            sharedModalController.modalTaxRateNameField.clear();
+            sharedModalController.modalTaxRateValueField.clear();
+            sharedModalController.modalTaxRateDescriptionField.clear();
+            sharedModalController.modalTaxRateActiveCheck.setSelected(false);
             return;
         }
-        sharedModalController.getModalTaxRateNameField()
-                .setText(AdminFormatUtils.fallback(taxRate.getName()).equals("-") ? "" : taxRate.getName());
-        sharedModalController.getModalTaxRateValueField()
-                .setText(taxRate.getRate() == null ? "" : taxRate.getRate().toPlainString());
-        sharedModalController.getModalTaxRateDescriptionField()
-                .setText(AdminFormatUtils.fallback(taxRate.getDescription()).equals("-") ? ""
-                        : taxRate.getDescription());
-        sharedModalController.getModalTaxRateActiveCheck().setSelected(Boolean.TRUE.equals(taxRate.getActive()));
+        sharedModalController.modalTaxRateNameField
+                .setText(AdminFormatUtils.fallback(taxRate.name()).equals("-") ? "" : taxRate.name());
+        sharedModalController.modalTaxRateValueField
+                .setText(taxRate.rate() == null ? "" : taxRate.rate().toPlainString());
+        sharedModalController.modalTaxRateDescriptionField
+                .setText(AdminFormatUtils.fallback(taxRate.description()).equals("-") ? ""
+                        : taxRate.description());
+        sharedModalController.modalTaxRateActiveCheck.setSelected(Boolean.TRUE.equals(taxRate.active()));
     }
 
     private FinancialExportService.FinancialExportSnapshot buildExportSnapshot() {
@@ -624,18 +588,46 @@ public class FinancialController implements AdminSectionController {
     }
 
     private void showPaymentDetails(AdminPaymentByTripDTO payment) {
-        if (paymentDetailPanel != null) {
-            paymentDetailPanel.show(payment, activePeriod);
+        if (payment == null) {
+            hidePaymentDetailPanel();
+            return;
         }
+
+        String taxRate = payment.taxRateApplied() == null ? "-"
+                : payment.taxRateApplied().multiply(new BigDecimal("100"))
+                        .setScale(2, RoundingMode.HALF_UP) + "%";
+        setLabelText(detailInitialsLabel, payment.paymentId() == null ? "--" : "#" + payment.paymentId());
+        setLabelText(detailTitleLabel, "Detalhe do pagamento");
+        setLabelText(detailNameLabel, AdminFormatUtils.formatPaymentAmount(payment));
+        setLabelText(detailEmailLabel, "Cliente: " + AdminFormatUtils.fallback(payment.clientName()));
+        setLabelText(detailStatusLabel, AdminFormatUtils.prettyPaymentStatus(payment.status()));
+        setLabelText(detailRoleLabel, AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()));
+        setLabelText(detailPhoneValueLabel,
+                "Metodo: " + AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()));
+        setLabelText(detailCreatedValueLabel,
+                payment.paymentDate() == null ? "-" : PAYMENT_DATE_FORMAT.format(payment.paymentDate()));
+        setLabelText(detailCardOneTitleLabel, "ID Viagem");
+        setLabelText(detailCardOneValueLabel, payment.tripId() == null ? "-" : "#" + payment.tripId());
+        setLabelText(detailCardTwoTitleLabel, "Valor");
+        setLabelText(detailCardTwoValueLabel, AdminFormatUtils.formatPaymentAmount(payment));
+        setLabelText(detailCardThreeTitleLabel, "Estado");
+        setLabelText(detailCardThreeValueLabel, AdminFormatUtils.prettyPaymentStatus(payment.status()));
+        setLabelText(detailCardFourTitleLabel, "Moeda");
+        setLabelText(detailCardFourValueLabel, AdminFormatUtils.fallback(payment.currencyCode()));
+        setLabelText(detailReferenceTitleLabel, "Taxa aplicada");
+        setLabelText(detailReferenceValueLabel, taxRate);
+        setLabelText(detailExtraOneTitleLabel, "Motorista");
+        setLabelText(detailExtraOneValueLabel, AdminFormatUtils.fallback(payment.driverName()));
+        setLabelText(detailExtraTwoTitleLabel, "Data pagamento");
+        setLabelText(detailExtraTwoValueLabel,
+                payment.paymentDate() == null ? "-" : PAYMENT_DATE_FORMAT.format(payment.paymentDate()));
+        setLabelText(detailExtraThreeTitleLabel, "Periodo");
+        setLabelText(detailExtraThreeValueLabel, AdminFormatUtils.prettyFinancialPeriod(activePeriod));
+        AdminModalIncludeController.setVisible(detailPanel, true);
     }
 
     private void hidePaymentDetailPanel() {
-        if (paymentDetailPanel != null) {
-            paymentDetailPanel.hide();
-        } else if (detailPanel != null) {
-            detailPanel.setVisible(false);
-            detailPanel.setManaged(false);
-        }
+        AdminModalIncludeController.setVisible(detailPanel, false);
     }
 
     private void setLabelText(Label label, String text) {
@@ -681,11 +673,11 @@ public class FinancialController implements AdminSectionController {
             AdminPaymentByTripDTO payment = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
                     ? getTableView().getItems().get(getIndex())
                     : null;
-            if (payment == null || payment.getStatus() == null) {
+            if (payment == null || payment.status() == null) {
                 return;
             }
 
-            switch (payment.getStatus()) {
+            switch (payment.status()) {
                 case PROCESSED -> getStyleClass().add("payment-processed");
                 case PENDING -> getStyleClass().add("payment-pending");
                 case FAILED -> getStyleClass().add("payment-failed");

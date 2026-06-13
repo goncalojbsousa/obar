@@ -130,7 +130,7 @@ public final class AdminFormatUtils {
     }
 
     public static String formatTripPrice(AdminTripDTO trip) {
-        BigDecimal amount = trip.getFinalPrice() != null ? trip.getFinalPrice() : trip.getEstimatedPrice();
+        BigDecimal amount = trip.finalPrice() != null ? trip.finalPrice() : trip.estimatedPrice();
         if (amount == null) {
             return "-";
         }
@@ -138,17 +138,17 @@ public final class AdminFormatUtils {
     }
 
     public static String formatPaymentAmount(AdminPaymentByTripDTO payment) {
-        if (payment.getAmount() == null) {
+        if (payment.amount() == null) {
             return "-";
         }
-        return payment.getCurrencyCode() + " " + payment.getAmount();
+        return payment.currencyCode() + " " + payment.amount();
     }
 
     public static String formatTaxRateDisplay(AdminTaxRateDTO taxRate) {
         if (taxRate == null) {
             return "-";
         }
-        return fallback(taxRate.getName()) + " (" + taxRate.getRate() + ")";
+        return fallback(taxRate.name()) + " (" + taxRate.rate() + ")";
     }
 
     public static String formatPercent(double value) {
@@ -195,5 +195,45 @@ public final class AdminFormatUtils {
         String first = parts[0].substring(0, 1);
         String last = parts[parts.length - 1].substring(0, 1);
         return (first + last).toUpperCase(Locale.ROOT);
+    }
+
+    public static Integer parseRequiredInteger(String value, String fieldName) {
+        Integer parsed = parseOptionalInteger(value, fieldName);
+        if (parsed == null) {
+            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
+        }
+        return parsed;
+    }
+
+    public static Integer parseOptionalInteger(String value, String fieldName) {
+        String text = value == null ? "" : value.trim();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(text);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(fieldName + " deve ser um numero inteiro.");
+        }
+    }
+
+    public static BigDecimal parseRequiredDecimal(String value, String fieldName) {
+        BigDecimal parsed = parseOptionalDecimal(value, fieldName);
+        if (parsed == null) {
+            throw new IllegalArgumentException(fieldName + " e obrigatorio.");
+        }
+        return parsed;
+    }
+
+    public static BigDecimal parseOptionalDecimal(String value, String fieldName) {
+        String text = value == null ? "" : value.trim().replace(",", ".");
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(text);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(fieldName + " deve ser um valor numerico.");
+        }
     }
 }

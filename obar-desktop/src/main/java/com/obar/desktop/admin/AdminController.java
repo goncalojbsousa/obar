@@ -146,18 +146,6 @@ public class AdminController {
         NavigationManager.navigateToLogin();
     }
 
-    @FXML
-    public void handleModalCancel() {
-        /* delegado */ }
-
-    @FXML
-    public void handleModalSave() {
-        /* delegado */ }
-
-    @FXML
-    public void handleModalConfirmDelete() {
-        /* delegado */ }
-
     // ── Private ───────────────────────────────────────────────────────────────
 
     private void configureSectionControllers() {

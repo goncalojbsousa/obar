@@ -12,13 +12,19 @@ import com.obar.model.enums.UserType;
  * @param email user email address
  * @param type user role type
  * @param status current account status
+ * @param photoUrl user profile photo URL
  */
 public record AuthenticatedUserDto(
         Integer id,
         String name,
         String email,
         UserType type,
-        AccountStatus status) {
+        AccountStatus status,
+        String photoUrl) {
+
+    public AuthenticatedUserDto(Integer id, String name, String email, UserType type, AccountStatus status) {
+        this(id, name, email, type, status, null);
+    }
 
     /**
      * Creates an authenticated user DTO from a domain user entity
@@ -32,6 +38,7 @@ public record AuthenticatedUserDto(
                 user.getName(),
                 user.getEmail(),
                 user.getType(),
-                user.getStatus());
+                user.getStatus(),
+                user.getPhotoUrl());
     }
 }

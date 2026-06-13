@@ -119,13 +119,13 @@
         <VBox spacing="8.0" styleClass="detail-actions">
             <Button fx:id="detailApproveButton"
                     text="✓ Aprovar motorista"
-                    onAction="#handleDetailApprove"
+                    onAction="#handleApprove"
                     styleClass="approve-button"
                     maxWidth="1.7976931348623157E308"
                     visible="false" managed="false" />
             <Button fx:id="detailRejectButton"
                     text="✕ Rejeitar motorista"
-                    onAction="#handleDetailReject"
+                    onAction="#handleReject"
                     styleClass="detail-action-danger"
                     maxWidth="1.7976931348623157E308"
                     visible="false" managed="false" />

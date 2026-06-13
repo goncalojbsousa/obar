@@ -7,27 +7,12 @@
     <title>Cliente | Obar</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY=" crossorigin="">
-    <link rel="stylesheet" th:href="@{/css/web.css}">
+    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=trip-people-details-20260613">
 </head>
 
 <body class="client-page">
-    <header class="topbar">
-        <a class="brand" th:href="@{/app}">Obar</a>
-        <nav class="client-nav" aria-label="Navegação do cliente">
-            <a class="active" th:href="@{/app}">Nova Viagem</a>
-            <a th:href="@{/app/scheduled}">Agendadas</a>
-            <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}">Motorista</a>
-            <a href="#" aria-disabled="true">Pagamentos</a>
-        </nav>
-        <div class="user-area">
-            <span class="user-avatar" aria-hidden="true"
-                th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
-            <span th:text="${currentUser.name()}">Cliente</span>
-            <form th:action="@{/logout}" method="post">
-                <button class="ghost-button" type="submit">Sair</button>
-            </form>
-        </div>
-    </header>
+    <header th:replace="~{fragments/client-navbar :: navbar('new')}"></header>
 
     <main class="client-shell">
         <section class="ride-request" aria-label="Pedir viagem">
@@ -37,16 +22,18 @@
                     <p class="muted">Para onde vais hoje?</p>
                 </div>
 
-                <div class="ride-form">
+                <div class="ride-form" data-ride-form>
                     <label class="search-field">
                         Origem
-                        <input type="search" autocomplete="off" placeholder="A obter localização atual..."
+                        <input type="search" autocomplete="off" placeholder="A obter localiza&#x00E7;&#x00E3;o atual..."
                             data-origin-input>
                         <div class="suggestions-list" data-origin-suggestions hidden></div>
-                        <span class="field-note" data-origin-status>Localização ainda não definida.</span>
+                        <span class="field-note" data-origin-status>Localiza&#x00E7;&#x00E3;o ainda n&#x00E3;o
+                            definida.</span>
                     </label>
 
-                    <button class="ghost-button" type="button" data-locate-button hidden>Usar localização atual</button>
+                    <button class="ghost-button" type="button" data-locate-button hidden>Usar localiza&#x00E7;&#x00E3;o
+                        atual</button>
 
                     <label class="search-field">
                         Destino
@@ -56,11 +43,18 @@
                     </label>
 
                     <label class="search-field vehicle-category-field">
-                        Tipo de veículo
+                        Tipo de ve&#x00ED;culo
                         <select data-vehicle-category>
                             <option th:each="category : ${vehicleCategories}" th:value="${category}"
                                 th:text="${category}">STANDARD</option>
                         </select>
+                    </label>
+
+                    <label class="search-field trip-notes-field">
+                        Observa&#x00E7;&#x00F5;es
+                        <textarea rows="3" maxlength="500" data-trip-notes
+                            placeholder="Ex.: levo bagagem ou preciso de ajuda"></textarea>
+                        <span class="field-note">Opcional, m&#x00E1;ximo 500 caracteres.</span>
                     </label>
 
                     <label class="search-field schedule-field">
@@ -71,29 +65,89 @@
 
                 <div class="estimate-panel" data-estimate-panel hidden>
                     <div>
-                        <span>Distância</span>
+                        <span>Dist&#x00E2;ncia</span>
                         <strong data-distance>0 km</strong>
                     </div>
                     <div>
-                        <span>Duração</span>
+                        <span>Dura&#x00E7;&#x00E3;o</span>
                         <strong data-duration>0 min</strong>
                     </div>
                     <div>
-                        <span>Preço</span>
-                        <strong data-price>0,00 €</strong>
+                        <span>Pre&#x00E7;o</span>
+                        <strong data-price>0,00 &#x20AC;</strong>
+                    </div>
+                    <div>
+                        <span>IVA aplicado</span>
+                        <strong data-tax-rate>23%</strong>
                     </div>
                     <button class="primary-button" type="button" data-request-button disabled>Pedir viagem</button>
                     <button class="ghost-button" type="button" data-schedule-button disabled>Agendar viagem</button>
                 </div>
 
                 <div class="waiting-panel" data-waiting-panel hidden>
-                    <div class="waiting-indicator" aria-hidden="true"></div>
-                    <div>
-                        <span class="field-title">Pedido enviado</span>
-                        <strong data-waiting-title>À espera de motorista</strong>
-                        <p>A procurar um motorista disponível para aceitar a viagem.</p>
+                    <div class="waiting-header">
+                        <div class="waiting-indicator" aria-hidden="true"></div>
+                        <div>
+                            <span class="field-title">Pedido enviado</span>
+                            <strong data-waiting-title>&#x00C0; espera de motorista</strong>
+                            <p data-waiting-detail>A procurar um motorista dispon&#x00ED;vel para aceitar a viagem.</p>
+                        </div>
+                    </div>
+
+                    <div class="active-trip-route">
+                        <div>
+                            <span>Origem</span>
+                            <strong data-summary-origin>Origem</strong>
+                        </div>
+                        <div>
+                            <span>Destino</span>
+                            <strong data-summary-destination>Destino</strong>
+                        </div>
+                    </div>
+
+                    <div class="active-trip-metrics">
+                        <div>
+                            <span>Categoria</span>
+                            <strong data-summary-category>STANDARD</strong>
+                        </div>
+                        <div>
+                            <span>Dist&#x00E2;ncia</span>
+                            <strong data-summary-distance>0 km</strong>
+                        </div>
+                        <div>
+                            <span>Dura&#x00E7;&#x00E3;o</span>
+                            <strong data-summary-duration>0 min</strong>
+                        </div>
+                        <div>
+                            <span>Pre&#x00E7;o</span>
+                            <strong data-summary-price>0,00 &#x20AC;</strong>
+                        </div>
+                    </div>
+
+                    <div class="active-trip-notes" data-summary-notes-block hidden>
+                        <span>Observa&#x00E7;&#x00F5;es</span>
+                        <p data-summary-notes></p>
+                    </div>
+
+                    <div class="active-trip-driver" data-driver-details hidden>
+                        <span class="active-trip-avatar" data-driver-avatar aria-hidden="true">M</span>
+                        <div class="active-trip-driver-copy">
+                            <span>O teu motorista</span>
+                            <strong data-driver-name>Motorista</strong>
+                            <p>
+                                <span data-vehicle-name>Ve&#x00ED;culo</span>
+                                <b data-vehicle-license-plate>Matr&#x00ED;cula</b>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="active-trip-progress">
+                        <div class="trip-pin trip-arrival" data-driver-arrival-block hidden>
+                            <span>Chegada prevista</span>
+                            <strong data-driver-arrival>0 min</strong>
+                        </div>
                         <div class="trip-pin" data-trip-pin-block hidden>
-                            <span>PIN para começar</span>
+                            <span>PIN para come&#x00E7;ar</span>
                             <strong data-trip-pin>0000</strong>
                         </div>
                     </div>
@@ -109,9 +163,84 @@
             </div>
         </section>
     </main>
+
+    <div class="app-modal" data-cancel-modal hidden>
+        <div class="app-modal-backdrop" data-cancel-dismiss></div>
+        <section class="app-modal-panel" role="dialog" aria-modal="true" aria-labelledby="client-cancel-title">
+            <button class="modal-close-button" type="button" aria-label="Fechar" data-cancel-dismiss>&times;</button>
+            <span class="modal-kicker">Cancelamento</span>
+            <h2 id="client-cancel-title">Cancelar viagem</h2>
+            <p>Indica o motivo para ficar registado no pedido.</p>
+            <form class="modal-form" data-cancel-form>
+                <label class="modal-field">
+                    Motivo
+                    <textarea rows="4" minlength="3" maxlength="255" required data-cancel-reason
+                        placeholder="Ex.: houve uma alteração de planos"></textarea>
+                </label>
+                <p class="modal-error" data-cancel-error hidden>Indica o motivo do cancelamento.</p>
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-cancel-dismiss>Voltar</button>
+                    <button class="primary-button" type="submit" data-cancel-submit>Confirmar cancelamento</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="app-modal" data-review-modal hidden>
+        <div class="app-modal-backdrop"></div>
+        <section class="app-modal-panel review-modal-panel" role="dialog" aria-modal="true"
+            aria-labelledby="client-review-title">
+            <button class="modal-close-button" type="button" aria-label="Avaliar mais tarde"
+                data-review-dismiss>&times;</button>
+            <span class="modal-kicker">Viagem concluída</span>
+            <div class="review-driver-summary">
+                <span class="review-driver-avatar" data-review-driver-avatar aria-hidden="true"></span>
+                <div>
+                    <h2 id="client-review-title">Como correu a viagem?</h2>
+                    <p>
+                        Avalia a tua experiência com
+                        <strong data-review-driver-name>o motorista</strong>.
+                    </p>
+                </div>
+            </div>
+            <div class="review-trip-summary">
+                <span data-review-destination>Destino</span>
+                <strong data-review-price>0,00 €</strong>
+            </div>
+            <form class="modal-form" data-review-form>
+                <fieldset class="review-rating-field">
+                    <legend>A tua avaliação</legend>
+                    <div class="review-stars">
+                        <input type="radio" id="client-rating-5" name="rating" value="5">
+                        <label for="client-rating-5" title="5 estrelas">★</label>
+                        <input type="radio" id="client-rating-4" name="rating" value="4">
+                        <label for="client-rating-4" title="4 estrelas">★</label>
+                        <input type="radio" id="client-rating-3" name="rating" value="3">
+                        <label for="client-rating-3" title="3 estrelas">★</label>
+                        <input type="radio" id="client-rating-2" name="rating" value="2">
+                        <label for="client-rating-2" title="2 estrelas">★</label>
+                        <input type="radio" id="client-rating-1" name="rating" value="1">
+                        <label for="client-rating-1" title="1 estrela">★</label>
+                    </div>
+                </fieldset>
+                <label class="modal-field">
+                    Comentário <span>(opcional)</span>
+                    <textarea rows="3" maxlength="500" data-review-comment
+                        placeholder="Conta-nos como foi a viagem"></textarea>
+                </label>
+                <p class="modal-error" data-review-error hidden>Escolhe uma avaliação.</p>
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-review-dismiss>Agora não</button>
+                    <button class="primary-button" type="submit" data-review-submit>Enviar avaliação</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script th:src="@{/js/client-map.js}"></script>
+    <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+    <script src="/js/client-map.js?v=trip-people-details-20260613"></script>
 </body>
 
 </html>

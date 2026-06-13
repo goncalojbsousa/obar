@@ -1,0 +1,161 @@
+/* Driver approval and pending request styles. */
+
+/* â”€â”€â”€ BotÃ£o de aprovaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.approve-button {
+
+    -fx-background-color: rgba(33, 170, 93, 0.22);
+
+    -fx-text-fill: #3fe68a;
+
+    -fx-border-color: rgba(33, 170, 93, 0.5);
+
+    -fx-border-radius: 9;
+
+    -fx-background-radius: 9;
+
+    -fx-font-weight: 700;
+
+}
+
+
+
+.approve-button:hover {
+
+    -fx-background-color: rgba(33, 170, 93, 0.34);
+
+}
+
+
+
+/* â”€â”€â”€ Sidebar â€” botÃ£o AprovaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.pending-sidebar-item {
+
+    -fx-background-color: rgba(255, 186, 0, 0.08);
+
+    -fx-text-fill: #d4a800;
+
+    -fx-font-weight: 600;
+
+    -fx-alignment: center-left;
+
+    -fx-background-radius: 10;
+
+    -fx-padding: 10 12 10 12;
+
+    -fx-border-color: rgba(255, 186, 0, 0.22);
+
+    -fx-border-radius: 10;
+
+}
+
+
+
+.pending-sidebar-item:hover,
+
+.pending-sidebar-item-active:hover {
+
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+
+}
+
+
+
+.pending-sidebar-item-active {
+
+    -fx-background-color: rgba(255, 186, 0, 0.24);
+
+    -fx-text-fill: #ffc107;
+
+    -fx-font-weight: 700;
+
+    -fx-alignment: center-left;
+
+    -fx-background-radius: 10;
+
+    -fx-padding: 10 12 10 12;
+
+    -fx-border-color: rgba(255, 186, 0, 0.5);
+
+    -fx-border-radius: 10;
+
+}
+
+
+
+/* â”€â”€â”€ Banner de aviso na secÃ§Ã£o de pendentes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.pending-banner {
+
+    -fx-background-color: rgba(255, 186, 0, 0.09);
+
+    -fx-border-color: rgba(255, 186, 0, 0.30);
+
+    -fx-border-radius: 10;
+
+    -fx-background-radius: 10;
+
+}
+
+
+
+.pending-banner-icon {
+
+    -fx-text-fill: #f5c500;
+
+    -fx-font-size: 16px;
+
+}
+
+
+
+.pending-banner-text {
+
+    -fx-text-fill: #c9a600;
+
+    -fx-font-size: 12px;
+
+    -fx-font-weight: 600;
+
+}
+
+
+
+/* â”€â”€â”€ Pill de estado pendente no detalhe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.pending-pill {
+
+    -fx-background-color: rgba(255, 186, 0, 0.20);
+
+    -fx-text-fill: #ffc107;
+
+}
+
+
+
+.note-field {
+
+    -fx-background-color: #18181b;
+
+    -fx-border-color: #2a2a2e;
+
+    -fx-border-radius: 8;
+
+    -fx-background-radius: 8;
+
+    -fx-text-fill: #c9d1e0;
+
+    -fx-prompt-text-fill: #45505e;
+
+    -fx-font-size: 12px;
+
+}
+
+
+
+.note-field:focused {
+
+    -fx-border-color: #e8642a;
+
+}

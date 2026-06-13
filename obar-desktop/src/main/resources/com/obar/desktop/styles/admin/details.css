@@ -1,0 +1,345 @@
+/* Admin detail panel styles. */
+
+.detail-panel {
+
+    -fx-background-color: #111113;
+
+    -fx-border-color: #232326;
+
+    -fx-border-width: 0 0 0 1;
+
+}
+
+
+
+.admin-content .detail-panel {
+
+    -fx-background-color: #111113;
+
+    -fx-min-width: 320;
+
+    -fx-pref-width: 320;
+
+    -fx-max-width: 320;
+
+    -fx-padding: 18 14 18 18;
+
+    -fx-border-width: 0 0 0 1;
+
+    -fx-border-radius: 0;
+
+    -fx-background-radius: 0;
+
+}
+
+
+
+.detail-title {
+
+    -fx-text-fill: #f2f6ff;
+
+    -fx-font-size: 16px;
+
+    -fx-font-weight: 700;
+
+}
+
+
+
+.detail-close {
+
+    -fx-background-color: #12141a;
+
+    -fx-text-fill: #a2adc3;
+
+    -fx-font-size: 12px;
+
+    -fx-font-weight: 800;
+
+    -fx-border-color: #2a3040;
+
+    -fx-border-radius: 8;
+
+    -fx-background-radius: 8;
+
+    -fx-min-width: 28;
+
+    -fx-min-height: 28;
+
+    -fx-padding: 0;
+
+}
+
+
+
+.detail-close:hover {
+
+    -fx-background-color: #191d27;
+
+    -fx-text-fill: #e4eaf8;
+
+}
+
+
+
+.detail-avatar {
+
+    -fx-alignment: center;
+
+    -fx-text-fill: #eef2ff;
+
+    -fx-font-size: 20px;
+
+    -fx-font-weight: 700;
+
+    -fx-background-color: linear-gradient(to bottom right, #7c5cff, #5f42de);
+
+    -fx-background-radius: 30;
+
+    -fx-min-width: 54;
+
+    -fx-min-height: 54;
+
+    -fx-max-width: 54;
+
+    -fx-max-height: 54;
+
+}
+
+
+
+.detail-name {
+
+    -fx-text-fill: #f6f9ff;
+
+    -fx-font-size: 24px;
+
+    -fx-font-weight: 800;
+
+}
+
+
+
+.status-pill,
+
+.role-pill {
+
+    -fx-font-size: 10px;
+
+    -fx-font-weight: 700;
+
+    -fx-padding: 4 8;
+
+    -fx-background-radius: 12;
+
+}
+
+
+
+.status-pill {
+
+    -fx-background-color: rgba(33, 170, 93, 0.28);
+
+    -fx-text-fill: #56e39a;
+
+}
+
+
+
+.role-pill {
+
+    -fx-background-color: rgba(104, 125, 171, 0.3);
+
+    -fx-text-fill: #d2dcf5;
+
+}
+
+
+
+.metric-card {
+
+    -fx-background-color: #10131a;
+
+    -fx-border-color: #232a36;
+
+    -fx-border-radius: 10;
+
+    -fx-background-radius: 10;
+
+    -fx-padding: 10 10 9 10;
+
+}
+
+
+
+.metric-value {
+
+    -fx-text-fill: #f1f6ff;
+
+    -fx-font-size: 17px;
+
+    -fx-font-weight: 700;
+
+}
+
+
+
+.metric-title {
+
+    -fx-text-fill: #7f89a2;
+
+    -fx-font-size: 10px;
+
+}
+
+
+
+.meta-title {
+
+    -fx-text-fill: #667389;
+
+    -fx-font-size: 10px;
+
+    -fx-font-weight: 700;
+
+}
+
+
+
+.meta-value {
+
+    -fx-text-fill: #d4deef;
+
+    -fx-font-size: 13px;
+
+}
+
+
+
+.detail-actions {
+
+    -fx-padding: 12 0 0 0;
+
+}
+
+
+
+.detail-action,
+
+.detail-action-danger,
+
+.detail-action-unlock {
+
+    -fx-pref-height: 38;
+
+    -fx-font-size: 12px;
+
+    -fx-font-weight: 700;
+
+    -fx-background-radius: 10;
+
+    -fx-border-radius: 10;
+
+    -fx-cursor: hand;
+
+}
+
+
+
+.detail-action {
+
+    -fx-background-color: #16191f;
+
+    -fx-border-color: #2a2f3e;
+
+    -fx-text-fill: #c8d4ec;
+
+}
+
+
+
+.detail-action:hover {
+
+    -fx-background-color: rgba(255, 106, 47, 0.10);
+
+    -fx-border-color: rgba(255, 106, 47, 0.35);
+
+    -fx-text-fill: #ff9565;
+
+}
+
+
+
+.detail-action-danger {
+
+    -fx-background-color: rgba(141, 30, 30, 0.22);
+
+    -fx-border-color: rgba(184, 50, 50, 0.40);
+
+    -fx-text-fill: #ff8f8f;
+
+}
+
+
+
+.detail-action-danger:hover {
+
+    -fx-background-color: rgba(184, 42, 42, 0.36);
+
+    -fx-border-color: rgba(220, 60, 60, 0.55);
+
+    -fx-text-fill: #ffaaaa;
+
+}
+
+.detail-action-unlock {
+
+    -fx-background-color: rgba(64, 186, 128, 0.12);
+
+    -fx-border-color: rgba(64, 186, 128, 0.34);
+
+    -fx-text-fill: #a8f0c7;
+
+}
+
+.detail-action-unlock:hover {
+
+    -fx-background-color: rgba(64, 186, 128, 0.18);
+
+    -fx-border-color: rgba(64, 186, 128, 0.52);
+
+    -fx-text-fill: #c0f7d7;
+
+}
+
+
+
+/* Approve button inside detail panel â€” slightly taller */
+
+.detail-actions .approve-button {
+
+    -fx-pref-height: 38;
+
+    -fx-font-size: 12px;
+
+    -fx-background-radius: 10;
+
+    -fx-border-radius: 10;
+
+    -fx-background-color: rgba(33, 170, 93, 0.20);
+
+    -fx-border-color: rgba(33, 170, 93, 0.45);
+
+    -fx-text-fill: #3fe68a;
+
+}
+
+
+
+.detail-actions .approve-button:hover {
+
+    -fx-background-color: rgba(33, 170, 93, 0.32);
+
+    -fx-border-color: rgba(33, 170, 93, 0.65);
+
+}

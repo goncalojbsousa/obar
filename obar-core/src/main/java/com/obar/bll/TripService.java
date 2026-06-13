@@ -2,6 +2,7 @@ package com.obar.bll;
 
 import com.obar.dal.TripRepository;
 import com.obar.dal.TripDriverRepository;
+import com.obar.dal.RouteRepository;
 import com.obar.dal.UserRepository;
 import com.obar.dal.VehicleRepository;
 import com.obar.model.Route;
@@ -13,6 +14,7 @@ import com.obar.model.enums.TripDriverStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -23,6 +25,8 @@ import java.security.SecureRandom;
 public class TripService {
 
     private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration MIN_SCHEDULE_NOTICE = Duration.ofMinutes(15);
+    private static final Duration SCHEDULED_TRIP_ACTIVATION_LEAD = Duration.ofMinutes(30);
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double DISTANCE_SCORE_WEIGHT = 0.70;
     private static final double RATING_SCORE_WEIGHT = 0.20;
@@ -32,6 +36,7 @@ public class TripService {
 
     private final TripRepository tripRepository = new TripRepository();
     private final TripDriverRepository tripDriverRepository = new TripDriverRepository();
+    private final RouteRepository routeRepository = new RouteRepository();
     private final UserRepository userRepository = new UserRepository();
     private final VehicleRepository vehicleRepository = new VehicleRepository();
 
@@ -73,8 +78,10 @@ public class TripService {
         Trip acceptedTrip = tripRepository.update(trip);
 
         markDriverAssignmentAsAccepted(tripId, driver.getId());
-        driver.setAvailable(false);
-        userRepository.update(driver);
+        if (trip.getTripType() == TripType.IMMEDIATE) {
+            driver.setAvailable(false);
+            userRepository.update(driver);
+        }
 
         return acceptedTrip;
     }
@@ -98,7 +105,7 @@ public class TripService {
         return tripRepository.update(trip);
     }
 
-    public Trip completeTrip(Integer tripId) {
+    public Trip completeTrip(Integer tripId, double distanceKm, int durationMin, BigDecimal finalPrice) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Viagem não encontrada."));
 
@@ -106,6 +113,11 @@ public class TripService {
             throw new IllegalStateException("Viagem não está em progresso.");
         }
 
+        Route route = trip.getRoute();
+        route.setDistanceKm((float) distanceKm);
+        route.setEstimatedDurationMin(durationMin);
+        trip.setRoute(routeRepository.update(route));
+        trip.setFinalPrice(finalPrice);
         trip.setStatus(TripStatus.COMPLETED);
         trip.setEndTime(LocalDateTime.now());
         Trip completedTrip = tripRepository.update(trip);
@@ -137,6 +149,27 @@ public class TripService {
         return tripRepository.findByClientId(clientId);
     }
 
+    public boolean hasActiveImmediateTrip(Integer clientId) {
+        return findActiveImmediateTripByClient(clientId).isPresent();
+    }
+
+    public Optional<Trip> findActiveImmediateTripByClient(Integer clientId) {
+        return findByClient(clientId).stream()
+                .filter(this::isActiveImmediateTrip)
+                .max(Comparator.comparing(Trip::getRequestTime));
+    }
+
+    public LocalDateTime validateScheduledTime(LocalDateTime scheduledAt) {
+        if (scheduledAt == null) {
+            throw new IllegalArgumentException("Escolhe a data e hora da viagem.");
+        }
+        if (scheduledAt.isBefore(LocalDateTime.now().plus(MIN_SCHEDULE_NOTICE))) {
+            throw new IllegalArgumentException(
+                    "A viagem agendada deve ser marcada com pelo menos 15 minutos de anteced\u00EAncia.");
+        }
+        return scheduledAt;
+    }
+
     public List<Trip> findScheduledByClient(Integer clientId) {
         return tripRepository.findScheduledByClientId(clientId);
     }
@@ -150,13 +183,27 @@ public class TripService {
     }
 
     public List<Trip> findPendingForDriver(Integer driverId) {
-        List<String> categories = vehicleRepository.findByDriverId(driverId).stream()
-                .map(Vehicle::getCategory)
-                .filter(category -> category != null && !category.isBlank())
-                .map(String::toUpperCase)
-                .distinct()
-                .toList();
-        return tripRepository.findPendingByVehicleCategories(categories);
+        return tripRepository.findPendingByVehicleCategories(vehicleCategoriesForDriver(driverId));
+    }
+
+    public List<Trip> findPendingScheduledForDriver(Integer driverId) {
+        return tripRepository.findPendingScheduledByVehicleCategories(vehicleCategoriesForDriver(driverId));
+    }
+
+    public List<Trip> findAcceptedScheduledForDriver(Integer driverId) {
+        return tripRepository.findAcceptedScheduledByDriverId(driverId);
+    }
+
+    public Trip acceptScheduledTrip(Integer tripId, User driver) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Viagem n\u00E3o encontrada."));
+        if (trip.getTripType() != TripType.SCHEDULED) {
+            throw new IllegalStateException("Esta viagem n\u00E3o \u00E9 programada.");
+        }
+        if (trip.getScheduledTime() == null || trip.getScheduledTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("A hora marcada para esta viagem j\u00E1 passou.");
+        }
+        return acceptTrip(tripId, driver);
     }
 
     public Optional<Trip> findById(Integer id) {
@@ -168,7 +215,9 @@ public class TripService {
     }
 
     public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId) {
-        return tripDriverRepository.findCurrentAssignmentForDriver(driverId);
+        return tripDriverRepository.findCurrentAssignmentForDriver(
+                driverId,
+                LocalDateTime.now().plus(SCHEDULED_TRIP_ACTIVATION_LEAD));
     }
 
     public Optional<TripDriver> dispatchTripToNextBestAvailableDriver(Trip trip) {
@@ -233,6 +282,9 @@ public class TripService {
         // small tie-breakers.
         return compatibleDrivers.stream()
                 .filter(driver -> !alreadyTrackedDriverIds.contains(driver.getId()))
+                .filter(driver -> !tripRepository.hasAcceptedScheduledTripStartingBefore(
+                        driver.getId(),
+                        LocalDateTime.now().plus(SCHEDULED_TRIP_ACTIVATION_LEAD)))
                 .map(driver -> new DriverDispatchCandidate(
                         driver,
                         calculateDistanceKm(
@@ -243,6 +295,13 @@ public class TripService {
                 .sorted(Comparator.comparingDouble(DriverDispatchCandidate::dispatchScore))
                 .map(DriverDispatchCandidate::driver)
                 .findFirst();
+    }
+
+    private boolean isActiveImmediateTrip(Trip trip) {
+        return trip.getTripType() == TripType.IMMEDIATE
+                && (trip.getStatus() == TripStatus.PENDING
+                        || trip.getStatus() == TripStatus.ACCEPTED
+                        || trip.getStatus() == TripStatus.IN_PROGRESS);
     }
 
     private void markDriverAssignmentAsAccepted(Integer tripId, Integer driverId) {
@@ -291,6 +350,16 @@ public class TripService {
 
     private String generateStartPin() {
         return String.format("%04d", PIN_RANDOM.nextInt(10_000));
+    }
+
+    private List<String> vehicleCategoriesForDriver(Integer driverId) {
+        return vehicleRepository.findByDriverId(driverId).stream()
+                .filter(vehicle -> Boolean.TRUE.equals(vehicle.getActive()))
+                .map(Vehicle::getCategory)
+                .filter(category -> category != null && !category.isBlank())
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
     }
 
     private record DriverDispatchCandidate(User driver, double pickupDistanceKm) {

@@ -125,16 +125,6 @@ public class PendingDriversController implements AdminSectionController {
     }
 
     @FXML
-    public void handleDetailApprove() {
-        approveSelectedDriver();
-    }
-
-    @FXML
-    public void handleDetailReject() {
-        rejectSelectedDriver();
-    }
-
-    @FXML
     public void handleCloseDetail() {
         pendingDriversTable.getSelectionModel().clearSelection();
         showDetailPanel(false);
@@ -153,8 +143,8 @@ public class PendingDriversController implements AdminSectionController {
 
         try {
             String note = approvalNoteField == null ? null : approvalNoteField.getText();
-            adminService.approveDriver(driver.getId(), note);
-            showFeedback("Motorista \"" + driver.getName() + "\" aprovado com sucesso.", false);
+            adminService.approveDriver(driver.id(), note);
+            showFeedback("Motorista \"" + driver.name() + "\" aprovado com sucesso.", false);
             pendingDriversTable.getSelectionModel().clearSelection();
             reload();
         } catch (IllegalArgumentException exception) {
@@ -175,8 +165,8 @@ public class PendingDriversController implements AdminSectionController {
 
         try {
             String note = approvalNoteField == null ? null : approvalNoteField.getText();
-            adminService.rejectDriver(driver.getId(), note);
-            showFeedback("Motorista \"" + driver.getName() + "\" rejeitado.", false);
+            adminService.rejectDriver(driver.id(), note);
+            showFeedback("Motorista \"" + driver.name() + "\" rejeitado.", false);
             pendingDriversTable.getSelectionModel().clearSelection();
             reload();
         } catch (IllegalArgumentException exception) {
@@ -203,10 +193,10 @@ public class PendingDriversController implements AdminSectionController {
         if (query.isBlank()) {
             return true;
         }
-        return AdminFormatUtils.normalize(driver.getName()).contains(query)
-                || AdminFormatUtils.normalize(driver.getEmail()).contains(query)
-                || AdminFormatUtils.normalize(driver.getPhone()).contains(query)
-                || AdminFormatUtils.normalize(driver.getLicenseNumber()).contains(query);
+        return AdminFormatUtils.normalize(driver.name()).contains(query)
+                || AdminFormatUtils.normalize(driver.email()).contains(query)
+                || AdminFormatUtils.normalize(driver.phone()).contains(query)
+                || AdminFormatUtils.normalize(driver.licenseNumber()).contains(query);
     }
 
     private void onSelectionChanged(AdminUserDTO driver) {
@@ -220,12 +210,12 @@ public class PendingDriversController implements AdminSectionController {
     }
 
     private void bindDetailPanel(AdminUserDTO driver) {
-        setText(detailNameLabel, driver.getName());
-        setText(detailEmailLabel, driver.getEmail());
-        setText(detailPhoneLabel, driver.getPhone());
-        setText(detailLicenseLabel, driver.getLicenseNumber());
+        setText(detailNameLabel, driver.name());
+        setText(detailEmailLabel, driver.email());
+        setText(detailPhoneLabel, driver.phone());
+        setText(detailLicenseLabel, driver.licenseNumber());
         setText(detailRegisteredLabel,
-                driver.getCreatedAt() == null ? null : driver.getCreatedAt().format(REGISTERED_DATE_FORMAT));
+                driver.createdAt() == null ? null : driver.createdAt().format(REGISTERED_DATE_FORMAT));
     }
 
     private void updateActionButtons(AdminUserDTO selected) {
@@ -259,17 +249,17 @@ public class PendingDriversController implements AdminSectionController {
 
     private void setupColumns() {
         pendingDriverIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getId() == null ? "-" : "#" + cellData.getValue().getId()));
+                cellData.getValue().id() == null ? "-" : "#" + cellData.getValue().id()));
         pendingDriverNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getName())));
+                AdminFormatUtils.fallback(cellData.getValue().name())));
         pendingDriverEmailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getEmail())));
+                AdminFormatUtils.fallback(cellData.getValue().email())));
         pendingDriverPhoneColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getPhone())));
+                AdminFormatUtils.fallback(cellData.getValue().phone())));
         pendingDriverLicenseColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getLicenseNumber())));
+                AdminFormatUtils.fallback(cellData.getValue().licenseNumber())));
         pendingDriverRegisteredColumn.setCellValueFactory(cellData -> {
-            var registeredAt = cellData.getValue().getCreatedAt();
+            var registeredAt = cellData.getValue().createdAt();
             return new SimpleStringProperty(registeredAt == null ? "-" : registeredAt.format(REGISTERED_DATE_FORMAT));
         });
 

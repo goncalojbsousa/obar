@@ -1,0 +1,391 @@
+.driver-scheduled-page {
+    background:
+        linear-gradient(180deg, #121216 0%, #101014 52%, #0f0f12 100%);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.driver-scheduled-shell {
+    height: calc(100vh - 78px);
+    overflow: auto;
+}
+
+.driver-scheduled-content {
+    color: #f5f5f6;
+    display: grid;
+    gap: 30px;
+    margin: 0 auto;
+    max-width: 1500px;
+    padding: 34px 48px 52px;
+}
+
+.driver-scheduled-header,
+.driver-scheduled-title,
+.driver-scheduled-client,
+.driver-accepted-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.driver-scheduled-header h1 {
+    color: #f7f7f8;
+    font-size: clamp(1.7rem, 2.4vw, 2.35rem);
+    line-height: 1.08;
+    margin: 5px 0 7px;
+}
+
+.driver-scheduled-header p,
+.driver-scheduled-title p,
+.driver-scheduled-empty p {
+    color: #9696a3;
+    margin: 0;
+}
+
+.page-kicker {
+    color: var(--brand);
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.driver-scheduled-section {
+    display: grid;
+    gap: 15px;
+}
+
+.driver-scheduled-title h2 {
+    color: #f7f7f8;
+    font-size: 1rem;
+    margin: 0 0 5px;
+}
+
+.driver-scheduled-title > strong {
+    align-items: center;
+    background: rgba(255, 96, 30, 0.14);
+    border: 1px solid rgba(255, 96, 30, 0.28);
+    border-radius: 999px;
+    color: var(--brand);
+    display: inline-flex;
+    height: 34px;
+    justify-content: center;
+    min-width: 34px;
+}
+
+.driver-scheduled-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+}
+
+.driver-scheduled-card,
+.driver-accepted-row,
+.driver-scheduled-empty {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+        #191a1f;
+    border: 1px solid #2c2d35;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* ── Available trip card ───────────────────────────────────────────── */
+
+.driver-scheduled-card {
+    display: grid;
+    gap: 0;
+    grid-template-columns: 120px minmax(0, 1fr) 240px 180px 152px;
+    min-height: 110px;
+    overflow: hidden;
+}
+
+/* Date column */
+.driver-scheduled-date {
+    align-content: center;
+    align-self: stretch;
+    border-right: 1px solid #30313a;
+    display: grid;
+    gap: 2px;
+    padding: 22px 20px;
+}
+
+.driver-scheduled-date-day {
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.driver-scheduled-date-time {
+    color: #f7f7f8;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.05;
+    margin-top: 2px;
+}
+
+/* Route column */
+.driver-scheduled-route {
+    align-content: center;
+    align-self: stretch;
+    border-right: 1px solid #30313a;
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 22px 24px;
+}
+
+.driver-scheduled-route div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.driver-scheduled-route span {
+    color: #9292a0;
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.driver-scheduled-route strong {
+    color: #f7f7f8;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Details column: chips + price */
+.driver-scheduled-details {
+    align-content: center;
+    align-items: start;
+    align-self: stretch;
+    border-right: 1px solid #30313a;
+    display: grid;
+    gap: 10px;
+    padding: 22px 20px;
+}
+
+.driver-scheduled-facts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.driver-scheduled-facts-row span {
+    background: #25262c;
+    border-radius: 6px;
+    color: #c8cad4;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 5px 9px;
+    white-space: nowrap;
+}
+
+.driver-scheduled-price {
+    color: var(--brand);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* Client column */
+.driver-scheduled-client {
+    align-content: center;
+    align-self: stretch;
+    border-right: 1px solid #30313a;
+    display: grid;
+    gap: 3px;
+    padding: 22px 20px;
+}
+
+.driver-scheduled-client span {
+    color: #9292a0;
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.driver-scheduled-client strong {
+    color: #f7f7f8;
+    font-size: 0.9rem;
+}
+
+.driver-scheduled-client small {
+    color: #fbbf24;
+    font-size: 0.8rem;
+}
+
+/* Accept button column */
+.driver-scheduled-card > form {
+    align-self: stretch;
+    display: flex;
+}
+
+.driver-scheduled-card .primary-button {
+    align-self: stretch;
+    border-radius: 0 8px 8px 0;
+    flex: 1;
+    font-size: 0.88rem;
+    margin: 0;
+    padding: 0 20px;
+    white-space: nowrap;
+}
+
+.driver-accepted-list {
+    display: grid;
+    gap: 10px;
+}
+
+.driver-accepted-row {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 110px minmax(260px, 1fr) 180px 120px auto;
+    padding: 17px 20px;
+}
+
+.driver-accepted-row > div strong {
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.driver-accepted-row > div:first-child strong {
+    color: var(--brand);
+    font-size: 1.15rem;
+}
+
+.driver-scheduled-empty {
+    padding: 24px;
+}
+
+.driver-scheduled-empty p {
+    margin-top: 7px;
+}
+
+.driver-scheduled-empty.compact {
+    padding: 19px 22px;
+}
+
+.scheduled-feedback {
+    border-radius: 8px;
+    font-weight: 800;
+    margin: -10px 0 0;
+    padding: 12px 14px;
+}
+
+.scheduled-feedback.is-success {
+    background: #17251d;
+    border: 1px solid #285f3a;
+    color: #86efac;
+}
+
+.scheduled-feedback.is-error {
+    background: #2a1818;
+    border: 1px solid #713737;
+    color: #fca5a5;
+}
+
+@media (max-width: 1100px) {
+    .driver-scheduled-card {
+        grid-template-columns: 120px minmax(0, 1fr);
+    }
+
+    .driver-scheduled-route {
+        border-right: 0;
+    }
+
+    .driver-scheduled-details {
+        border-right: 0;
+        grid-column: 1 / -1;
+        border-top: 1px solid #30313a;
+        flex-direction: row;
+        align-items: center;
+        display: flex;
+        gap: 16px;
+        padding: 14px 20px;
+    }
+
+    .driver-scheduled-facts-row {
+        flex: 1;
+    }
+
+    .driver-scheduled-client {
+        grid-column: 1 / -1;
+        border-right: 0;
+        border-top: 1px solid #30313a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 20px;
+    }
+
+    .driver-scheduled-card > form {
+        grid-column: 1 / -1;
+        border-top: 1px solid #30313a;
+    }
+
+    .driver-scheduled-card .primary-button {
+        border-radius: 0 0 8px 8px;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 900px) {
+    .driver-accepted-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .driver-scheduled-page {
+        height: auto;
+        overflow: auto;
+    }
+
+    .driver-scheduled-shell {
+        height: auto;
+    }
+
+    .driver-scheduled-content {
+        padding: 24px 16px 40px;
+    }
+
+    .driver-scheduled-card {
+        grid-template-columns: 1fr;
+    }
+
+    .driver-scheduled-date {
+        border-right: 0;
+        border-bottom: 1px solid #30313a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px;
+    }
+
+    .driver-scheduled-route,
+    .driver-scheduled-details,
+    .driver-scheduled-client {
+        grid-column: 1;
+    }
+
+    .driver-scheduled-header {
+        align-items: stretch;
+        display: grid;
+        gap: 16px;
+    }
+
+    .driver-scheduled-card .primary-button {
+        width: 100%;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .driver-accepted-row {
+        grid-template-columns: 1fr;
+    }
+}

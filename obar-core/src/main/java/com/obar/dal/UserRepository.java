@@ -49,6 +49,7 @@ public class UserRepository extends BaseRepository<User, Integer> {
                             + "JOIN v.driver u "
                             + "WHERE u.type = :type "
                             + "AND u.status = :status "
+                            + "AND u.online = true "
                             + "AND u.available = true "
                             + "AND u.currentLatitude IS NOT NULL "
                             + "AND u.currentLongitude IS NOT NULL "
@@ -68,7 +69,7 @@ public class UserRepository extends BaseRepository<User, Integer> {
                     "FROM User u "
                             + "WHERE u.type = :type "
                             + "AND u.status = :status "
-                            + "AND u.available = true "
+                            + "AND u.online = true "
                             + "AND u.currentLatitude IS NOT NULL "
                             + "AND u.currentLongitude IS NOT NULL "
                             + "ORDER BY u.name ASC",

@@ -1,12 +1,14 @@
 package com.obar.desktop.admin.sections.trips;
 
+import static com.obar.desktop.admin.shared.AdminPdfExportService.column;
+
 import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
-import com.obar.desktop.admin.shared.AdminParseUtils;
+import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import javafx.beans.property.SimpleStringProperty;
@@ -23,6 +25,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Controller for the Trips admin section.
@@ -34,6 +40,9 @@ import java.time.LocalDateTime;
  * </p>
  */
 public class TripsController implements AdminSectionController {
+
+    private static final DateTimeFormatter EXPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.forLanguageTag("pt-PT"));
 
     private enum ModalMode {
         NONE, CREATE, EDIT, DELETE_CONFIRM
@@ -71,13 +80,6 @@ public class TripsController implements AdminSectionController {
     private Button completedTripsFilterButton;
     @FXML
     private Button pendingTripsFilterButton;
-    @FXML
-    private Button addTripButton;
-    @FXML
-    private Button editTripButton;
-    @FXML
-    private Button deleteTripButton;
-
     @FXML
     private VBox detailPanel;
     @FXML
@@ -134,6 +136,7 @@ public class TripsController implements AdminSectionController {
 
     private final ObservableList<AdminTripDTO> allTrips = FXCollections.observableArrayList();
     private final FilteredList<AdminTripDTO> filteredTrips = new FilteredList<>(allTrips, trip -> true);
+    private final AdminPdfExportService pdfExportService = new AdminPdfExportService();
 
     private AdminService adminService;
     private TripStatus activeStatusFilter;
@@ -170,9 +173,9 @@ public class TripsController implements AdminSectionController {
     private void configureTripModal() {
         sharedModalController.bindActions(this::handleModalCancel, this::handleModalSave,
                 this::handleModalConfirmDelete);
-        sharedModalController.<TripType>getModalTripTypeCombo()
+        sharedModalController.modalTripTypeCombo
                 .setItems(FXCollections.observableArrayList(TripType.values()));
-        sharedModalController.<TripStatus>getModalTripStatusCombo()
+        sharedModalController.modalTripStatusCombo
                 .setItems(FXCollections.observableArrayList(TripStatus.values()));
     }
 
@@ -235,10 +238,25 @@ public class TripsController implements AdminSectionController {
         modalTarget = selected;
         sharedModalController.prepareForDeleteConfirm("Apagar viagem");
         hideAllModalForms();
-        sharedModalController.getModalDeleteMessageLabel().setText(
-                "Tem a certeza que deseja apagar a viagem #" + selected.getId()
-                        + "?\nRota: " + AdminFormatUtils.fallback(selected.getOriginAddress())
-                        + " -> " + AdminFormatUtils.fallback(selected.getDestinationAddress()) + ".");
+        sharedModalController.modalDeleteMessageLabel.setText(
+                "Tem a certeza que deseja apagar a viagem #" + selected.id()
+                        + "?\nRota: " + AdminFormatUtils.fallback(selected.originAddress())
+                        + " -> " + AdminFormatUtils.fallback(selected.destinationAddress()) + ".");
+    }
+
+    @FXML
+    public void handleExportPdf() {
+        try {
+            Path exportPath = pdfExportService.exportTable(
+                    "OBAR - Viagens",
+                    "Dados atualmente mostrados na dashboard: " + filteredTrips.size() + " de " + allTrips.size(),
+                    "admin_viagens",
+                    tripExportColumns(),
+                    List.copyOf(filteredTrips));
+            showFeedback("PDF exportado: " + exportPath.toAbsolutePath(), false);
+        } catch (Exception exception) {
+            showFeedback("Falha ao exportar PDF: " + exception.getMessage(), true);
+        }
     }
 
     @FXML
@@ -260,11 +278,11 @@ public class TripsController implements AdminSectionController {
         try {
             AdminTripCommand command = buildTripCommand();
             if (modalMode == ModalMode.EDIT) {
-                if (modalTarget == null || modalTarget.getId() == null) {
+                if (modalTarget == null || modalTarget.id() == null) {
                     sharedModalController.showError("Viagem invalida.");
                     return;
                 }
-                adminService.updateTrip(modalTarget.getId(), command);
+                adminService.updateTrip(modalTarget.id(), command);
                 finishModalWithSuccess("Viagem atualizada com sucesso.");
                 return;
             }
@@ -278,12 +296,12 @@ public class TripsController implements AdminSectionController {
 
     @FXML
     public void handleModalConfirmDelete() {
-        if (modalTarget == null || modalTarget.getId() == null) {
+        if (modalTarget == null || modalTarget.id() == null) {
             sharedModalController.showError("Viagem invalida.");
             return;
         }
         try {
-            adminService.deleteTrip(modalTarget.getId());
+            adminService.deleteTrip(modalTarget.id());
             finishModalWithSuccess("Viagem apagada com sucesso.");
         } catch (Exception exception) {
             sharedModalController.showError("Falha ao apagar viagem: " + exception.getMessage());
@@ -312,20 +330,20 @@ public class TripsController implements AdminSectionController {
     }
 
     private boolean matchesStatus(AdminTripDTO trip) {
-        return activeStatusFilter == null || trip.getStatus() == activeStatusFilter;
+        return activeStatusFilter == null || trip.status() == activeStatusFilter;
     }
 
     private boolean matchesSearch(AdminTripDTO trip, String query) {
         if (query.isBlank()) {
             return true;
         }
-        String id = trip.getId() == null ? "" : String.valueOf(trip.getId());
+        String id = trip.id() == null ? "" : String.valueOf(trip.id());
         return AdminFormatUtils.normalize(id).contains(query)
-                || AdminFormatUtils.normalize(trip.getClientName()).contains(query)
-                || AdminFormatUtils.normalize(trip.getDriverName()).contains(query)
-                || AdminFormatUtils.normalize(trip.getOriginAddress()).contains(query)
-                || AdminFormatUtils.normalize(trip.getDestinationAddress()).contains(query)
-                || AdminFormatUtils.normalize(AdminFormatUtils.prettyTripStatus(trip.getStatus())).contains(query);
+                || AdminFormatUtils.normalize(trip.clientName()).contains(query)
+                || AdminFormatUtils.normalize(trip.driverName()).contains(query)
+                || AdminFormatUtils.normalize(trip.originAddress()).contains(query)
+                || AdminFormatUtils.normalize(trip.destinationAddress()).contains(query)
+                || AdminFormatUtils.normalize(AdminFormatUtils.prettyTripStatus(trip.status())).contains(query);
     }
 
     private void updateCountLabels() {
@@ -338,7 +356,7 @@ public class TripsController implements AdminSectionController {
     }
 
     private long count(TripStatus status) {
-        return allTrips.stream().filter(trip -> trip.getStatus() == status).count();
+        return allTrips.stream().filter(trip -> trip.status() == status).count();
     }
 
     private void updateFilterChipStyles() {
@@ -359,19 +377,19 @@ public class TripsController implements AdminSectionController {
 
     private void configureTripTableColumns() {
         tripIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getId() == null ? "-" : "#" + cellData.getValue().getId()));
+                cellData.getValue().id() == null ? "-" : "#" + cellData.getValue().id()));
         tripClientColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getClientName())));
+                AdminFormatUtils.fallback(cellData.getValue().clientName())));
         tripDriverColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.fallback(cellData.getValue().getDriverName())));
+                AdminFormatUtils.fallback(cellData.getValue().driverName())));
         tripStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyTripStatus(cellData.getValue().getStatus())));
+                AdminFormatUtils.prettyTripStatus(cellData.getValue().status())));
         tripTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyTripType(cellData.getValue().getTripType())));
+                AdminFormatUtils.prettyTripType(cellData.getValue().tripType())));
         tripPriceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
                 AdminFormatUtils.formatTripPrice(cellData.getValue())));
         tripRequestedAtColumn.setCellValueFactory(cellData -> {
-            LocalDateTime requestTime = cellData.getValue().getRequestTime();
+            LocalDateTime requestTime = cellData.getValue().requestTime();
             return new SimpleStringProperty(requestTime == null ? "-" : requestTime.toString());
         });
 
@@ -390,10 +408,10 @@ public class TripsController implements AdminSectionController {
                 AdminTripDTO trip = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
                         ? getTableView().getItems().get(getIndex())
                         : null;
-                if (trip == null || trip.getStatus() == null) {
+                if (trip == null || trip.status() == null) {
                     return;
                 }
-                switch (trip.getStatus()) {
+                switch (trip.status()) {
                     case COMPLETED -> getStyleClass().add("trip-completed");
                     case IN_PROGRESS -> getStyleClass().add("trip-in-progress");
                     case ACCEPTED -> getStyleClass().add("trip-accepted");
@@ -407,59 +425,62 @@ public class TripsController implements AdminSectionController {
 
     private AdminTripCommand buildTripCommand() {
         return new AdminTripCommand(
-                AdminParseUtils.parseRequiredInteger(sharedModalController.getModalTripClientIdField().getText(),
+                AdminFormatUtils.parseRequiredInteger(sharedModalController.modalTripClientIdField.getText(),
                         "Cliente ID"),
-                AdminParseUtils.parseOptionalInteger(sharedModalController.getModalTripDriverIdField().getText()),
-                sharedModalController.getModalTripOriginField().getText(),
-                sharedModalController.getModalTripDestinationField().getText(),
-                sharedModalController.<TripType>getModalTripTypeCombo().getValue(),
-                sharedModalController.<TripStatus>getModalTripStatusCombo().getValue(),
-                sharedModalController.getModalTripNotesField().getText(),
-                AdminParseUtils.parseOptionalDecimal(sharedModalController.getModalTripEstimatedPriceField().getText()),
-                AdminParseUtils.parseOptionalDecimal(sharedModalController.getModalTripFinalPriceField().getText()));
+                AdminFormatUtils.parseOptionalInteger(sharedModalController.modalTripDriverIdField.getText(),
+                        "Motorista ID"),
+                sharedModalController.modalTripOriginField.getText(),
+                sharedModalController.modalTripDestinationField.getText(),
+                sharedModalController.modalTripTypeCombo.getValue(),
+                sharedModalController.modalTripStatusCombo.getValue(),
+                sharedModalController.modalTripNotesField.getText(),
+                AdminFormatUtils.parseOptionalDecimal(
+                        sharedModalController.modalTripEstimatedPriceField.getText(), "Preco estimado"),
+                AdminFormatUtils.parseOptionalDecimal(
+                        sharedModalController.modalTripFinalPriceField.getText(), "Preco final"));
     }
 
     private void showOnlyTripForm() {
-        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), true);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalDeleteSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalUsersFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTripsFormSection, true);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTaxRateFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalDeleteSection, false);
     }
 
     private void hideAllModalForms() {
-        AdminModalIncludeController.setVisible(sharedModalController.getModalUsersFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTripsFormSection(), false);
-        AdminModalIncludeController.setVisible(sharedModalController.getModalTaxRateFormSection(), false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalUsersFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTripsFormSection, false);
+        AdminModalIncludeController.setVisible(sharedModalController.modalTaxRateFormSection, false);
     }
 
     private void fillTripForm(AdminTripDTO trip) {
-        sharedModalController.getModalTripClientIdField()
-                .setText(trip.getClientId() == null ? "" : String.valueOf(trip.getClientId()));
-        sharedModalController.getModalTripDriverIdField()
-                .setText(trip.getDriverId() == null ? "" : String.valueOf(trip.getDriverId()));
-        sharedModalController.<TripType>getModalTripTypeCombo()
-                .setValue(trip.getTripType() == null ? TripType.IMMEDIATE : trip.getTripType());
-        sharedModalController.<TripStatus>getModalTripStatusCombo()
-                .setValue(trip.getStatus() == null ? TripStatus.PENDING : trip.getStatus());
-        sharedModalController.getModalTripOriginField().setText(nullToEmpty(trip.getOriginAddress()));
-        sharedModalController.getModalTripDestinationField().setText(nullToEmpty(trip.getDestinationAddress()));
-        sharedModalController.getModalTripEstimatedPriceField()
-                .setText(trip.getEstimatedPrice() == null ? "" : trip.getEstimatedPrice().toPlainString());
-        sharedModalController.getModalTripFinalPriceField()
-                .setText(trip.getFinalPrice() == null ? "" : trip.getFinalPrice().toPlainString());
-        sharedModalController.getModalTripNotesField().setText(nullToEmpty(trip.getNotes()));
+        sharedModalController.modalTripClientIdField
+                .setText(trip.clientId() == null ? "" : String.valueOf(trip.clientId()));
+        sharedModalController.modalTripDriverIdField
+                .setText(trip.driverId() == null ? "" : String.valueOf(trip.driverId()));
+        sharedModalController.modalTripTypeCombo
+                .setValue(trip.tripType() == null ? TripType.IMMEDIATE : trip.tripType());
+        sharedModalController.modalTripStatusCombo
+                .setValue(trip.status() == null ? TripStatus.PENDING : trip.status());
+        sharedModalController.modalTripOriginField.setText(nullToEmpty(trip.originAddress()));
+        sharedModalController.modalTripDestinationField.setText(nullToEmpty(trip.destinationAddress()));
+        sharedModalController.modalTripEstimatedPriceField
+                .setText(trip.estimatedPrice() == null ? "" : trip.estimatedPrice().toPlainString());
+        sharedModalController.modalTripFinalPriceField
+                .setText(trip.finalPrice() == null ? "" : trip.finalPrice().toPlainString());
+        sharedModalController.modalTripNotesField.setText(nullToEmpty(trip.notes()));
     }
 
     private void clearTripForm() {
-        sharedModalController.getModalTripClientIdField().clear();
-        sharedModalController.getModalTripDriverIdField().clear();
-        sharedModalController.<TripType>getModalTripTypeCombo().setValue(TripType.IMMEDIATE);
-        sharedModalController.<TripStatus>getModalTripStatusCombo().setValue(TripStatus.PENDING);
-        sharedModalController.getModalTripOriginField().clear();
-        sharedModalController.getModalTripDestinationField().clear();
-        sharedModalController.getModalTripEstimatedPriceField().clear();
-        sharedModalController.getModalTripFinalPriceField().clear();
-        sharedModalController.getModalTripNotesField().clear();
+        sharedModalController.modalTripClientIdField.clear();
+        sharedModalController.modalTripDriverIdField.clear();
+        sharedModalController.modalTripTypeCombo.setValue(TripType.IMMEDIATE);
+        sharedModalController.modalTripStatusCombo.setValue(TripStatus.PENDING);
+        sharedModalController.modalTripOriginField.clear();
+        sharedModalController.modalTripDestinationField.clear();
+        sharedModalController.modalTripEstimatedPriceField.clear();
+        sharedModalController.modalTripFinalPriceField.clear();
+        sharedModalController.modalTripNotesField.clear();
     }
 
     private void showTripDetails(AdminTripDTO trip) {
@@ -468,34 +489,61 @@ public class TripsController implements AdminSectionController {
             return;
         }
 
-        String route = AdminFormatUtils.fallback(trip.getOriginAddress())
-                + " -> " + AdminFormatUtils.fallback(trip.getDestinationAddress());
-        setLabelText(detailInitialsLabel, trip.getId() == null ? "--" : "#" + trip.getId());
+        String route = AdminFormatUtils.fallback(trip.originAddress())
+                + " -> " + AdminFormatUtils.fallback(trip.destinationAddress());
+        setLabelText(detailInitialsLabel, trip.id() == null ? "--" : "#" + trip.id());
         setLabelText(detailTitleLabel, "Detalhe da viagem");
         setLabelText(detailNameLabel, route);
-        setLabelText(detailEmailLabel, "Cliente: " + AdminFormatUtils.fallback(trip.getClientName()));
-        setLabelText(detailStatusLabel, AdminFormatUtils.prettyTripStatus(trip.getStatus()));
-        setLabelText(detailRoleLabel, AdminFormatUtils.prettyTripType(trip.getTripType()));
-        setLabelText(detailPhoneValueLabel, "Motorista: " + AdminFormatUtils.fallback(trip.getDriverName()));
-        setLabelText(detailCreatedValueLabel, trip.getRequestTime() == null ? "-" : trip.getRequestTime().toString());
+        setLabelText(detailEmailLabel, "Cliente: " + AdminFormatUtils.fallback(trip.clientName()));
+        setLabelText(detailStatusLabel, AdminFormatUtils.prettyTripStatus(trip.status()));
+        setLabelText(detailRoleLabel, AdminFormatUtils.prettyTripType(trip.tripType()));
+        setLabelText(detailPhoneValueLabel, "Motorista: " + AdminFormatUtils.fallback(trip.driverName()));
+        setLabelText(detailCreatedValueLabel, trip.requestTime() == null ? "-" : trip.requestTime().toString());
         setLabelText(detailCardOneTitleLabel, "ID Cliente");
-        setLabelText(detailCardOneValueLabel, trip.getClientId() == null ? "-" : "#" + trip.getClientId());
+        setLabelText(detailCardOneValueLabel, trip.clientId() == null ? "-" : "#" + trip.clientId());
         setLabelText(detailCardTwoTitleLabel, "ID Motorista");
-        setLabelText(detailCardTwoValueLabel, trip.getDriverId() == null ? "-" : "#" + trip.getDriverId());
+        setLabelText(detailCardTwoValueLabel, trip.driverId() == null ? "-" : "#" + trip.driverId());
         setLabelText(detailCardThreeTitleLabel, "Veiculo");
-        setLabelText(detailCardThreeValueLabel, AdminFormatUtils.fallback(trip.getVehicleDisplay()));
+        setLabelText(detailCardThreeValueLabel, AdminFormatUtils.fallback(trip.vehicleDisplay()));
         setLabelText(detailCardFourTitleLabel, "Distancia");
-        setLabelText(detailCardFourValueLabel, trip.getDistanceKm() == null ? "-" : trip.getDistanceKm() + " km");
+        setLabelText(detailCardFourValueLabel, trip.distanceKm() == null ? "-" : trip.distanceKm() + " km");
         setLabelText(detailReferenceTitleLabel, "Preco estimado");
         setLabelText(detailReferenceValueLabel,
-                trip.getEstimatedPrice() == null ? "-" : "EUR " + trip.getEstimatedPrice());
+                trip.estimatedPrice() == null ? "-" : "EUR " + trip.estimatedPrice());
         setLabelText(detailExtraOneTitleLabel, "Preco final");
-        setLabelText(detailExtraOneValueLabel, trip.getFinalPrice() == null ? "-" : "EUR " + trip.getFinalPrice());
+        setLabelText(detailExtraOneValueLabel, trip.finalPrice() == null ? "-" : "EUR " + trip.finalPrice());
         setLabelText(detailExtraTwoTitleLabel, "Inicio");
-        setLabelText(detailExtraTwoValueLabel, trip.getStartTime() == null ? "-" : trip.getStartTime().toString());
+        setLabelText(detailExtraTwoValueLabel, trip.startTime() == null ? "-" : trip.startTime().toString());
         setLabelText(detailExtraThreeTitleLabel, "Fim");
-        setLabelText(detailExtraThreeValueLabel, trip.getEndTime() == null ? "-" : trip.getEndTime().toString());
+        setLabelText(detailExtraThreeValueLabel, trip.endTime() == null ? "-" : trip.endTime().toString());
         setDetailVisible(true);
+    }
+
+    private List<AdminPdfExportService.PdfColumn<AdminTripDTO>> tripExportColumns() {
+        return List.of(
+                column("ID", 0.6f, trip -> formatId(trip.id())),
+                column("Cliente ID", 0.8f, trip -> formatId(trip.clientId())),
+                column("Cliente", 1.4f, AdminTripDTO::clientName),
+                column("Motorista ID", 0.8f, trip -> formatId(trip.driverId())),
+                column("Motorista", 1.4f, AdminTripDTO::driverName),
+                column("Veiculo ID", 0.8f, trip -> formatId(trip.vehicleId())),
+                column("Marca", 1f, AdminTripDTO::vehicleBrand),
+                column("Modelo", 1f, AdminTripDTO::vehicleModel),
+                column("Matricula", 1f, AdminTripDTO::vehicleLicensePlate),
+                column("Categoria", 0.9f, AdminTripDTO::vehicleCategory),
+                column("Estado", 1f, trip -> AdminFormatUtils.prettyTripStatus(trip.status())),
+                column("Tipo", 0.9f, trip -> AdminFormatUtils.prettyTripType(trip.tripType())),
+                column("Estimado", 0.9f, trip -> formatMoney(trip.estimatedPrice())),
+                column("Final", 0.9f, trip -> formatMoney(trip.finalPrice())),
+                column("Distancia", 0.9f, trip -> formatDistance(trip.distanceKm())),
+                column("Origem", 2.1f, AdminTripDTO::originAddress),
+                column("Destino", 2.1f, AdminTripDTO::destinationAddress),
+                column("Pedido em", 1.4f, trip -> formatDate(trip.requestTime())),
+                column("Inicio", 1.4f, trip -> formatDate(trip.startTime())),
+                column("Fim", 1.4f, trip -> formatDate(trip.endTime())),
+                column("Cancelado por", 1.1f, AdminTripDTO::cancelledBy),
+                column("Motivo cancel.", 1.4f, AdminTripDTO::cancelReason),
+                column("Notas", 1.5f, AdminTripDTO::notes));
     }
 
     private void finishModalWithSuccess(String message) {
@@ -540,5 +588,21 @@ public class TripsController implements AdminSectionController {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private String formatId(Integer id) {
+        return id == null ? "-" : "#" + id;
+    }
+
+    private String formatDate(LocalDateTime value) {
+        return value == null ? "-" : EXPORT_DATE_FORMAT.format(value);
+    }
+
+    private String formatDistance(Float distanceKm) {
+        return distanceKm == null ? "-" : distanceKm + " km";
+    }
+
+    private String formatMoney(java.math.BigDecimal value) {
+        return value == null ? "-" : "EUR " + value;
     }
 }

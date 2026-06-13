@@ -1,23 +1,23 @@
 package com.obar.web.maps;
 
 import com.obar.bll.RouteService;
+import com.obar.bll.ReviewService;
+import com.obar.bll.TaxRateService;
+import com.obar.bll.TaxRateService.FareQuote;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
+import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Route;
 import com.obar.model.Trip;
 import com.obar.model.User;
+import com.obar.model.Vehicle;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.web.maps.client.MapsServiceClient;
-import com.obar.web.maps.dto.request.RouteEstimateRequest;
-import com.obar.web.maps.dto.request.TripCancellationRequest;
-import com.obar.web.maps.dto.response.ActiveTripResponse;
-import com.obar.web.maps.dto.response.LocationSuggestionResponse;
-import com.obar.web.maps.dto.response.RouteEstimateResponse;
-import com.obar.web.maps.dto.response.TripCancellationResponse;
-import com.obar.web.maps.dto.response.TripRequestResponse;
-import com.obar.web.maps.utils.VehicleCategoryCatalog;
+import com.obar.web.maps.client.MapsServiceClient.LocationSuggestionResponse;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateRequest;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateResponse;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -29,9 +29,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
-import java.util.List;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 public class MapsApiController {
@@ -40,16 +40,22 @@ public class MapsApiController {
     private final RouteService routeService;
     private final TripService tripService;
     private final UserService userService;
+    private final TaxRateService taxRateService;
+    private final ReviewService reviewService;
 
     public MapsApiController(
             MapsServiceClient mapsServiceClient,
             RouteService routeService,
             TripService tripService,
-            UserService userService) {
+            UserService userService,
+            TaxRateService taxRateService,
+            ReviewService reviewService) {
         this.mapsServiceClient = mapsServiceClient;
         this.routeService = routeService;
         this.tripService = tripService;
         this.userService = userService;
+        this.taxRateService = taxRateService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/api/locations/search")
@@ -65,8 +71,10 @@ public class MapsApiController {
     }
 
     @PostMapping("/api/routes/estimate")
-    public RouteEstimateResponse estimateRoute(@RequestBody RouteEstimateRequest request) {
-        return mapsServiceClient.estimate(request);
+    public FareEstimateResponse estimateRoute(@RequestBody RouteEstimateRequest request, HttpSession session) {
+        User client = currentClient(session);
+        RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
+        return toFareEstimate(estimate, taxRateService.quote(estimate.estimatedPrice(), client.getTaxNumber()));
     }
 
     @PostMapping("/api/trips/request")
@@ -80,19 +88,27 @@ public class MapsApiController {
     }
 
     private TripRequestResponse createTrip(RouteEstimateRequest request, HttpSession session, TripType tripType) {
-        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        User client = userService.findById(currentUser.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User client = currentClient(session);
 
-        if (tripType == TripType.IMMEDIATE && hasActiveTrip(client.getId())) {
+        if (Boolean.TRUE.equals(client.getOnline())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Fica offline antes de pedires uma viagem.");
+        }
+        if (tripType == TripType.IMMEDIATE && tripService.hasActiveImmediateTrip(client.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Já tens uma viagem ativa ou à espera de motorista.");
         }
-        LocalDateTime scheduledAt = tripType == TripType.SCHEDULED ? validateScheduledAt(request.scheduledAt()) : null;
+        LocalDateTime scheduledAt = tripType == TripType.SCHEDULED
+                ? tripService.validateScheduledTime(request.scheduledAt())
+                : null;
 
-        String vehicleCategory = VehicleCategoryCatalog.normalize(request.vehicleCategory());
+        String vehicleCategory = VehicleService.normalizeCategory(request.vehicleCategory());
+        if (tripType == TripType.IMMEDIATE && !userService.hasOnlineAvailableDriverForCategory(vehicleCategory)) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Não existem motoristas online e disponíveis para esta categoria. Tenta novamente mais tarde.");
+        }
         RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
+        FareQuote fare = taxRateService.quote(estimate.estimatedPrice(), client.getTaxNumber());
 
         Route route = new Route();
         route.setOriginAddress(blankToDefault(request.originAddress(), "Localização atual"));
@@ -111,7 +127,9 @@ public class MapsApiController {
         trip.setTripType(tripType);
         trip.setScheduledTime(scheduledAt);
         trip.setVehicleCategory(vehicleCategory);
-        trip.setEstimatedPrice(estimate.estimatedPrice());
+        trip.setEstimatedPrice(fare.totalAmount());
+        trip.setTaxRateApplied(fare.taxRate());
+        trip.setNotes(normalizeNotes(request.notes()));
         Trip savedTrip = tripService.requestTrip(trip);
 
         return new TripRequestResponse(
@@ -119,7 +137,8 @@ public class MapsApiController {
                 savedRoute.getId(),
                 estimate.distanceKm(),
                 estimate.durationMin(),
-                estimate.estimatedPrice(),
+                fare.totalAmount(),
+                fare.taxRate(),
                 savedTrip.getVehicleCategory(),
                 savedTrip.getTripType().name(),
                 savedTrip.getScheduledTime(),
@@ -131,11 +150,43 @@ public class MapsApiController {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        return tripService.findByClient(currentUser.id()).stream()
-                .filter(this::isActiveTrip)
-                .max(Comparator.comparing(Trip::getRequestTime))
+        return tripService.findActiveImmediateTripByClient(currentUser.id())
                 .map(this::toActiveTripResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe viagem ativa."));
+    }
+
+    @GetMapping("/api/trips/review-pending")
+    public PendingReviewResponse pendingReview(HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        Trip trip = reviewService.findPendingClientReview(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sem avaliacao pendente."));
+        return new PendingReviewResponse(
+                trip.getId(),
+                trip.getDriver().getName(),
+                trip.getDriver().getPhotoUrl(),
+                trip.getRoute().getDestinationAddress(),
+                trip.getFinalPrice() == null ? trip.getEstimatedPrice() : trip.getFinalPrice());
+    }
+
+    @PostMapping("/api/trips/{tripId}/review")
+    public ReviewResponse reviewDriver(@PathVariable Integer tripId,
+            @RequestBody TripReviewRequest request,
+            HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        try {
+            reviewService.addClientReview(
+                    tripId,
+                    currentUser.id(),
+                    request == null ? null : request.rating(),
+                    request == null ? null : request.comment());
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage(), exception);
+        }
+        return new ReviewResponse("Obrigado pela tua avaliacao.");
     }
 
     @PostMapping("/api/trips/{tripId}/cancel")
@@ -174,20 +225,22 @@ public class MapsApiController {
         return value == null || value.isBlank() ? fallback : value.trim();
     }
 
-    private boolean hasActiveTrip(Integer clientId) {
-        return tripService.findByClient(clientId).stream()
-                .anyMatch(this::isActiveTrip);
-    }
-
-    private boolean isActiveTrip(Trip trip) {
-        return trip.getTripType() == TripType.IMMEDIATE
-                && (trip.getStatus() == TripStatus.PENDING
-                        || trip.getStatus() == TripStatus.ACCEPTED
-                        || trip.getStatus() == TripStatus.IN_PROGRESS);
+    private String normalizeNotes(String notes) {
+        if (notes == null || notes.isBlank()) {
+            return null;
+        }
+        String normalized = notes.trim();
+        if (normalized.length() > 500) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "As observações não podem exceder 500 caracteres.");
+        }
+        return normalized;
     }
 
     private ActiveTripResponse toActiveTripResponse(Trip trip) {
         Route route = trip.getRoute();
+        User driver = trip.getDriver();
+        Vehicle vehicle = trip.getVehicle();
         return new ActiveTripResponse(
                 trip.getId(),
                 route.getId(),
@@ -201,19 +254,130 @@ public class MapsApiController {
                 route.getDistanceKm(),
                 route.getEstimatedDurationMin(),
                 trip.getEstimatedPrice(),
+                trip.getTaxRateApplied(),
                 trip.getVehicleCategory(),
-                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null);
+                trip.getNotes(),
+                driver == null ? null : driver.getName(),
+                driver == null ? null : driver.getPhotoUrl(),
+                vehicle == null ? null : vehicle.getBrand(),
+                vehicle == null ? null : vehicle.getModel(),
+                vehicle == null ? null : vehicle.getLicensePlate(),
+                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
+                driverArrivalMin(trip));
     }
 
-    private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {
-        if (scheduledAt == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe a data e hora da viagem.");
+    private Integer driverArrivalMin(Trip trip) {
+        User driver = trip.getDriver();
+        Route route = trip.getRoute();
+        if (trip.getStatus() != TripStatus.ACCEPTED
+                || driver == null
+                || driver.getCurrentLatitude() == null
+                || driver.getCurrentLongitude() == null) {
+            return null;
         }
-        if (scheduledAt.isBefore(LocalDateTime.now().plusMinutes(15))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A viagem agendada deve ser marcada com pelo menos 15 minutos de antecedência.");
+
+        try {
+            return mapsServiceClient.estimate(new RouteEstimateRequest(
+                    driver.getCurrentLatitude(),
+                    driver.getCurrentLongitude(),
+                    route.getOriginLatitude(),
+                    route.getOriginLongitude(),
+                    "Localização do motorista",
+                    route.getOriginAddress(),
+                    trip.getVehicleCategory(),
+                    null,
+                    null)).durationMin();
+        } catch (ResponseStatusException exception) {
+            return null;
         }
-        return scheduledAt;
     }
 
+    private User currentClient(HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        return userService.findById(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    }
+
+    private FareEstimateResponse toFareEstimate(RouteEstimateResponse estimate, FareQuote fare) {
+        return new FareEstimateResponse(
+                estimate.distanceKm(),
+                estimate.durationMin(),
+                fare.netAmount(),
+                fare.taxRate(),
+                fare.taxAmount(),
+                fare.totalAmount(),
+                estimate.geometry());
+    }
+
+    public record ActiveTripResponse(
+            Integer tripId,
+            Integer routeId,
+            String status,
+            String originAddress,
+            String destinationAddress,
+            double originLat,
+            double originLng,
+            double destinationLat,
+            double destinationLng,
+            double distanceKm,
+            int durationMin,
+            BigDecimal estimatedPrice,
+            BigDecimal taxRate,
+            String vehicleCategory,
+            String notes,
+            String driverName,
+            String driverPhotoUrl,
+            String vehicleBrand,
+            String vehicleModel,
+            String vehicleLicensePlate,
+            String startPin,
+            Integer driverArrivalMin) {
+    }
+
+    public record TripCancellationRequest(String reason) {
+    }
+
+    public record PendingReviewResponse(
+            Integer tripId,
+            String driverName,
+            String driverPhotoUrl,
+            String destinationAddress,
+            BigDecimal finalPrice) {
+    }
+
+    public record TripReviewRequest(Integer rating, String comment) {
+    }
+
+    public record ReviewResponse(String message) {
+    }
+
+    public record TripCancellationResponse(
+            Integer tripId,
+            String status,
+            String message) {
+    }
+
+    public record TripRequestResponse(
+            Integer tripId,
+            Integer routeId,
+            double distanceKm,
+            int durationMin,
+            BigDecimal estimatedPrice,
+            BigDecimal taxRate,
+            String vehicleCategory,
+            String tripType,
+            LocalDateTime scheduledAt,
+            String status) {
+    }
+
+    public record FareEstimateResponse(
+            double distanceKm,
+            int durationMin,
+            BigDecimal netPrice,
+            BigDecimal taxRate,
+            BigDecimal taxAmount,
+            BigDecimal estimatedPrice,
+            Object geometry) {
+    }
 }

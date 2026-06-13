@@ -21,6 +21,15 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
         }
     }
 
+    public Optional<Vehicle> findByLicensePlate(String licensePlate) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "FROM Vehicle v WHERE upper(v.licensePlate) = upper(:licensePlate)", Vehicle.class)
+                    .setParameter("licensePlate", licensePlate)
+                    .uniqueResultOptional();
+        }
+    }
+
     public Optional<Vehicle> findActiveByDriverIdAndCategory(Integer driverId, String category) {
         try (Session session = getSession()) {
             return session.createQuery(

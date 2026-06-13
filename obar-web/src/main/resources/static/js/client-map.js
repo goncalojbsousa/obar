@@ -12,7 +12,8 @@ const state = {
     },
     activeTripId: null,
     activeTripPoll: null,
-    tripLocked: false
+    tripLocked: false,
+    pendingReviewTripId: null
 };
 
 const map = L.map("ride-map", { zoomControl: true }).setView(defaultCenter, 13);
@@ -22,12 +23,14 @@ map.getPane("routePane").style.pointerEvents = "none";
 map.createPane("tripMarkerPane");
 map.getPane("tripMarkerPane").style.zIndex = 720;
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
 }).addTo(map);
 
 const elements = {
+    rideForm: document.querySelector("[data-ride-form]"),
     originStatus: document.querySelector("[data-origin-status]"),
     originInput: document.querySelector("[data-origin-input]"),
     originSuggestions: document.querySelector("[data-origin-suggestions]"),
@@ -35,6 +38,7 @@ const elements = {
     destinationInput: document.querySelector("[data-destination-input]"),
     destinationSuggestions: document.querySelector("[data-location-suggestions]"),
     vehicleCategory: document.querySelector("[data-vehicle-category]"),
+    notes: document.querySelector("[data-trip-notes]"),
     scheduledAt: document.querySelector("[data-scheduled-at]"),
     requestButton: document.querySelector("[data-request-button]"),
     scheduleButton: document.querySelector("[data-schedule-button]"),
@@ -42,24 +46,67 @@ const elements = {
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
     price: document.querySelector("[data-price]"),
+    taxRate: document.querySelector("[data-tax-rate]"),
     message: document.querySelector("[data-ride-message]"),
     waitingPanel: document.querySelector("[data-waiting-panel]"),
+    summaryOrigin: document.querySelector("[data-summary-origin]"),
+    summaryDestination: document.querySelector("[data-summary-destination]"),
+    summaryCategory: document.querySelector("[data-summary-category]"),
+    summaryDistance: document.querySelector("[data-summary-distance]"),
+    summaryDuration: document.querySelector("[data-summary-duration]"),
+    summaryPrice: document.querySelector("[data-summary-price]"),
+    summaryNotesBlock: document.querySelector("[data-summary-notes-block]"),
+    summaryNotes: document.querySelector("[data-summary-notes]"),
+    driverDetails: document.querySelector("[data-driver-details]"),
+    driverAvatar: document.querySelector("[data-driver-avatar]"),
+    driverName: document.querySelector("[data-driver-name]"),
+    vehicleName: document.querySelector("[data-vehicle-name]"),
+    vehicleLicensePlate: document.querySelector("[data-vehicle-license-plate]"),
+    driverArrivalBlock: document.querySelector("[data-driver-arrival-block]"),
+    driverArrival: document.querySelector("[data-driver-arrival]"),
     tripPinBlock: document.querySelector("[data-trip-pin-block]"),
     tripPin: document.querySelector("[data-trip-pin]"),
-    cancelTripButton: document.querySelector("[data-cancel-trip-button]")
+    cancelTripButton: document.querySelector("[data-cancel-trip-button]"),
+    cancelModal: document.querySelector("[data-cancel-modal]"),
+    cancelForm: document.querySelector("[data-cancel-form]"),
+    cancelReason: document.querySelector("[data-cancel-reason]"),
+    cancelError: document.querySelector("[data-cancel-error]"),
+    cancelSubmitButton: document.querySelector("[data-cancel-submit]"),
+    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]"),
+    reviewModal: document.querySelector("[data-review-modal]"),
+    reviewForm: document.querySelector("[data-review-form]"),
+    reviewDriverAvatar: document.querySelector("[data-review-driver-avatar]"),
+    reviewDriverName: document.querySelector("[data-review-driver-name]"),
+    reviewDestination: document.querySelector("[data-review-destination]"),
+    reviewPrice: document.querySelector("[data-review-price]"),
+    reviewComment: document.querySelector("[data-review-comment]"),
+    reviewError: document.querySelector("[data-review-error]"),
+    reviewSubmitButton: document.querySelector("[data-review-submit]"),
+    reviewDismissButtons: document.querySelectorAll("[data-review-dismiss]")
 };
+
+const routeInputs = [
+    elements.destinationInput,
+    elements.originInput,
+    elements.vehicleCategory,
+    elements.notes,
+    elements.scheduledAt
+];
+const tripButtons = [elements.requestButton, elements.scheduleButton];
 
 elements.locateButton.addEventListener("click", locateUser);
 elements.originInput.addEventListener("input", (event) => handleLocationInput("origin", event));
 elements.destinationInput.addEventListener("input", (event) => handleLocationInput("destination", event));
-elements.vehicleCategory.addEventListener("change", () => {
-    if (state.origin && state.destination) {
-        estimateRoute();
-    }
-});
+elements.vehicleCategory.addEventListener("change", () => state.origin && state.destination && estimateRoute());
+elements.scheduledAt.addEventListener("click", openSchedulePicker);
 elements.requestButton.addEventListener("click", requestTrip);
 elements.scheduleButton.addEventListener("click", scheduleTrip);
-elements.cancelTripButton.addEventListener("click", cancelTrip);
+elements.cancelTripButton.addEventListener("click", openCancelModal);
+elements.cancelForm.addEventListener("submit", submitCancelTrip);
+elements.cancelDismissButtons.forEach((button) => button.addEventListener("click", closeCancelModal));
+elements.reviewForm.addEventListener("submit", submitDriverReview);
+elements.reviewDismissButtons.forEach((button) => button.addEventListener("click", closeReviewModal));
+document.addEventListener("keydown", handleModalKeydown);
 
 initializeScheduleInput();
 initializeRide();
@@ -70,6 +117,7 @@ async function initializeRide() {
         await renderActiveTrip(activeTrip);
     } catch (error) {
         if (error.status === 404) {
+            await loadPendingReview();
             locateUser({ automatic: true });
             return;
         }
@@ -229,6 +277,7 @@ async function requestTrip() {
             body: JSON.stringify(buildRouteRequest())
         });
         state.activeTripId = trip.tripId;
+        renderTripSummary(trip);
         setTripLockedState(trip.status);
         renderTripPin(trip);
         setMessage("");
@@ -246,6 +295,7 @@ async function scheduleTrip() {
 
     if (!elements.scheduledAt.value) {
         setMessage("Escolhe a data e hora para agendar a viagem.");
+        openSchedulePicker();
         return;
     }
 
@@ -255,7 +305,7 @@ async function scheduleTrip() {
         const trip = await fetchJson("/api/trips/schedule", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(buildRouteRequest({ scheduled: true }))
+            body: JSON.stringify(buildRouteRequest(true))
         });
         setMessage(`Viagem agendada para ${formatDateTime(trip.scheduledAt)}. Podes continuar a pedir viagens imediatas.`);
     } catch (error) {
@@ -265,39 +315,165 @@ async function scheduleTrip() {
     }
 }
 
-async function cancelTrip() {
+function openCancelModal() {
     if (!state.activeTripId) {
         return;
     }
 
-    const reason = window.prompt("Indica o motivo do cancelamento:");
-    if (!reason || !reason.trim()) {
-        setMessage("Indica o motivo do cancelamento.");
+    elements.cancelReason.value = "";
+    elements.cancelError.hidden = true;
+    elements.cancelSubmitButton.disabled = false;
+    elements.cancelModal.hidden = false;
+    window.setTimeout(() => elements.cancelReason.focus(), 0);
+}
+
+function closeCancelModal() {
+    if (elements.cancelSubmitButton.disabled) {
         return;
     }
 
+    elements.cancelModal.hidden = true;
+    elements.cancelError.hidden = true;
+}
+
+async function submitCancelTrip(event) {
+    event.preventDefault();
+    if (!state.activeTripId) {
+        closeCancelModal();
+        return;
+    }
+
+    const reason = elements.cancelReason.value.trim();
+    if (reason.length < 3) {
+        elements.cancelError.textContent = "Indica um motivo com pelo menos 3 caracteres.";
+        elements.cancelError.hidden = false;
+        elements.cancelReason.focus();
+        return;
+    }
+
+    elements.cancelSubmitButton.disabled = true;
     setBusy(true);
     elements.cancelTripButton.disabled = true;
+    elements.cancelError.hidden = true;
     setMessage("A cancelar viagem...");
     try {
         await fetchJson(`/api/trips/${state.activeTripId}/cancel`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason: reason.trim() })
+            body: JSON.stringify({ reason })
         });
+        elements.cancelModal.hidden = true;
         state.activeTripId = null;
         setTripLockedState(null);
         stopActiveTripPolling();
         setMessage("Viagem cancelada. Podes escolher outro destino ou pedir novamente.");
     } catch (error) {
-        setMessage(error.message);
+        elements.cancelError.textContent = error.message;
+        elements.cancelError.hidden = false;
+        elements.cancelSubmitButton.disabled = false;
         elements.cancelTripButton.disabled = false;
     } finally {
         setBusy(false);
     }
 }
 
-function buildRouteRequest(options = {}) {
+function handleModalKeydown(event) {
+    if (event.key === "Escape" && !elements.cancelModal.hidden) {
+        closeCancelModal();
+    } else if (event.key === "Escape" && !elements.reviewModal.hidden) {
+        closeReviewModal();
+    }
+}
+
+function openSchedulePicker() {
+    if (elements.scheduledAt.disabled) {
+        return;
+    }
+
+    elements.scheduledAt.focus();
+    if (typeof elements.scheduledAt.showPicker === "function") {
+        try {
+            elements.scheduledAt.showPicker();
+        } catch {
+            // The native field remains usable when the browser blocks showPicker.
+        }
+    }
+}
+
+async function loadPendingReview() {
+    try {
+        const review = await fetchJson("/api/trips/review-pending");
+        openReviewModal(review);
+    } catch (error) {
+        if (error.status !== 404) {
+            setMessage(error.message);
+        }
+    }
+}
+
+function openReviewModal(review) {
+    state.pendingReviewTripId = review.tripId;
+    elements.reviewForm.reset();
+    elements.reviewError.hidden = true;
+    elements.reviewSubmitButton.disabled = false;
+    elements.reviewDriverName.textContent = review.driverName;
+    elements.reviewDestination.textContent = review.destinationAddress || "Viagem concluída";
+    elements.reviewPrice.textContent = formatCurrency(review.finalPrice || 0);
+    const hasDriverPhoto = Boolean(review.driverPhotoUrl);
+    elements.reviewDriverAvatar.textContent = hasDriverPhoto
+        ? ""
+        : review.driverName
+            ? review.driverName.trim().substring(0, 1).toUpperCase()
+            : "M";
+    elements.reviewDriverAvatar.style.backgroundImage = hasDriverPhoto
+        ? `url("${review.driverPhotoUrl.replaceAll('"', "%22")}")`
+        : "";
+    elements.reviewModal.hidden = false;
+}
+
+function closeReviewModal() {
+    if (elements.reviewSubmitButton.disabled) {
+        return;
+    }
+    elements.reviewModal.hidden = true;
+    elements.reviewError.hidden = true;
+}
+
+async function submitDriverReview(event) {
+    event.preventDefault();
+    const ratingInput = elements.reviewForm.querySelector('input[name="rating"]:checked');
+    if (!ratingInput) {
+        elements.reviewError.textContent = "Escolhe entre 1 e 5 estrelas.";
+        elements.reviewError.hidden = false;
+        return;
+    }
+    if (!state.pendingReviewTripId) {
+        elements.reviewModal.hidden = true;
+        return;
+    }
+
+    elements.reviewSubmitButton.disabled = true;
+    elements.reviewError.hidden = true;
+    try {
+        const result = await fetchJson(`/api/trips/${state.pendingReviewTripId}/review`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rating: Number(ratingInput.value),
+                comment: elements.reviewComment.value.trim()
+            })
+        });
+        state.pendingReviewTripId = null;
+        elements.reviewModal.hidden = true;
+        setMessage(result.message);
+    } catch (error) {
+        elements.reviewError.textContent = error.message;
+        elements.reviewError.hidden = false;
+        elements.reviewSubmitButton.disabled = false;
+    }
+}
+
+function buildRouteRequest(includeSchedule = false) {
     const request = {
         originLat: state.origin.lat,
         originLng: state.origin.lng,
@@ -305,9 +481,10 @@ function buildRouteRequest(options = {}) {
         destinationLng: state.destination.lng,
         originAddress: state.origin.label,
         destinationAddress: state.destination.label,
-        vehicleCategory: elements.vehicleCategory.value
+        vehicleCategory: elements.vehicleCategory.value,
+        notes: elements.notes.value.trim()
     };
-    if (options.scheduled) {
+    if (includeSchedule) {
         request.scheduledAt = elements.scheduledAt.value;
     }
     return request;
@@ -320,6 +497,7 @@ function renderEstimate(estimate) {
     elements.distance.textContent = `${estimate.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${estimate.durationMin} min`;
     elements.price.textContent = formatCurrency(estimate.estimatedPrice);
+    elements.taxRate.textContent = formatTaxRate(estimate.taxRate);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = false;
     elements.scheduleButton.disabled = false;
@@ -344,17 +522,21 @@ async function renderActiveTrip(trip) {
     elements.originInput.value = trip.originAddress;
     elements.destinationInput.value = trip.destinationAddress;
     elements.vehicleCategory.value = trip.vehicleCategory || elements.vehicleCategory.value;
+    elements.notes.value = trip.notes || "";
     elements.originStatus.textContent = "Origem da viagem ativa.";
     setMarker("origin", state.origin, "Origem");
     setMarker("destination", state.destination, "Destino");
-    setTripLockedState(trip.status);
+    renderDriverArrival(trip);
     renderTripPin(trip);
 
     elements.distance.textContent = `${trip.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${trip.durationMin} min`;
     elements.price.textContent = formatCurrency(trip.estimatedPrice);
+    elements.taxRate.textContent = formatTaxRate(trip.taxRate);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = true;
+    renderTripSummary(trip);
+    setTripLockedState(trip.status);
 
     try {
         const estimate = await fetchJson("/api/routes/estimate", {
@@ -371,57 +553,28 @@ async function renderActiveTrip(trip) {
 }
 
 function buildRouteLayer(geometry) {
-    const routeOutline = L.geoJSON(geometry, {
+    return L.featureGroup([
+        { color: "#17202a", weight: 10, opacity: 0.14 },
+        { color: "#ffffff", weight: 8, opacity: 0.95 },
+        { color: "#2563eb", weight: 5, opacity: 0.95 }
+    ].map((style) => L.geoJSON(geometry, {
         pane: "routePane",
-        style: {
-            color: "#ffffff",
-            weight: 8,
-            opacity: 0.95,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-    const routeShadow = L.geoJSON(geometry, {
-        pane: "routePane",
-        style: {
-            color: "#17202a",
-            weight: 10,
-            opacity: 0.14,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-    const routeLine = L.geoJSON(geometry, {
-        pane: "routePane",
-        style: {
-            color: "#2563eb",
-            weight: 5,
-            opacity: 0.95,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-
-    return L.featureGroup([routeShadow, routeOutline, routeLine]);
+        style: { ...style, lineCap: "round", lineJoin: "round" }
+    })));
 }
 
 function setMarker(type, point, label) {
+    const markerKey = type === "origin" ? "originMarker" : "destinationMarker";
     const marker = L.marker([point.lat, point.lng], {
         icon: buildMarkerIcon(type),
         pane: "tripMarkerPane",
         zIndexOffset: 1000
     }).bindPopup(label);
-    if (type === "origin") {
-        if (state.originMarker) {
-            state.originMarker.remove();
-        }
-        state.originMarker = marker.addTo(map);
-    } else {
-        if (state.destinationMarker) {
-            state.destinationMarker.remove();
-        }
-        state.destinationMarker = marker.addTo(map);
+
+    if (state[markerKey]) {
+        state[markerKey].remove();
     }
+    state[markerKey] = marker.addTo(map);
 }
 
 function buildMarkerIcon(type) {
@@ -449,42 +602,44 @@ function removeRouteLayer() {
 }
 
 function setBusy(isBusy) {
-    elements.requestButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
-    elements.scheduleButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
-    elements.destinationInput.disabled = isBusy || state.tripLocked;
-    elements.originInput.disabled = isBusy || state.tripLocked;
-    elements.vehicleCategory.disabled = isBusy || state.tripLocked;
-    elements.scheduledAt.disabled = isBusy || state.tripLocked;
-    elements.locateButton.disabled = isBusy || state.tripLocked;
+    const disabled = isBusy || state.tripLocked;
+    tripButtons.forEach((button) => {
+        button.disabled = disabled || elements.estimatePanel.hidden;
+    });
+    routeInputs.forEach((input) => {
+        input.disabled = disabled;
+    });
+    elements.locateButton.disabled = disabled;
     elements.cancelTripButton.disabled = isBusy && state.tripLocked;
 }
 
 function setTripLockedState(status) {
-    const isLocked = Boolean(status);
-    state.tripLocked = isLocked;
-    elements.waitingPanel.hidden = !isLocked;
-    elements.requestButton.disabled = isLocked || elements.estimatePanel.hidden;
-    elements.scheduleButton.disabled = isLocked || elements.estimatePanel.hidden;
-    elements.destinationInput.disabled = isLocked;
-    elements.originInput.disabled = isLocked;
-    elements.vehicleCategory.disabled = isLocked;
-    elements.scheduledAt.disabled = isLocked;
-    elements.locateButton.hidden = isLocked || Boolean(state.origin);
-    elements.cancelTripButton.hidden = !isLocked;
-    if (isLocked) {
+    state.tripLocked = Boolean(status);
+    elements.rideForm.hidden = state.tripLocked;
+    elements.estimatePanel.hidden = state.tripLocked || !state.origin || !state.destination;
+    elements.waitingPanel.hidden = !state.tripLocked;
+    tripButtons.forEach((button) => {
+        button.disabled = state.tripLocked || elements.estimatePanel.hidden;
+    });
+    routeInputs.forEach((input) => {
+        input.disabled = state.tripLocked;
+    });
+    elements.locateButton.hidden = state.tripLocked || Boolean(state.origin);
+    elements.cancelTripButton.hidden = !state.tripLocked;
+    if (state.tripLocked) {
         startActiveTripPolling();
     } else {
         stopActiveTripPolling();
+        renderDriverArrival(null);
         renderTripPin(null);
     }
-    renderSuggestions("origin", []);
-    renderSuggestions("destination", []);
+    ["origin", "destination"].forEach((type) => renderSuggestions(type, []));
     updateWaitingCopy(status);
 }
 
 function updateWaitingCopy(status) {
     const title = elements.waitingPanel.querySelector("[data-waiting-title]");
-    const detail = elements.waitingPanel.querySelector("p");
+    const detail = elements.waitingPanel.querySelector("[data-waiting-detail]");
     if (status === "ACCEPTED") {
         title.textContent = "Motorista a caminho";
         detail.textContent = "A viagem foi aceite. Diz o PIN ao motorista quando ele chegar.";
@@ -495,6 +650,42 @@ function updateWaitingCopy(status) {
         title.textContent = "À espera de motorista";
         detail.textContent = "A procurar um motorista disponível para aceitar a viagem.";
     }
+}
+
+function renderTripSummary(trip) {
+    const notes = elements.notes.value.trim();
+    elements.summaryOrigin.textContent = trip.originAddress || state.origin?.label || elements.originInput.value;
+    elements.summaryDestination.textContent = trip.destinationAddress
+        || state.destination?.label
+        || elements.destinationInput.value;
+    elements.summaryCategory.textContent = trip.vehicleCategory || elements.vehicleCategory.value;
+    elements.summaryDistance.textContent = `${Number(trip.distanceKm || 0).toFixed(2)} km`;
+    elements.summaryDuration.textContent = `${trip.durationMin || 0} min`;
+    elements.summaryPrice.textContent = formatCurrency(trip.estimatedPrice || 0);
+    elements.summaryNotesBlock.hidden = !notes;
+    elements.summaryNotes.textContent = notes;
+    renderDriverDetails(trip);
+}
+
+function renderDriverDetails(trip) {
+    const hasDriver = Boolean(trip.driverName);
+    elements.driverDetails.hidden = !hasDriver;
+    if (!hasDriver) {
+        return;
+    }
+
+    elements.driverName.textContent = trip.driverName;
+    elements.vehicleName.textContent = [trip.vehicleBrand, trip.vehicleModel].filter(Boolean).join(" ") || "Veículo";
+    elements.vehicleLicensePlate.textContent = trip.vehicleLicensePlate || "Matrícula por confirmar";
+    setAvatar(elements.driverAvatar, trip.driverName, trip.driverPhotoUrl, "M");
+}
+
+function setAvatar(element, name, photoUrl, fallback) {
+    const hasPhoto = Boolean(photoUrl);
+    element.textContent = hasPhoto ? "" : (name?.trim().substring(0, 1).toUpperCase() || fallback);
+    element.style.backgroundImage = hasPhoto
+        ? `url("${photoUrl.replaceAll('"', "%22")}")`
+        : "";
 }
 
 async function refreshActiveTrip() {
@@ -510,6 +701,7 @@ async function refreshActiveTrip() {
             state.activeTripId = null;
             setTripLockedState(null);
             setMessage("");
+            await loadPendingReview();
             return;
         }
         setMessage(error.message);
@@ -534,6 +726,12 @@ function renderTripPin(trip) {
     const pin = trip && trip.startPin ? trip.startPin : "";
     elements.tripPinBlock.hidden = !pin;
     elements.tripPin.textContent = pin || "0000";
+}
+
+function renderDriverArrival(trip) {
+    const arrivalMin = trip && trip.status === "ACCEPTED" ? trip.driverArrivalMin : null;
+    elements.driverArrivalBlock.hidden = arrivalMin == null;
+    elements.driverArrival.textContent = arrivalMin == null ? "0 min" : `${arrivalMin} min`;
 }
 
 function setMessage(message) {
@@ -567,15 +765,18 @@ function formatCurrency(value) {
     }).format(value);
 }
 
+function formatTaxRate(value) {
+    return new Intl.NumberFormat("pt-PT", {
+        style: "percent",
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
 function initializeScheduleInput() {
     const now = new Date();
     now.setMinutes(now.getMinutes() + 15);
-    elements.scheduledAt.min = toLocalDateTimeValue(now);
-}
-
-function toLocalDateTimeValue(date) {
-    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return offsetDate.toISOString().slice(0, 16);
+    const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    elements.scheduledAt.min = offsetDate.toISOString().slice(0, 16);
 }
 
 function formatDateTime(value) {

@@ -8,8 +8,10 @@ const state = {
     assignmentMarkers: L.layerGroup(),
     assignmentPoll: null,
     snapshotPoll: null,
+    locationPoll: null,
     countdownTimer: null,
-    currentLocation: null
+    currentLocation: null,
+    online: false
 };
 
 const map = L.map("driver-map", { zoomControl: true }).setView(defaultCenter, 12);
@@ -19,9 +21,10 @@ map.getPane("routePane").style.pointerEvents = "none";
 map.createPane("tripMarkerPane");
 map.getPane("tripMarkerPane").style.zIndex = 720;
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
 }).addTo(map);
 state.markersLayer.addTo(map);
 state.assignmentMarkers.addTo(map);
@@ -35,9 +38,14 @@ const elements = {
     destinationAddress: document.querySelector("[data-destination-address]"),
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
+    priceBlock: document.querySelector("[data-price-block]"),
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
+    clientAvatar: document.querySelector("[data-client-avatar]"),
     clientName: document.querySelector("[data-client-name]"),
+    clientRating: document.querySelector("[data-client-rating]"),
+    clientNotesBlock: document.querySelector("[data-client-notes-block]"),
+    clientNotes: document.querySelector("[data-client-notes]"),
     countdownBlock: document.querySelector("[data-countdown-block]"),
     responseActions: document.querySelector("[data-response-actions]"),
     acceptButton: document.querySelector("[data-accept-trip]"),
@@ -45,22 +53,51 @@ const elements = {
     startPanel: document.querySelector("[data-start-panel]"),
     startPin: document.querySelector("[data-start-pin]"),
     startButton: document.querySelector("[data-start-trip]"),
+    completePanel: document.querySelector("[data-complete-panel]"),
+    clientRatingInput: document.querySelector("[data-client-rating-input]"),
+    completeButton: document.querySelector("[data-complete-trip]"),
     cancelTripButton: document.querySelector("[data-cancel-trip]"),
-    message: document.querySelector("[data-driver-message]")
+    message: document.querySelector("[data-driver-message]"),
+    alertModal: document.querySelector("[data-alert-modal]"),
+    alertTitle: document.querySelector("[data-alert-title]"),
+    alertMessage: document.querySelector("[data-alert-message]"),
+    alertCloseButtons: document.querySelectorAll("[data-alert-close]"),
+    cancelModal: document.querySelector("[data-cancel-modal]"),
+    cancelForm: document.querySelector("[data-cancel-form]"),
+    cancelReason: document.querySelector("[data-cancel-reason]"),
+    cancelError: document.querySelector("[data-cancel-error]"),
+    cancelSubmitButton: document.querySelector("[data-cancel-submit]"),
+    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
 };
+
+const responseButtons = [elements.acceptButton, elements.rejectButton];
 
 elements.acceptButton.addEventListener("click", acceptAssignment);
 elements.rejectButton.addEventListener("click", rejectAssignment);
 elements.startButton.addEventListener("click", startTrip);
-elements.cancelTripButton.addEventListener("click", cancelTrip);
+elements.completeButton.addEventListener("click", completeTrip);
+elements.cancelTripButton.addEventListener("click", openCancelModal);
+elements.cancelForm.addEventListener("submit", submitCancelTrip);
+elements.alertCloseButtons.forEach((button) => button.addEventListener("click", closeAlertModal));
+elements.cancelDismissButtons.forEach((button) => button.addEventListener("click", closeCancelModal));
 elements.startPin.addEventListener("input", () => {
     elements.startPin.value = elements.startPin.value.replace(/\D/g, "").slice(0, 4);
+});
+document.addEventListener("keydown", handleModalKeydown);
+document.addEventListener("driver-online-changed", (event) => {
+    renderOnlineStatus(event.detail.online);
+    if (event.detail.online) {
+        pollAssignment();
+    }
 });
 
 initializeDriverMap();
 
-function initializeDriverMap() {
-    updateCurrentLocation();
+async function initializeDriverMap() {
+    await loadOnlineStatus();
+    if (state.online) {
+        await updateCurrentLocation(true);
+    }
     loadSnapshot();
     pollAssignment();
     state.assignmentPoll = window.setInterval(pollAssignment, 2500);
@@ -69,10 +106,14 @@ function initializeDriverMap() {
             loadSnapshot();
         }
     }, 10000);
+    state.locationPoll = window.setInterval(() => {
+        if (state.assignment && state.assignment.status === "ACCEPTED") {
+            updateCurrentLocation(true);
+        }
+    }, 10000);
 }
 
-function updateCurrentLocation(options = {}) {
-    const silent = options.silent === true;
+function updateCurrentLocation(silent = false) {
     if (!navigator.geolocation) {
         return Promise.resolve(null);
     }
@@ -105,7 +146,7 @@ function updateCurrentLocation(options = {}) {
 }
 
 async function pollAssignment() {
-    if (state.assignment) {
+    if (state.assignment || !state.online) {
         return;
     }
 
@@ -116,6 +157,24 @@ async function pollAssignment() {
         if (error.status !== 404) {
             setMessage(error.message);
         }
+    }
+}
+
+async function loadOnlineStatus() {
+    try {
+        const result = await fetchJson("/api/driver/online");
+        renderOnlineStatus(result.online);
+    } catch (error) {
+        setMessage(error.message);
+    }
+}
+
+function renderOnlineStatus(online) {
+    state.online = online;
+    if (!state.assignment) {
+        elements.status.textContent = online
+            ? "A procurar viagens para ti."
+            : "Fica online quando quiseres trabalhar.";
     }
 }
 
@@ -134,14 +193,13 @@ function renderSnapshot(snapshot) {
     }
 
     state.markersLayer.clearLayers();
-    const markers = [];
-    [...snapshot.drivers, ...snapshot.clients].forEach((point) => {
+    const markers = [...snapshot.drivers, ...snapshot.clients].map((point) => {
         const marker = L.marker([point.lat, point.lng], {
             icon: buildMarkerIcon(point.type.toLowerCase()),
             pane: "tripMarkerPane"
         }).bindPopup(point.name);
         marker.addTo(state.markersLayer);
-        markers.push(marker);
+        return marker;
     });
 
     if (markers.length > 0) {
@@ -156,37 +214,53 @@ function renderAssignment(assignment) {
     clearRouteLayer();
     setMessage("");
 
-    elements.status.textContent = statusCopy(assignment);
+    elements.status.textContent = assignment.status === "ACCEPTED"
+        ? "Vai até à localização do cliente."
+        : assignment.status === "IN_PROGRESS"
+            ? "Viagem em curso."
+            : "Tens uma viagem para responder.";
     elements.empty.hidden = true;
     elements.trip.hidden = false;
     elements.originAddress.textContent = assignment.originAddress;
     elements.destinationAddress.textContent = assignment.destinationAddress;
     elements.distance.textContent = `${assignment.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${assignment.durationMin} min`;
+    elements.priceBlock.hidden = assignment.routeMode === "PICKUP";
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;
+    setAvatar(elements.clientAvatar, assignment.clientName, assignment.clientPhotoUrl, "C");
+    elements.clientRating.textContent = assignment.clientRating > 0
+        ? `★ ${assignment.clientRating.toFixed(1)}`
+        : "Sem avaliações";
+    const notes = assignment.notes?.trim();
+    elements.clientNotesBlock.hidden = !notes;
+    elements.clientNotes.textContent = notes || "";
     const isPending = assignment.status === "PENDING";
     const isAccepted = assignment.status === "ACCEPTED";
+    const isInProgress = assignment.status === "IN_PROGRESS";
     const canCancel = assignment.status === "ACCEPTED" || assignment.status === "IN_PROGRESS";
     elements.countdownBlock.hidden = !isPending;
     elements.responseActions.hidden = !isPending;
     elements.startPanel.hidden = !isAccepted;
+    elements.completePanel.hidden = !isInProgress;
     elements.cancelTripButton.hidden = !canCancel;
     elements.acceptButton.disabled = !isPending;
     elements.rejectButton.disabled = !isPending;
     elements.startButton.disabled = !isAccepted;
+    elements.completeButton.disabled = !isInProgress;
     elements.cancelTripButton.disabled = !canCancel;
 
+    const pickupRoute = assignment.routeMode === "PICKUP";
     state.routeLayer = buildRouteLayer(assignment.geometry).addTo(map);
     const originMarker = L.marker([assignment.originLat, assignment.originLng], {
-        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "driver" : "client"),
+        icon: buildMarkerIcon(pickupRoute ? "driver" : "client"),
         pane: "tripMarkerPane"
-    }).bindPopup(assignment.routeMode === "PICKUP" ? "Motorista" : "Origem");
+    }).bindPopup(pickupRoute ? "Motorista" : "Origem");
     const destinationMarker = L.marker([assignment.destinationLat, assignment.destinationLng], {
-        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "client" : "destination"),
+        icon: buildMarkerIcon(pickupRoute ? "client" : "destination"),
         pane: "tripMarkerPane"
-    }).bindPopup(assignment.routeMode === "PICKUP" ? "Cliente" : "Destino");
+    }).bindPopup(pickupRoute ? "Cliente" : "Destino");
     originMarker.addTo(state.assignmentMarkers);
     destinationMarker.addTo(state.assignmentMarkers);
     map.fitBounds(L.featureGroup([state.routeLayer, originMarker, destinationMarker]).getBounds(), { padding: [36, 36] });
@@ -198,10 +272,20 @@ function renderAssignment(assignment) {
     }
 }
 
+function setAvatar(element, name, photoUrl, fallback) {
+    const hasPhoto = Boolean(photoUrl);
+    element.textContent = hasPhoto ? "" : (name?.trim().substring(0, 1).toUpperCase() || fallback);
+    element.style.backgroundImage = hasPhoto
+        ? `url("${photoUrl.replaceAll('"', "%22")}")`
+        : "";
+}
+
 async function acceptAssignment() {
-    setActionBusy(true);
+    responseButtons.forEach((button) => {
+        button.disabled = true;
+    });
     try {
-        const point = await updateCurrentLocation({ silent: true });
+        const point = await updateCurrentLocation(true);
         const options = { method: "POST" };
         if (point) {
             options.headers = { "Content-Type": "application/json" };
@@ -212,7 +296,9 @@ async function acceptAssignment() {
         setMessage("Viagem aceite. Segue até ao cliente e introduz o PIN para começar.");
     } catch (error) {
         setMessage(error.message);
-        setActionBusy(false);
+        responseButtons.forEach((button) => {
+            button.disabled = false;
+        });
     }
 }
 
@@ -235,13 +321,46 @@ async function startTrip() {
         renderAssignment(assignment);
         setMessage("Viagem iniciada. Segue a rota até ao destino.");
     } catch (error) {
-        setMessage(error.message);
+        showAlertModal(
+            error.message.toLowerCase().includes("pin") ? "PIN inválido" : "Não foi possível começar",
+            error.message
+        );
+        elements.startPin.select();
         elements.startButton.disabled = false;
     }
 }
 
+async function completeTrip() {
+    const rating = Number(elements.clientRatingInput.value);
+    if (rating < 1 || rating > 5) {
+        setMessage("Escolhe uma nota para o cliente.");
+        return;
+    }
+
+    elements.completeButton.disabled = true;
+    try {
+        const point = await updateCurrentLocation(true);
+        if (!point) {
+            throw new Error("Ativa a localização para calcular o preço final da viagem.");
+        }
+        const result = await fetchJson("/api/driver/assignment/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rating, lat: point.lat, lng: point.lng })
+        });
+        resetAssignmentView();
+        setMessage(result.message);
+        loadSnapshot();
+    } catch (error) {
+        setMessage(error.message);
+        elements.completeButton.disabled = false;
+    }
+}
+
 async function rejectAssignment() {
-    setActionBusy(true);
+    responseButtons.forEach((button) => {
+        button.disabled = true;
+    });
     try {
         const result = await fetchJson("/api/driver/assignment/reject", { method: "POST" });
         resetAssignmentView();
@@ -249,34 +368,66 @@ async function rejectAssignment() {
         loadSnapshot();
     } catch (error) {
         setMessage(error.message);
-        setActionBusy(false);
+        responseButtons.forEach((button) => {
+            button.disabled = false;
+        });
     }
 }
 
-async function cancelTrip() {
+function openCancelModal() {
     if (!state.assignment) {
         return;
     }
 
-    const reason = window.prompt("Indica o motivo do cancelamento:");
-    if (!reason || !reason.trim()) {
-        setMessage("Indica o motivo do cancelamento.");
+    elements.cancelReason.value = "";
+    elements.cancelError.hidden = true;
+    elements.cancelSubmitButton.disabled = false;
+    elements.cancelModal.hidden = false;
+    window.setTimeout(() => elements.cancelReason.focus(), 0);
+}
+
+function closeCancelModal() {
+    if (elements.cancelSubmitButton.disabled) {
         return;
     }
 
+    elements.cancelModal.hidden = true;
+    elements.cancelError.hidden = true;
+}
+
+async function submitCancelTrip(event) {
+    event.preventDefault();
+    if (!state.assignment) {
+        closeCancelModal();
+        return;
+    }
+
+    const reason = elements.cancelReason.value.trim();
+    if (reason.length < 3) {
+        elements.cancelError.textContent = "Indica um motivo com pelo menos 3 caracteres.";
+        elements.cancelError.hidden = false;
+        elements.cancelReason.focus();
+        return;
+    }
+
+    elements.cancelSubmitButton.disabled = true;
     elements.cancelTripButton.disabled = true;
+    elements.cancelError.hidden = true;
     setMessage("A cancelar viagem...");
     try {
         const result = await fetchJson("/api/driver/assignment/cancel", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason: reason.trim() })
+            body: JSON.stringify({ reason })
         });
+        elements.cancelModal.hidden = true;
         resetAssignmentView();
         setMessage(result.message);
         loadSnapshot();
     } catch (error) {
-        setMessage(error.message);
+        elements.cancelError.textContent = error.message;
+        elements.cancelError.hidden = false;
+        elements.cancelSubmitButton.disabled = false;
         elements.cancelTripButton.disabled = false;
     }
 }
@@ -284,10 +435,10 @@ async function cancelTrip() {
 function startCountdown(secondsLeft) {
     stopCountdown();
     let remaining = Math.min(responseTimeoutSeconds, Math.max(0, secondsLeft));
-    renderCountdown(remaining);
+    elements.countdown.textContent = `00:${String(remaining).padStart(2, "0")}`;
     state.countdownTimer = window.setInterval(() => {
         remaining -= 1;
-        renderCountdown(remaining);
+        elements.countdown.textContent = `00:${String(Math.max(0, remaining)).padStart(2, "0")}`;
         if (remaining <= 0) {
             stopCountdown();
             resetAssignmentView();
@@ -295,11 +446,6 @@ function startCountdown(secondsLeft) {
             window.setTimeout(pollAssignment, 1200);
         }
     }, 1000);
-}
-
-function renderCountdown(seconds) {
-    const safeSeconds = Math.max(0, seconds);
-    elements.countdown.textContent = `00:${String(safeSeconds).padStart(2, "0")}`;
 }
 
 function stopCountdown() {
@@ -320,36 +466,24 @@ function resetAssignmentView() {
     elements.countdownBlock.hidden = false;
     elements.responseActions.hidden = false;
     elements.startPanel.hidden = true;
+    elements.completePanel.hidden = true;
     elements.cancelTripButton.hidden = true;
     elements.startPin.value = "";
-    setActionBusy(false);
-}
-
-function statusCopy(assignment) {
-    if (assignment.status === "ACCEPTED") {
-        return "Vai até à localização do cliente.";
-    }
-    if (assignment.status === "IN_PROGRESS") {
-        return "Viagem em curso.";
-    }
-    return "Tens uma viagem para responder.";
+    elements.clientRatingInput.value = "";
+    responseButtons.forEach((button) => {
+        button.disabled = false;
+    });
 }
 
 function buildRouteLayer(geometry) {
     return L.featureGroup([
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#17202a", weight: 10, opacity: 0.18, lineCap: "round", lineJoin: "round" }
-        }),
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#ffffff", weight: 8, opacity: 0.95, lineCap: "round", lineJoin: "round" }
-        }),
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#2563eb", weight: 5, opacity: 0.95, lineCap: "round", lineJoin: "round" }
-        })
-    ]);
+        { color: "#17202a", weight: 10, opacity: 0.18 },
+        { color: "#ffffff", weight: 8, opacity: 0.95 },
+        { color: "#2563eb", weight: 5, opacity: 0.95 }
+    ].map((style) => L.geoJSON(geometry, {
+        pane: "routePane",
+        style: { ...style, lineCap: "round", lineJoin: "round" }
+    })));
 }
 
 function buildMarkerIcon(type) {
@@ -369,14 +503,36 @@ function clearRouteLayer() {
     }
 }
 
-function setActionBusy(isBusy) {
-    elements.acceptButton.disabled = isBusy;
-    elements.rejectButton.disabled = isBusy;
-}
-
 function setMessage(message) {
     elements.message.textContent = message;
     elements.message.hidden = !message;
+}
+
+function showAlertModal(title, message) {
+    elements.alertTitle.textContent = title;
+    elements.alertMessage.textContent = message || "Não foi possível completar o pedido.";
+    elements.alertModal.hidden = false;
+    const closeButton = elements.alertModal.querySelector("[data-alert-close]:last-child");
+    window.setTimeout(() => closeButton.focus(), 0);
+}
+
+function closeAlertModal() {
+    elements.alertModal.hidden = true;
+}
+
+function handleModalKeydown(event) {
+    if (event.key !== "Escape") {
+        return;
+    }
+
+    if (!elements.alertModal.hidden) {
+        closeAlertModal();
+        return;
+    }
+
+    if (!elements.cancelModal.hidden) {
+        closeCancelModal();
+    }
 }
 
 async function fetchJson(url, options = {}) {

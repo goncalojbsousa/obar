@@ -1,6 +1,5 @@
 package com.obar.desktop.admin.sections.drivers;
 
-import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.users.UsersController;
 import com.obar.model.enums.AccountStatus;
@@ -48,11 +47,6 @@ public class DriversController extends UsersController {
     }
 
     @Override
-    public void setAdminService(AdminService adminService) {
-        super.setAdminService(adminService);
-    }
-
-    @Override
     @FXML
     public void initialize() {
         super.initialize();
@@ -61,10 +55,6 @@ public class DriversController extends UsersController {
                 .addListener((obs, previous, current) -> updateApprovalButtons(current));
     }
 
-    /**
-     * Approves the currently selected pending driver.
-     * Triggered by the toolbar button or the detail panel button.
-     */
     @FXML
     public void handleApproveDriver() {
         if (getAdminService() == null) {
@@ -77,18 +67,14 @@ public class DriversController extends UsersController {
             return;
         }
         try {
-            getAdminService().approveDriver(selected.getId(), null);
+            getAdminService().approveDriver(selected.id(), null);
             reloadAndClearSelection();
-            showFeedback("Motorista \"" + selected.getName() + "\" aprovado com sucesso.", false);
+            showFeedback("Motorista \"" + selected.name() + "\" aprovado com sucesso.", false);
         } catch (IllegalArgumentException exception) {
             showFeedback(exception.getMessage(), true);
         }
     }
 
-    /**
-     * Rejects the currently selected pending driver.
-     * Triggered by the toolbar button or the detail panel button.
-     */
     @FXML
     public void handleRejectDriver() {
         if (getAdminService() == null) {
@@ -101,26 +87,19 @@ public class DriversController extends UsersController {
             return;
         }
         try {
-            getAdminService().rejectDriver(selected.getId(), null);
+            getAdminService().rejectDriver(selected.id(), null);
             reloadAndClearSelection();
-            showFeedback("Motorista \"" + selected.getName() + "\" rejeitado.", false);
+            showFeedback("Motorista \"" + selected.name() + "\" rejeitado.", false);
         } catch (IllegalArgumentException exception) {
             showFeedback(exception.getMessage(), true);
         }
     }
-
-    // -------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------
 
     private void reloadAndClearSelection() {
         usersTable.getSelectionModel().clearSelection();
         onSectionActivated();
     }
 
-    /**
-     * Shows the approve/reject buttons only when a PENDING driver is selected.
-     */
     private void updateApprovalButtons(AdminUserDTO selected) {
         boolean isPending = canApproveOrReject(selected);
 
@@ -143,6 +122,6 @@ public class DriversController extends UsersController {
     }
 
     private boolean canApproveOrReject(AdminUserDTO selected) {
-        return selected != null && selected.getStatus() == AccountStatus.PENDING;
+        return selected != null && selected.status() == AccountStatus.PENDING;
     }
 }

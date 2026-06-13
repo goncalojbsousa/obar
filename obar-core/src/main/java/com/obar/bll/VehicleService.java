@@ -7,8 +7,12 @@ import com.obar.model.enums.UserType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class VehicleService {
+
+    private static final List<String> SUPPORTED_CATEGORIES = List.of("STANDARD", "XL", "PREMIUM");
+    private static final Set<String> SUPPORTED_CATEGORY_SET = Set.copyOf(SUPPORTED_CATEGORIES);
 
     private final VehicleRepository vehicleRepository = new VehicleRepository();
 
@@ -26,6 +30,22 @@ public class VehicleService {
 
     public List<String> findActiveCategories() {
         return vehicleRepository.findActiveCategories();
+    }
+
+    public List<String> supportedCategories() {
+        return SUPPORTED_CATEGORIES;
+    }
+
+    public static String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException("Escolhe o tipo de ve\u00EDculo.");
+        }
+
+        String normalized = category.trim().toUpperCase();
+        if (!SUPPORTED_CATEGORY_SET.contains(normalized)) {
+            throw new IllegalArgumentException("Tipo de ve\u00EDculo inv\u00E1lido.");
+        }
+        return normalized;
     }
 
     public Optional<Vehicle> findById(Integer id) {

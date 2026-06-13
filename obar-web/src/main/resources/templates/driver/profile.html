@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Perfil do Motorista | Obar</title>
+    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=profile-reviews-20260613">
+</head>
+
+<body class="client-page profile-page driver-profile-page">
+    <header th:replace="~{fragments/client-navbar :: navbar('driver-profile')}"></header>
+
+    <main class="profile-shell driver-profile-shell">
+        <aside class="profile-card profile-identity-card driver-profile-identity">
+            <form class="profile-photo-form" th:action="@{/app/profile/photo}" method="post"
+                enctype="multipart/form-data">
+                <label class="profile-avatar-large photo-upload-trigger" title="Atualizar foto de perfil">
+                    <img th:if="${driverProfile.photoUrl() != null and !driverProfile.photoUrl().isBlank()}"
+                        th:src="${driverProfile.photoUrl()}" alt="Foto de perfil">
+                    <span class="profile-avatar-initials"
+                        th:unless="${driverProfile.photoUrl() != null and !driverProfile.photoUrl().isBlank()}"
+                        th:text="${driverProfile.initials()}">RM</span>
+                    <span class="photo-upload-overlay">Atualizar foto</span>
+                    <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                        aria-label="Atualizar foto de perfil" data-photo-upload required>
+                </label>
+            </form>
+            <p class="profile-upload-message is-success" th:if="${photoSuccess}" th:text="${photoSuccess}"></p>
+            <p class="profile-upload-message is-error" th:if="${photoError}" th:text="${photoError}"></p>
+            <h1 th:text="${driverProfile.name()}">Rui Martins</h1>
+            <p>Motorista desde <span th:text="${driverProfile.memberSince()}">jun 2024</span></p>
+            <div class="profile-review-summary">
+                <span class="profile-review-star" aria-hidden="true">&#9733;</span>
+                <strong th:text="${driverProfile.averageRating()}">0,0</strong>
+                <span th:text="${driverProfile.reviewCount() == 1 ? '1 avaliação' : driverProfile.reviewCount() + ' avaliações'}">
+                    0 avaliações
+                </span>
+            </div>
+
+            <div class="driver-profile-online">
+                <span class="profile-status-pill" th:classappend="${driverProfile.online()} ? '' : ' is-offline'"
+                    th:text="${driverProfile.onlineLabel()}">Online</span>
+            </div>
+
+            <dl class="profile-contact-list">
+                <div>
+                    <dt>Email</dt>
+                    <dd th:text="${driverProfile.email()}">rui@email.com</dd>
+                </div>
+                <div>
+                    <dt>Telefone</dt>
+                    <dd th:text="${driverProfile.phone()}">912 345 678</dd>
+                </div>
+                <div>
+                    <dt>NIF</dt>
+                    <dd th:text="${driverProfile.taxNumber()}">123456789</dd>
+                </div>
+                <div>
+                    <dt>Carta</dt>
+                    <dd th:text="${driverProfile.licenseNumber()}">L-000000</dd>
+                </div>
+            </dl>
+
+            <a class="profile-primary-link" th:href="@{/app}">Nova viagem</a>
+        </aside>
+
+        <section class="profile-main driver-profile-main">
+            <div class="profile-title">
+                <div>
+                    <span>Perfil</span>
+                    <h2>Perfil do Motorista</h2>
+                </div>
+                <a th:href="@{/driver}">Voltar ao painel</a>
+            </div>
+
+            <section class="profile-card profile-panel driver-profile-panel">
+                <div class="profile-panel-title">
+                    <span class="profile-panel-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6.8 17.5H5.2a1.8 1.8 0 0 1-1.8-1.8v-3.1l2.1-5A2.4 2.4 0 0 1 7.7 6h8.6a2.4 2.4 0 0 1 2.2 1.6l2.1 5v3.1a1.8 1.8 0 0 1-1.8 1.8h-1.6"></path>
+                            <path d="M7 13h10"></path>
+                            <path d="M8.3 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                            <path d="M15.7 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                        </svg>
+                    </span>
+                    <h3>Ve&iacute;culo</h3>
+                </div>
+
+                <div class="driver-vehicle-card" th:if="${driverProfile.vehicle() != null}">
+                    <form class="vehicle-photo-form"
+                        th:action="@{/driver/vehicles/{vehicleId}/photo(vehicleId=${driverProfile.vehicle().id()})}"
+                        method="post" enctype="multipart/form-data">
+                        <label class="driver-vehicle-visual photo-upload-trigger" title="Atualizar foto do veiculo">
+                            <img th:if="${driverProfile.vehicle().photoUrl() != null and !driverProfile.vehicle().photoUrl().isBlank()}"
+                                th:src="${driverProfile.vehicle().photoUrl()}" alt="Foto do veiculo">
+                            <span class="vehicle-placeholder"
+                                th:unless="${driverProfile.vehicle().photoUrl() != null and !driverProfile.vehicle().photoUrl().isBlank()}"
+                                aria-hidden="true"></span>
+                            <span class="photo-upload-overlay">Atualizar foto</span>
+                            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                                aria-label="Atualizar foto do veiculo" data-photo-upload required>
+                        </label>
+                    </form>
+                    <div class="driver-vehicle-details">
+                        <span>Gest&atilde;o do ve&iacute;culo</span>
+                        <strong th:text="${driverProfile.vehicle().model()}">Toyota Corolla</strong>
+                        <div class="driver-vehicle-meta">
+                            <span th:text="${driverProfile.vehicle().licensePlate()}">AA-24-OB</span>
+                            <span th:text="${driverProfile.vehicle().category()}">STANDARD</span>
+                            <span th:text="${driverProfile.vehicle().year()}">2021</span>
+                            <span th:text="${driverProfile.vehicle().color()}">Preto</span>
+                        </div>
+                    </div>
+                    <div class="driver-vehicle-state">
+                        <span class="profile-status-pill" th:classappend="${driverProfile.vehicle().active()} ? '' : ' is-offline'"
+                            th:text="${driverProfile.vehicle().statusLabel()}">Ativo</span>
+                    </div>
+                </div>
+                <p class="profile-upload-message is-success" th:if="${vehiclePhotoSuccess}"
+                    th:text="${vehiclePhotoSuccess}"></p>
+                <p class="profile-upload-message is-error" th:if="${vehiclePhotoError}"
+                    th:text="${vehiclePhotoError}"></p>
+
+                <div class="driver-profile-empty" th:if="${driverProfile.vehicle() == null}">
+                    <strong>Sem ve&iacute;culo ativo</strong>
+                    <p>Associa um ve&iacute;culo para poderes receber viagens.</p>
+                </div>
+            </section>
+
+            <section class="driver-profile-grid">
+                <div class="profile-card profile-panel driver-profile-panel">
+                    <div class="profile-panel-title">
+                        <span class="profile-panel-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 20V10"></path>
+                                <path d="M18 20V4"></path>
+                                <path d="M6 20v-6"></path>
+                            </svg>
+                        </span>
+                        <h3>Carreira</h3>
+                    </div>
+
+                    <div class="profile-stat-grid driver-career-stats">
+                        <article class="profile-card profile-stat-card">
+                            <span>Viagens</span>
+                            <strong th:text="${driverProfile.completedTrips()}">248</strong>
+                        </article>
+                        <article class="profile-card profile-stat-card">
+                            <span>Avalia&ccedil;&atilde;o</span>
+                            <strong th:text="${driverProfile.averageRating()}">4.8</strong>
+                        </article>
+                        <article class="profile-card profile-stat-card">
+                            <span>Ganhos</span>
+                            <strong th:text="${#numbers.formatCurrency(driverProfile.totalEarnings())}">3 420 &euro;</strong>
+                        </article>
+                    </div>
+
+                    <section class="driver-earnings-chart" aria-labelledby="weekly-earnings-title">
+                        <div class="driver-earnings-chart-header">
+                            <div>
+                                <span>Últimos 7 dias</span>
+                                <h4 id="weekly-earnings-title">Ganhos semanais</h4>
+                            </div>
+                            <strong th:text="${#numbers.formatCurrency(driverProfile.weeklyEarnings().total())}">
+                                0,00 €
+                            </strong>
+                        </div>
+                        <div class="driver-earnings-bars">
+                            <div class="driver-earnings-day"
+                                th:each="day : ${driverProfile.weeklyEarnings().days()}">
+                                <span class="driver-earnings-value"
+                                    th:text="${#numbers.formatCurrency(day.amount())}">0,00 €</span>
+                                <div class="driver-earnings-track">
+                                    <span class="driver-earnings-bar"
+                                        th:style="'height:' + ${day.heightPercent()} + '%'"></span>
+                                </div>
+                                <strong th:text="${day.day()}">SEG</strong>
+                                <small th:text="${day.date()}">08 jun</small>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="driver-activity-strip">
+                        <span>Atividade recente</span>
+                        <strong th:text="${driverProfile.lastDriverTrip().route()}">Aeroporto -> Baixa</strong>
+                        <p>
+                            <span th:text="${driverProfile.lastDriverTrip().date()}">13 jun 2026</span>
+                            <span>&middot;</span>
+                            <span th:text="${driverProfile.lastDriverTrip().status()}">Conclu&iacute;da</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="profile-card profile-panel driver-profile-panel">
+                    <div class="profile-panel-title">
+                        <span class="profile-panel-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"></path>
+                                <path d="M4.8 20.5a7.2 7.2 0 0 1 14.4 0"></path>
+                            </svg>
+                        </span>
+                        <h3>Perfil Cliente</h3>
+                    </div>
+
+                    <div class="profile-info-grid driver-client-info">
+                        <div>
+                            <span>Email</span>
+                            <strong th:text="${driverProfile.email()}">rui@email.com</strong>
+                        </div>
+                        <div>
+                            <span>Telefone</span>
+                            <strong th:text="${driverProfile.phone()}">912 345 678</strong>
+                        </div>
+                        <div>
+                            <span>Viagens cliente</span>
+                            <strong th:text="${driverProfile.clientTrips()}">12</strong>
+                        </div>
+                        <div>
+                            <span>Agendadas</span>
+                            <strong th:text="${driverProfile.scheduledClientTrips()}">2</strong>
+                        </div>
+                    </div>
+
+                    <div class="driver-activity-strip">
+                        <span>&Uacute;ltima viagem como cliente</span>
+                        <strong th:text="${driverProfile.lastClientTrip().route()}">Casa -> Faculdade</strong>
+                        <p>
+                            <span th:text="${driverProfile.lastClientTrip().date()}">11 jun 2026</span>
+                            <span>&middot;</span>
+                            <span th:text="${driverProfile.lastClientTrip().status()}">Conclu&iacute;da</span>
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+    <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
+</body>
+
+</html>

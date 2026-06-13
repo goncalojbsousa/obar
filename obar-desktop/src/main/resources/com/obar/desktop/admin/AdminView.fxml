@@ -41,28 +41,31 @@
                 </VBox>
 
                 <Label text="PRINCIPAL" styleClass="sidebar-group-title" />
-                <Button fx:id="motoristasSectionButton" text="Motoristas"
+                <Button fx:id="motoristasSectionButton" text="&#x1F464;  Motoristas"
                     onAction="#handleMotoristasSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item-active" />
-                <Button fx:id="clientesSectionButton" text="Clientes"
+                <Button fx:id="veiculosSectionButton" text="&#x1F698;  Veiculos"
+                    onAction="#handleVeiculosSection" maxWidth="1.7976931348623157E308"
+                    styleClass="sidebar-item" />
+                <Button fx:id="clientesSectionButton" text="&#x25C9;  Clientes"
                     onAction="#handleClientesSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
-                <Button fx:id="viagensSectionButton" text="Viagens"
+                <Button fx:id="viagensSectionButton" text="&#x21C4;  Viagens"
                     onAction="#handleViagensSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
-                <Button fx:id="financeiraSectionButton" text="Financeiro"
+                <Button fx:id="financeiraSectionButton" text="&#x20AC;  Financeiro"
                     onAction="#handleFinanceiraSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
 
                 <Label text="SISTEMA" styleClass="sidebar-group-title" />
-                <Button fx:id="pendingDriversSectionButton" text="Aprovações"
+                <Button fx:id="pendingDriversSectionButton" text="&#x2713;  Aprova&#x00E7;&#x00F5;es"
                     onAction="#handlePendingDriversSection" maxWidth="1.7976931348623157E308"
                     styleClass="sidebar-item" />
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                    <VBox spacing="10.0" maxWidth="1.7976931348623157E308" styleClass="sidebar-user-card"
-                        onMouseClicked="#handleLogout">
+                <VBox spacing="10.0" maxWidth="1.7976931348623157E308" styleClass="sidebar-user-card"
+                    onMouseClicked="#handleLogout">
                     <children>
                         <HBox spacing="10.0" alignment="CENTER_LEFT">
                             <children>
@@ -73,7 +76,7 @@
                                         <Label fx:id="sidebarUserRoleLabel" text="Administrador" styleClass="sidebar-user-role" />
                                     </children>
                                 </VBox>
-                                <Label text="↪" styleClass="sidebar-logout-icon" />
+                                <Label text="&#x21AA;" styleClass="sidebar-logout-icon" />
                             </children>
                         </HBox>
                     </children>
@@ -84,6 +87,7 @@
         <center>
             <StackPane fx:id="contentArea">
                 <fx:include fx:id="driversSection" source="sections/drivers/drivers-section.fxml" />
+                <fx:include fx:id="vehiclesSection" source="sections/vehicles/vehicles-section.fxml" />
                 <fx:include fx:id="pendingDriversSection" source="sections/drivers/pending-drivers-section.fxml" />
                 <fx:include fx:id="clientsSection" source="sections/clients/clients-section.fxml" />
                 <fx:include fx:id="tripsSection" source="sections/trips/trips-section.fxml" />

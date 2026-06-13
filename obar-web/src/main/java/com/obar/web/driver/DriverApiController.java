@@ -1,16 +1,19 @@
 package com.obar.web.driver;
 
+import com.obar.bll.ReviewService;
+import com.obar.bll.TaxRateService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Route;
+import com.obar.model.Review;
 import com.obar.model.Trip;
 import com.obar.model.TripDriver;
 import com.obar.model.User;
 import com.obar.model.enums.UserType;
 import com.obar.web.maps.client.MapsServiceClient;
-import com.obar.web.maps.dto.request.RouteEstimateRequest;
-import com.obar.web.maps.dto.response.RouteEstimateResponse;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateRequest;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateResponse;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,14 +34,18 @@ public class DriverApiController {
         private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
 
         private final TripService tripService;
+        private final ReviewService reviewService;
         private final UserService userService;
         private final MapsServiceClient mapsServiceClient;
+        private final TaxRateService taxRateService;
 
-        public DriverApiController(TripService tripService, UserService userService,
-                        MapsServiceClient mapsServiceClient) {
+        public DriverApiController(TripService tripService, ReviewService reviewService, UserService userService,
+                        MapsServiceClient mapsServiceClient, TaxRateService taxRateService) {
                 this.tripService = tripService;
+                this.reviewService = reviewService;
                 this.userService = userService;
                 this.mapsServiceClient = mapsServiceClient;
+                this.taxRateService = taxRateService;
         }
 
         @GetMapping("/api/driver/assignment")
@@ -50,7 +58,8 @@ public class DriverApiController {
         }
 
         @PostMapping("/api/driver/assignment/accept")
-        public DriverAssignmentResponse acceptAssignment(@RequestBody(required = false) DriverLocationUpdateRequest location,
+        public DriverAssignmentResponse acceptAssignment(
+                        @RequestBody(required = false) DriverLocationUpdateRequest location,
                         HttpSession session) {
                 AuthenticatedUserDto currentUser = requireDriver(session);
                 TripDriver assignment = currentAssignmentEntity(currentUser.id());
@@ -73,10 +82,79 @@ public class DriverApiController {
         public DriverAssignmentResponse startTrip(@RequestBody DriverStartTripRequest request, HttpSession session) {
                 AuthenticatedUserDto currentUser = requireDriver(session);
                 TripDriver assignment = currentAssignmentEntity(currentUser.id());
-                Trip startedTrip = tripService.startTrip(assignment.getTrip().getId(), currentUser.id(), request.pin());
+                Trip startedTrip;
+                try {
+                        startedTrip = tripService.startTrip(
+                                        assignment.getTrip().getId(),
+                                        currentUser.id(),
+                                        request.pin());
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
                 assignment.setTrip(startedTrip);
                 return toAssignmentResponse(startedTrip, assignment.getAssignedAt(), "IN_PROGRESS",
                                 assignment.getDriver());
+        }
+
+        @PostMapping("/api/driver/assignment/complete")
+        public DriverActionResponse completeTrip(@RequestBody DriverCompleteTripRequest request, HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                TripDriver assignment = currentAssignmentEntity(currentUser.id());
+                Trip trip = assignment.getTrip();
+
+                if (request.rating() == null || request.rating() < 1 || request.rating() > 5) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe uma nota entre 1 e 5.");
+                }
+                if (request.lat() == null || request.lng() == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Ativa a localização para calcular o preço final da viagem.");
+                }
+                if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                        "Esta viagem pertence a outro motorista.");
+                }
+
+                try {
+                        Route route = trip.getRoute();
+                        RouteEstimateResponse finalEstimate = mapsServiceClient.estimate(new RouteEstimateRequest(
+                                        route.getOriginLatitude(),
+                                        route.getOriginLongitude(),
+                                        request.lat(),
+                                        request.lng(),
+                                        route.getOriginAddress(),
+                                        "Local de conclusão",
+                                        trip.getVehicleCategory(),
+                                        null,
+                                        null));
+                        int actualDurationMin = Math.max(1, (int) Math.ceil(
+                                        Duration.between(trip.getStartTime(), LocalDateTime.now()).toSeconds() / 60.0));
+                        userService.updateDriverCurrentLocation(
+                                        currentUser.id(),
+                                        request.lat().floatValue(),
+                                        request.lng().floatValue());
+                        Trip completedTrip = tripService.completeTrip(
+                                        trip.getId(),
+                                        finalEstimate.distanceKm(),
+                                        actualDurationMin,
+                                        taxRateService.quoteAtRate(
+                                                        mapsServiceClient.calculatePrice(
+                                                                        finalEstimate.distanceKm(),
+                                                                        actualDurationMin,
+                                                                        trip.getVehicleCategory()),
+                                                        trip.getTaxRateApplied())
+                                                        .totalAmount());
+                        Review review = new Review();
+                        review.setTrip(completedTrip);
+                        review.setReviewer(assignment.getDriver());
+                        review.setReviewed(completedTrip.getClient());
+                        review.setRating(request.rating());
+                        review.setReviewerType("DRIVER");
+                        reviewService.addReview(review);
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
+
+                return new DriverActionResponse("Viagem concluída. Preço final atualizado e cliente avaliado.");
         }
 
         @PostMapping("/api/driver/assignment/reject")
@@ -95,7 +173,8 @@ public class DriverApiController {
                 if (trip.getDriver() == null || !trip.getDriver().getId().equals(currentUser.id())) {
                         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não podes cancelar esta viagem.");
                 }
-                tripService.cancelTrip(trip.getId(), "DRIVER", requireReason(request == null ? null : request.reason()));
+                tripService.cancelTrip(trip.getId(), "DRIVER",
+                                requireReason(request == null ? null : request.reason()));
                 return new DriverActionResponse("Viagem cancelada.");
         }
 
@@ -105,6 +184,36 @@ public class DriverApiController {
                 AuthenticatedUserDto currentUser = requireDriver(session);
                 userService.updateDriverCurrentLocation(currentUser.id(), (float) request.lat(), (float) request.lng());
                 return new DriverActionResponse("Localização atualizada.");
+        }
+
+        @GetMapping("/api/driver/online")
+        public DriverOnlineResponse onlineStatus(HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                User driver = userService.findById(currentUser.id())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                return new DriverOnlineResponse(Boolean.TRUE.equals(driver.getOnline()));
+        }
+
+        @PostMapping("/api/driver/online")
+        public DriverOnlineResponse updateOnlineStatus(@RequestBody DriverOnlineRequest request,
+                        HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                if (tripService.findCurrentAssignmentForDriver(currentUser.id()).isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "Termina ou cancela a viagem antes de alterares o estado online.");
+                }
+                try {
+                        if (request.online() && request.lat() != null && request.lng() != null) {
+                                userService.updateDriverCurrentLocation(
+                                                currentUser.id(),
+                                                request.lat().floatValue(),
+                                                request.lng().floatValue());
+                        }
+                        userService.setDriverOnline(currentUser.id(), request.online());
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
+                return new DriverOnlineResponse(request.online());
         }
 
         @GetMapping("/api/driver/map-snapshot")
@@ -167,6 +276,7 @@ public class DriverApiController {
                                 originAddress,
                                 destinationAddress,
                                 trip.getVehicleCategory(),
+                                null,
                                 null));
 
                 long secondsLeft = Math.max(0,
@@ -176,6 +286,9 @@ public class DriverApiController {
                 return new DriverAssignmentResponse(
                                 trip.getId(),
                                 trip.getClient().getName(),
+                                trip.getClient().getAverageRating(),
+                                trip.getClient().getPhotoUrl(),
+                                trip.getNotes(),
                                 originAddress,
                                 destinationAddress,
                                 originLat,
@@ -184,7 +297,7 @@ public class DriverApiController {
                                 destinationLng,
                                 estimate.distanceKm(),
                                 estimate.durationMin(),
-                                estimate.estimatedPrice(),
+                                pickupRoute ? estimate.estimatedPrice() : trip.getEstimatedPrice(),
                                 trip.getVehicleCategory(),
                                 status,
                                 assignedAt,
@@ -207,5 +320,62 @@ public class DriverApiController {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica o motivo do cancelamento.");
                 }
                 return reason.trim();
+        }
+
+        public record DriverActionResponse(String message) {
+        }
+
+        public record DriverAssignmentResponse(
+                        Integer tripId,
+                        String clientName,
+                        Float clientRating,
+                        String clientPhotoUrl,
+                        String notes,
+                        String originAddress,
+                        String destinationAddress,
+                        double originLat,
+                        double originLng,
+                        double destinationLat,
+                        double destinationLng,
+                        double distanceKm,
+                        int durationMin,
+                        BigDecimal estimatedPrice,
+                        String vehicleCategory,
+                        String status,
+                        LocalDateTime assignedAt,
+                        long secondsLeft,
+                        String routeMode,
+                        Object geometry) {
+        }
+
+        public record DriverCancelTripRequest(String reason) {
+        }
+
+        public record DriverCompleteTripRequest(Integer rating, Double lat, Double lng) {
+        }
+
+        public record DriverLocationUpdateRequest(double lat, double lng) {
+        }
+
+        public record DriverMapPointResponse(
+                        Integer id,
+                        String name,
+                        String type,
+                        double lat,
+                        double lng) {
+        }
+
+        public record DriverMapSnapshotResponse(
+                        List<DriverMapPointResponse> drivers,
+                        List<DriverMapPointResponse> clients) {
+        }
+
+        public record DriverOnlineRequest(boolean online, Double lat, Double lng) {
+        }
+
+        public record DriverOnlineResponse(boolean online) {
+        }
+
+        public record DriverStartTripRequest(String pin) {
         }
 }

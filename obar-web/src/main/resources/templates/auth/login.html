@@ -5,34 +5,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Entrar | Obar</title>
-    <link rel="stylesheet" th:href="@{/css/web.css}">
+    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/login.css?v=font-20260613">
 </head>
 
-<body class="auth-page">
-    <main class="auth-shell">
-        <section class="auth-panel">
-            <a class="brand" th:href="@{/login}">Obar</a>
-            <h1>Entra na tua conta</h1>
-            <p class="muted">Pede viagens, acompanha pedidos e gere os teus dados de cliente.</p>
+<body class="login-auth-page">
+    <main class="login-auth-shell">
+        <section class="login-hero" aria-label="Obar">
+            <a class="brand login-brand" th:href="@{/login}" aria-label="OBAR">
+                <span class="brand-mark" aria-hidden="true">O</span><span class="brand-text">bar</span>
+            </a>
 
-            <p class="alert success" th:if="${param.logout}">Sessão terminada.</p>
-            <p class="alert" th:if="${error}" th:text="${error}"></p>
+            <div class="login-hero-copy">
+                <h1>A tua viagem,<span>no teu ritmo.</span></h1>
+                <p>Pede viagens, acompanha pedidos e gere os teus dados de cliente.</p>
+            </div>
 
-            <form class="form-stack" th:action="@{/login}" th:object="${loginForm}" method="post">
-                <label>
-                    Email
-                    <input type="email" th:field="*{email}" autocomplete="email" required autofocus>
-                </label>
+            <div class="login-route-preview" aria-hidden="true">
+                <div class="login-route-line">
+                    <span class="login-route-dot origin"></span>
+                    <span class="login-route-track"></span>
+                    <span class="login-route-dot destination"></span>
+                </div>
+                <div class="login-stats-row">
+                    <div>
+                        <strong>2.4k+</strong>
+                        <span>VIAGENS ESTE MES</span>
+                    </div>
+                    <div>
+                        <strong>98%</strong>
+                        <span>SATISFACAO</span>
+                    </div>
+                    <div>
+                        <strong>4.8</strong>
+                        <span>AVALIACAO MEDIA</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                <label>
-                    Palavra-passe
-                    <input type="password" th:field="*{password}" autocomplete="current-password" required>
-                </label>
+        <section class="login-form-side" aria-label="Entrar na conta Obar">
+            <div class="login-card">
+                <nav class="login-segment" aria-label="Autenticacao">
+                    <a class="active" th:href="@{/login}">Entrar</a>
+                    <a th:href="@{/register}">Criar conta</a>
+                </nav>
 
-                <button class="primary-button" type="submit">Entrar</button>
-            </form>
+                <div class="login-heading">
+                    <h1 id="login-title">Bem-vindo!</h1>
+                    <p>Entra na tua conta para continuar</p>
+                </div>
 
-            <p class="switch-link">Ainda nao tens conta? <a th:href="@{/register}">Criar conta cliente</a></p>
+                <p class="login-alert success" th:if="${param.logout}">Sessao terminada.</p>
+                <p class="login-alert" th:if="${error}" th:text="${error}"></p>
+
+                <form class="login-form" th:action="@{/login}" th:object="${loginForm}" method="post">
+                    <label class="login-field">
+                        <span>Email</span>
+                        <input type="email" th:field="*{email}" placeholder="o.teu@email.com" autocomplete="email"
+                            required autofocus>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Palavra-passe</span>
+                        <input type="password" th:field="*{password}" placeholder="********"
+                            autocomplete="current-password" required>
+                    </label>
+
+                    <button class="login-submit" type="submit">Entrar</button>
+                </form>
+
+                <p class="login-security-note">Acesso seguro para clientes Obar</p>
+            </div>
         </section>
     </main>
 </body>

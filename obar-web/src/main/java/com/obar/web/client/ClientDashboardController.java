@@ -40,10 +40,10 @@ public class ClientDashboardController {
     @GetMapping("/app/scheduled")
     public String scheduledTrips(HttpSession session, Model model) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        var scheduledTrips = tripService.findScheduledByClient(currentUser.id());
         model.addAttribute("currentUser", currentUser);
-        model.addAttribute("scheduledTrips", tripService.findScheduledByClient(currentUser.id()).stream()
-                .map(ScheduledTripView::from)
-                .toList());
+        model.addAttribute("scheduledPage",
+                ScheduledTripsPageView.from(scheduledTrips, tripService.findByClient(currentUser.id())));
         return "client/scheduled";
     }
 

@@ -16,7 +16,13 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
     public List<Trip> findByClientId(Integer clientId) {
         try (Session session = getSession()) {
             return session.createQuery(
-                    "FROM Trip t WHERE t.client.id = :clientId ORDER BY t.requestTime DESC", Trip.class)
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.route "
+                            + "LEFT JOIN FETCH t.driver "
+                            + "LEFT JOIN FETCH t.vehicle "
+                            + "WHERE t.client.id = :clientId "
+                            + "ORDER BY t.requestTime DESC",
+                    Trip.class)
                     .setParameter("clientId", clientId)
                     .list();
         }

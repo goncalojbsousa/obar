@@ -7,7 +7,8 @@
     <title>Cliente | Obar</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY=" crossorigin="">
-    <link rel="stylesheet" th:href="@{/css/web.css}">
+    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=app-refactor-20260613">
 </head>
 
 <body class="client-page">
@@ -93,9 +94,32 @@
             </div>
         </section>
     </main>
+
+    <div class="app-modal" data-cancel-modal hidden>
+        <div class="app-modal-backdrop" data-cancel-dismiss></div>
+        <section class="app-modal-panel" role="dialog" aria-modal="true" aria-labelledby="client-cancel-title">
+            <button class="modal-close-button" type="button" aria-label="Fechar" data-cancel-dismiss>&times;</button>
+            <span class="modal-kicker">Cancelamento</span>
+            <h2 id="client-cancel-title">Cancelar viagem</h2>
+            <p>Indica o motivo para ficar registado no pedido.</p>
+            <form class="modal-form" data-cancel-form>
+                <label class="modal-field">
+                    Motivo
+                    <textarea rows="4" minlength="3" maxlength="255" required data-cancel-reason
+                        placeholder="Ex.: houve uma alteração de planos"></textarea>
+                </label>
+                <p class="modal-error" data-cancel-error hidden>Indica o motivo do cancelamento.</p>
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-cancel-dismiss>Voltar</button>
+                    <button class="primary-button" type="submit" data-cancel-submit>Confirmar cancelamento</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script th:src="@{/js/client-map.js}"></script>
+    <script src="/js/client-map.js?v=map-light-modal-20260613"></script>
 </body>
 
 </html>

@@ -22,9 +22,10 @@ map.getPane("routePane").style.pointerEvents = "none";
 map.createPane("tripMarkerPane");
 map.getPane("tripMarkerPane").style.zIndex = 720;
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
 }).addTo(map);
 
 const elements = {
@@ -46,7 +47,13 @@ const elements = {
     waitingPanel: document.querySelector("[data-waiting-panel]"),
     tripPinBlock: document.querySelector("[data-trip-pin-block]"),
     tripPin: document.querySelector("[data-trip-pin]"),
-    cancelTripButton: document.querySelector("[data-cancel-trip-button]")
+    cancelTripButton: document.querySelector("[data-cancel-trip-button]"),
+    cancelModal: document.querySelector("[data-cancel-modal]"),
+    cancelForm: document.querySelector("[data-cancel-form]"),
+    cancelReason: document.querySelector("[data-cancel-reason]"),
+    cancelError: document.querySelector("[data-cancel-error]"),
+    cancelSubmitButton: document.querySelector("[data-cancel-submit]"),
+    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
 };
 
 elements.locateButton.addEventListener("click", locateUser);
@@ -59,7 +66,10 @@ elements.vehicleCategory.addEventListener("change", () => {
 });
 elements.requestButton.addEventListener("click", requestTrip);
 elements.scheduleButton.addEventListener("click", scheduleTrip);
-elements.cancelTripButton.addEventListener("click", cancelTrip);
+elements.cancelTripButton.addEventListener("click", openCancelModal);
+elements.cancelForm.addEventListener("submit", submitCancelTrip);
+elements.cancelDismissButtons.forEach((button) => button.addEventListener("click", closeCancelModal));
+document.addEventListener("keydown", handleModalKeydown);
 
 initializeScheduleInput();
 initializeRide();
@@ -265,35 +275,71 @@ async function scheduleTrip() {
     }
 }
 
-async function cancelTrip() {
+function openCancelModal() {
     if (!state.activeTripId) {
         return;
     }
 
-    const reason = window.prompt("Indica o motivo do cancelamento:");
-    if (!reason || !reason.trim()) {
-        setMessage("Indica o motivo do cancelamento.");
+    elements.cancelReason.value = "";
+    elements.cancelError.hidden = true;
+    elements.cancelSubmitButton.disabled = false;
+    elements.cancelModal.hidden = false;
+    window.setTimeout(() => elements.cancelReason.focus(), 0);
+}
+
+function closeCancelModal() {
+    if (elements.cancelSubmitButton.disabled) {
         return;
     }
 
+    elements.cancelModal.hidden = true;
+    elements.cancelError.hidden = true;
+}
+
+async function submitCancelTrip(event) {
+    event.preventDefault();
+    if (!state.activeTripId) {
+        closeCancelModal();
+        return;
+    }
+
+    const reason = elements.cancelReason.value.trim();
+    if (reason.length < 3) {
+        elements.cancelError.textContent = "Indica um motivo com pelo menos 3 caracteres.";
+        elements.cancelError.hidden = false;
+        elements.cancelReason.focus();
+        return;
+    }
+
+    elements.cancelSubmitButton.disabled = true;
     setBusy(true);
     elements.cancelTripButton.disabled = true;
+    elements.cancelError.hidden = true;
     setMessage("A cancelar viagem...");
     try {
         await fetchJson(`/api/trips/${state.activeTripId}/cancel`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason: reason.trim() })
+            body: JSON.stringify({ reason })
         });
+        elements.cancelModal.hidden = true;
         state.activeTripId = null;
         setTripLockedState(null);
         stopActiveTripPolling();
         setMessage("Viagem cancelada. Podes escolher outro destino ou pedir novamente.");
     } catch (error) {
-        setMessage(error.message);
+        elements.cancelError.textContent = error.message;
+        elements.cancelError.hidden = false;
+        elements.cancelSubmitButton.disabled = false;
         elements.cancelTripButton.disabled = false;
     } finally {
         setBusy(false);
+    }
+}
+
+function handleModalKeydown(event) {
+    if (event.key === "Escape" && !elements.cancelModal.hidden) {
+        closeCancelModal();
     }
 }
 

@@ -19,9 +19,10 @@ map.getPane("routePane").style.pointerEvents = "none";
 map.createPane("tripMarkerPane");
 map.getPane("tripMarkerPane").style.zIndex = 720;
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
 }).addTo(map);
 state.markersLayer.addTo(map);
 state.assignmentMarkers.addTo(map);
@@ -46,16 +47,30 @@ const elements = {
     startPin: document.querySelector("[data-start-pin]"),
     startButton: document.querySelector("[data-start-trip]"),
     cancelTripButton: document.querySelector("[data-cancel-trip]"),
-    message: document.querySelector("[data-driver-message]")
+    message: document.querySelector("[data-driver-message]"),
+    alertModal: document.querySelector("[data-alert-modal]"),
+    alertTitle: document.querySelector("[data-alert-title]"),
+    alertMessage: document.querySelector("[data-alert-message]"),
+    alertCloseButtons: document.querySelectorAll("[data-alert-close]"),
+    cancelModal: document.querySelector("[data-cancel-modal]"),
+    cancelForm: document.querySelector("[data-cancel-form]"),
+    cancelReason: document.querySelector("[data-cancel-reason]"),
+    cancelError: document.querySelector("[data-cancel-error]"),
+    cancelSubmitButton: document.querySelector("[data-cancel-submit]"),
+    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
 };
 
 elements.acceptButton.addEventListener("click", acceptAssignment);
 elements.rejectButton.addEventListener("click", rejectAssignment);
 elements.startButton.addEventListener("click", startTrip);
-elements.cancelTripButton.addEventListener("click", cancelTrip);
+elements.cancelTripButton.addEventListener("click", openCancelModal);
+elements.cancelForm.addEventListener("submit", submitCancelTrip);
+elements.alertCloseButtons.forEach((button) => button.addEventListener("click", closeAlertModal));
+elements.cancelDismissButtons.forEach((button) => button.addEventListener("click", closeCancelModal));
 elements.startPin.addEventListener("input", () => {
     elements.startPin.value = elements.startPin.value.replace(/\D/g, "").slice(0, 4);
 });
+document.addEventListener("keydown", handleModalKeydown);
 
 initializeDriverMap();
 
@@ -235,7 +250,11 @@ async function startTrip() {
         renderAssignment(assignment);
         setMessage("Viagem iniciada. Segue a rota até ao destino.");
     } catch (error) {
-        setMessage(error.message);
+        showAlertModal(
+            error.message.toLowerCase().includes("pin") ? "PIN inválido" : "Não foi possível começar",
+            error.message
+        );
+        elements.startPin.select();
         elements.startButton.disabled = false;
     }
 }
@@ -253,30 +272,60 @@ async function rejectAssignment() {
     }
 }
 
-async function cancelTrip() {
+function openCancelModal() {
     if (!state.assignment) {
         return;
     }
 
-    const reason = window.prompt("Indica o motivo do cancelamento:");
-    if (!reason || !reason.trim()) {
-        setMessage("Indica o motivo do cancelamento.");
+    elements.cancelReason.value = "";
+    elements.cancelError.hidden = true;
+    elements.cancelSubmitButton.disabled = false;
+    elements.cancelModal.hidden = false;
+    window.setTimeout(() => elements.cancelReason.focus(), 0);
+}
+
+function closeCancelModal() {
+    if (elements.cancelSubmitButton.disabled) {
         return;
     }
 
+    elements.cancelModal.hidden = true;
+    elements.cancelError.hidden = true;
+}
+
+async function submitCancelTrip(event) {
+    event.preventDefault();
+    if (!state.assignment) {
+        closeCancelModal();
+        return;
+    }
+
+    const reason = elements.cancelReason.value.trim();
+    if (reason.length < 3) {
+        elements.cancelError.textContent = "Indica um motivo com pelo menos 3 caracteres.";
+        elements.cancelError.hidden = false;
+        elements.cancelReason.focus();
+        return;
+    }
+
+    elements.cancelSubmitButton.disabled = true;
     elements.cancelTripButton.disabled = true;
+    elements.cancelError.hidden = true;
     setMessage("A cancelar viagem...");
     try {
         const result = await fetchJson("/api/driver/assignment/cancel", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason: reason.trim() })
+            body: JSON.stringify({ reason })
         });
+        elements.cancelModal.hidden = true;
         resetAssignmentView();
         setMessage(result.message);
         loadSnapshot();
     } catch (error) {
-        setMessage(error.message);
+        elements.cancelError.textContent = error.message;
+        elements.cancelError.hidden = false;
+        elements.cancelSubmitButton.disabled = false;
         elements.cancelTripButton.disabled = false;
     }
 }
@@ -377,6 +426,33 @@ function setActionBusy(isBusy) {
 function setMessage(message) {
     elements.message.textContent = message;
     elements.message.hidden = !message;
+}
+
+function showAlertModal(title, message) {
+    elements.alertTitle.textContent = title;
+    elements.alertMessage.textContent = message || "Não foi possível completar o pedido.";
+    elements.alertModal.hidden = false;
+    const closeButton = elements.alertModal.querySelector("[data-alert-close]:last-child");
+    window.setTimeout(() => closeButton.focus(), 0);
+}
+
+function closeAlertModal() {
+    elements.alertModal.hidden = true;
+}
+
+function handleModalKeydown(event) {
+    if (event.key !== "Escape") {
+        return;
+    }
+
+    if (!elements.alertModal.hidden) {
+        closeAlertModal();
+        return;
+    }
+
+    if (!elements.cancelModal.hidden) {
+        closeCancelModal();
+    }
 }
 
 async function fetchJson(url, options = {}) {

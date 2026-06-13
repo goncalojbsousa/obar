@@ -5,61 +5,257 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Viagens Agendadas | Obar</title>
-    <link rel="stylesheet" th:href="@{/css/web.css}">
+    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=scheduled-polish-20260613">
 </head>
 
 <body class="client-page scheduled-page">
     <header th:replace="~{fragments/client-navbar :: navbar('scheduled')}"></header>
 
     <main class="client-shell scheduled-shell">
-        <section class="scheduled-trips" aria-label="Viagens agendadas">
-            <div class="scheduled-header">
+        <section class="scheduled-page-content" aria-label="Viagens agendadas">
+            <div class="scheduled-page-header">
                 <div>
                     <h1>Viagens Agendadas</h1>
-                    <p class="muted">Pedidos marcados para uma data e hora espec&#x00ED;ficas.</p>
+                    <p>Organiza as tuas viagens futuras.</p>
                 </div>
-                <a class="primary-button inline-action" th:href="@{/app}">Nova viagem</a>
+                <a class="primary-button scheduled-new-trip" th:href="@{/app}">
+                    <span>Nova viagem</span>
+                    <span class="scheduled-button-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8"></circle>
+                            <path d="M12 8v8"></path>
+                            <path d="M8 12h8"></path>
+                        </svg>
+                    </span>
+                </a>
             </div>
 
-            <div class="empty-state" th:if="${#lists.isEmpty(scheduledTrips)}">
-                <strong>Sem viagens agendadas</strong>
-                <p>Quando agendares uma viagem, ela aparece aqui.</p>
-            </div>
+            <div class="scheduled-board">
+                <div class="scheduled-main-flow">
+                    <section class="scheduled-section">
+                        <div class="scheduled-section-heading">
+                            <span class="section-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+                                    <path d="M8 3v4"></path>
+                                    <path d="M16 3v4"></path>
+                                    <path d="M4 10h16"></path>
+                                </svg>
+                            </span>
+                            <h2>Pr&oacute;ximas viagens</h2>
+                        </div>
 
-            <div class="scheduled-list" th:if="${!#lists.isEmpty(scheduledTrips)}">
-                <article class="scheduled-trip-card" th:each="trip : ${scheduledTrips}">
-                    <div>
-                        <span class="field-title"
-                            th:text="${#temporals.format(trip.scheduledTime(), 'dd/MM/yyyy HH:mm')}">26/05/2026
-                            09:30</span>
-                        <strong th:text="${trip.destinationAddress()}">Destino</strong>
-                        <p>
-                            <span th:text="${trip.originAddress()}">Origem</span>
-                            <span> -> </span>
-                            <span th:text="${trip.destinationAddress()}">Destino</span>
+                        <div class="scheduled-upcoming-list"
+                            th:if="${!#lists.isEmpty(scheduledPage.scheduledTrips())}">
+                            <article class="scheduled-ride-card" th:each="trip : ${scheduledPage.scheduledTrips()}">
+                                <div class="scheduled-card-time">
+                                    <strong th:text="${trip.scheduleHeadline()}">Hoje, 18:30</strong>
+                                    <span class="scheduled-time-row">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+                                            <path d="M8 3v4"></path>
+                                            <path d="M16 3v4"></path>
+                                            <path d="M4 10h16"></path>
+                                        </svg>
+                                        <span th:text="${trip.scheduleDateLabel()}">13 jun 2026</span>
+                                    </span>
+                                    <span class="scheduled-time-row">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="8"></circle>
+                                            <path d="M12 8v4l3 2"></path>
+                                        </svg>
+                                        <span th:text="${trip.scheduleTimeLabel()}">18:30</span>
+                                    </span>
+                                    <em>Ida</em>
+                                </div>
+
+                                <div class="scheduled-route">
+                                    <div class="scheduled-route-track" aria-hidden="true">
+                                        <span></span>
+                                        <i></i>
+                                        <span></span>
+                                    </div>
+                                    <div class="scheduled-route-copy">
+                                        <strong th:text="${trip.originDisplay()}">Origem</strong>
+                                        <strong th:text="${trip.destinationDisplay()}">Destino</strong>
+                                        <p>
+                                            Dist&acirc;ncia:
+                                            <span th:text="${trip.distanceLabel()}">34,2 km</span>
+                                            <span aria-hidden="true">&middot;</span>
+                                            Dura&ccedil;&atilde;o:
+                                            <span th:text="${trip.durationLabel()}">32 min</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="scheduled-trip-facts">
+                                    <div>
+                                        <span>Ve&iacute;culo</span>
+                                        <strong th:text="${trip.vehicleCategoryLabel()}">STANDARD</strong>
+                                    </div>
+                                    <div>
+                                        <span>Motorista</span>
+                                        <strong th:text="${trip.driverDisplay()}">Ricardo</strong>
+                                    </div>
+                                    <div>
+                                        <span>Pre&ccedil;o</span>
+                                        <strong th:text="${#numbers.formatCurrency(trip.estimatedPrice())}">12,40 &euro;</strong>
+                                    </div>
+                                </div>
+
+                                <div class="scheduled-status-area">
+                                    <span class="status-pill" th:classappend="${trip.statusClass()}"
+                                        th:text="${trip.statusLabel()}">Agendada</span>
+                                    <form th:if="${trip.canCancel()}"
+                                        th:action="@{/app/scheduled/{id}/cancel(id=${trip.id()})}" method="post">
+                                        <input type="hidden" name="reason" value="Cancelado pelo cliente">
+                                        <button class="scheduled-cancel-button" type="submit">Cancelar</button>
+                                    </form>
+                                </div>
+
+                                <span class="scheduled-arrow" aria-hidden="true">&rsaquo;</span>
+                            </article>
+                        </div>
+
+                        <div class="empty-state scheduled-empty-state"
+                            th:if="${#lists.isEmpty(scheduledPage.scheduledTrips())}">
+                            <strong>Sem viagens agendadas</strong>
+                            <p>Quando agendares uma viagem, ela aparece aqui com a data, rota, motorista e valor previsto.</p>
+                            <a class="ghost-button" th:href="@{/app}">Agendar primeira viagem</a>
+                        </div>
+                    </section>
+
+                    <section class="scheduled-section">
+                        <div class="scheduled-section-heading">
+                            <span class="section-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                                    <path d="M3 4v5h5"></path>
+                                    <path d="M12 8v5l3 2"></path>
+                                </svg>
+                            </span>
+                            <h2>Hist&oacute;rico recente</h2>
+                        </div>
+
+                        <div class="scheduled-history-table" th:if="${!#lists.isEmpty(scheduledPage.recentTrips())}">
+                            <article class="scheduled-history-row" th:each="trip : ${scheduledPage.recentTrips()}">
+                                <div>
+                                    <span th:text="${trip.dateLabel()}">10 jun 2026</span>
+                                    <strong th:text="${trip.timeLabel()}">16:20</strong>
+                                </div>
+                                <div class="history-route">
+                                    <strong th:text="${trip.originDisplay()}">Origem</strong>
+                                    <span aria-hidden="true">&rarr;</span>
+                                    <strong th:text="${trip.destinationDisplay()}">Destino</strong>
+                                </div>
+                                <div>
+                                    <span>Dist&acirc;ncia</span>
+                                    <strong th:text="${trip.distanceLabel()}">28,1 km</strong>
+                                </div>
+                                <div>
+                                    <span>Pre&ccedil;o</span>
+                                    <strong th:text="${#numbers.formatCurrency(trip.price())}">15,20 &euro;</strong>
+                                </div>
+                                <span class="status-pill is-completed" th:text="${trip.statusLabel()}">Conclu&iacute;da</span>
+                                <span class="scheduled-arrow" aria-hidden="true">&rsaquo;</span>
+                            </article>
+                        </div>
+
+                        <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(scheduledPage.recentTrips())}">
+                            <strong>Sem hist&oacute;rico recente</strong>
+                            <p>As viagens conclu&iacute;das aparecem aqui.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="scheduled-side-column" aria-label="Resumo das viagens">
+                    <section class="scheduled-side-card">
+                        <h2>Resumo</h2>
+
+                        <div class="scheduled-summary-list">
+                            <div class="scheduled-summary-item">
+                                <span class="summary-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+                                        <path d="M8 3v4"></path>
+                                        <path d="M16 3v4"></path>
+                                        <path d="M4 10h16"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <strong th:text="${scheduledPage.activeScheduledCount()}">0</strong>
+                                    <span>agendadas</span>
+                                </div>
+                            </div>
+
+                            <div class="scheduled-summary-item">
+                                <span class="summary-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <rect x="4" y="6" width="16" height="12" rx="2"></rect>
+                                        <path d="M4 10h16"></path>
+                                        <path d="M8 14h4"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <strong th:text="${#numbers.formatCurrency(scheduledPage.expectedTotal())}">0,00 &euro;</strong>
+                                    <span>previstos</span>
+                                </div>
+                            </div>
+
+                            <div class="scheduled-summary-item">
+                                <span class="summary-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M6.8 17.5H5.2a1.8 1.8 0 0 1-1.8-1.8v-3.1l2.1-5A2.4 2.4 0 0 1 7.7 6h8.6a2.4 2.4 0 0 1 2.2 1.6l2.1 5v3.1a1.8 1.8 0 0 1-1.8 1.8h-1.6"></path>
+                                        <path d="M7 13h10"></path>
+                                        <path d="M8.3 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                                        <path d="M15.7 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <strong th:text="${scheduledPage.mostUsedCategory()}">STANDARD</strong>
+                                    <span>ve&iacute;culo mais usado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="scheduled-side-card">
+                        <div class="scheduled-side-title">
+                            <span class="section-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8"></circle>
+                                    <path d="M12 8v4l3 2"></path>
+                                </svg>
+                            </span>
+                            <h2>Pr&oacute;ximas 24h</h2>
+                        </div>
+
+                        <div class="scheduled-next-metrics">
+                            <div>
+                                <strong th:text="${scheduledPage.nextDayCount()}">0</strong>
+                                <span th:text="${scheduledPage.nextDayCount() == 1 ? 'viagem' : 'viagens'}">viagem</span>
+                            </div>
+                            <div>
+                                <strong th:text="${#numbers.formatCurrency(scheduledPage.nextDayExpectedTotal())}">0,00 &euro;</strong>
+                                <span>valor previsto</span>
+                            </div>
+                        </div>
+
+                        <div class="scheduled-next-preview" th:if="${scheduledPage.nextDayTrip() != null}">
+                            <span th:text="${scheduledPage.nextDayTrip().scheduleHeadline()}">Hoje, 18:30</span>
+                            <strong th:text="${scheduledPage.nextDayTrip().originDisplay()}">Origem</strong>
+                            <p>
+                                &rarr;
+                                <span th:text="${scheduledPage.nextDayTrip().destinationDisplay()}">Destino</span>
+                            </p>
+                        </div>
+
+                        <p class="scheduled-side-empty" th:if="${scheduledPage.nextDayTrip() == null}">
+                            N&atilde;o tens viagens marcadas nas pr&oacute;ximas 24 horas.
                         </p>
-                    </div>
-                    <div class="scheduled-meta">
-                        <span th:text="${trip.vehicleCategory()}">STANDARD</span>
-                        <span th:text="${trip.status()}">PENDING</span>
-                        <span th:text="${#numbers.formatCurrency(trip.estimatedPrice())}">0,00 &#x20AC;</span>
-                    </div>
-                    <p class="muted" th:if="${trip.driverName() != null}">
-                        Motorista:
-                        <span th:text="${trip.driverName()}">Motorista</span>
-                        <span th:if="${trip.vehicleDisplay() != null}"> &#x00B7; </span>
-                        <span th:if="${trip.vehicleDisplay() != null}" th:text="${trip.vehicleDisplay()}">Ve&#x00ED;culo</span>
-                    </p>
-                    <form th:if="${trip.canCancel()}" th:action="@{/app/scheduled/{id}/cancel(id=${trip.id()})}"
-                        method="post">
-                        <label class="cancel-reason-field">
-                            Motivo do cancelamento
-                            <input type="text" name="reason" required minlength="3" maxlength="255"
-                                placeholder="Indica o motivo">
-                        </label>
-                        <button class="ghost-button danger-button" type="submit">Cancelar</button>
-                    </form>
-                </article>
+                    </section>
+                </aside>
             </div>
         </section>
     </main>

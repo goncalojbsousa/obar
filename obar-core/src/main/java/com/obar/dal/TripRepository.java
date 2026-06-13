@@ -7,6 +7,7 @@ import org.hibernate.Session;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public class TripRepository extends BaseRepository<Trip, Integer> {
 
@@ -26,6 +27,30 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
                     Trip.class)
                     .setParameter("clientId", clientId)
                     .list();
+        }
+    }
+
+    public Optional<Trip> findLatestCompletedWithoutClientReview(Integer clientId) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                            "SELECT t FROM Trip t "
+                                    + "JOIN FETCH t.client "
+                                    + "JOIN FETCH t.driver "
+                                    + "JOIN FETCH t.route "
+                                    + "WHERE t.client.id = :clientId "
+                                    + "AND t.status = :status "
+                                    + "AND NOT EXISTS ("
+                                    + "SELECT r.id FROM Review r "
+                                    + "WHERE r.trip.id = t.id "
+                                    + "AND r.reviewerType = :reviewerType"
+                                    + ") "
+                                    + "ORDER BY t.endTime DESC",
+                            Trip.class)
+                    .setParameter("clientId", clientId)
+                    .setParameter("status", TripStatus.COMPLETED)
+                    .setParameter("reviewerType", "CLIENT")
+                    .setMaxResults(1)
+                    .uniqueResultOptional();
         }
     }
 

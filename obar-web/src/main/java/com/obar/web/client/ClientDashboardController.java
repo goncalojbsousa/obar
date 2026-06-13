@@ -1,6 +1,7 @@
 package com.obar.web.client;
 
 import com.obar.bll.TripService;
+import com.obar.bll.ReviewService;
 import com.obar.bll.UserService;
 import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
@@ -29,13 +30,15 @@ public class ClientDashboardController {
     private final UserService userService;
     private final VehicleService vehicleService;
     private final SupabaseStorageService storageService;
+    private final ReviewService reviewService;
 
     public ClientDashboardController(TripService tripService, UserService userService, VehicleService vehicleService,
-            SupabaseStorageService storageService) {
+            SupabaseStorageService storageService, ReviewService reviewService) {
         this.tripService = tripService;
         this.userService = userService;
         this.vehicleService = vehicleService;
         this.storageService = storageService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/app")
@@ -74,7 +77,10 @@ public class ClientDashboardController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente nao encontrado."));
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("clientProfile",
-                ClientViews.ClientProfileView.from(client, tripService.findByClient(currentUser.id())));
+                ClientViews.ClientProfileView.from(
+                        client,
+                        tripService.findByClient(currentUser.id()),
+                        reviewService.countByReviewed(currentUser.id())));
         return "client/profile";
     }
 

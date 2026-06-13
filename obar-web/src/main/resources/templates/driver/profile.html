@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil do Motorista | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=weekly-earnings-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=profile-reviews-20260613">
 </head>
 
 <body class="client-page profile-page driver-profile-page">
@@ -31,6 +31,13 @@
             <p class="profile-upload-message is-error" th:if="${photoError}" th:text="${photoError}"></p>
             <h1 th:text="${driverProfile.name()}">Rui Martins</h1>
             <p>Motorista desde <span th:text="${driverProfile.memberSince()}">jun 2024</span></p>
+            <div class="profile-review-summary">
+                <span class="profile-review-star" aria-hidden="true">&#9733;</span>
+                <strong th:text="${driverProfile.averageRating()}">0,0</strong>
+                <span th:text="${driverProfile.reviewCount() == 1 ? '1 avaliação' : driverProfile.reviewCount() + ' avaliações'}">
+                    0 avaliações
+                </span>
+            </div>
 
             <div class="driver-profile-online">
                 <span class="profile-status-pill" th:classappend="${driverProfile.online()} ? '' : ' is-offline'"

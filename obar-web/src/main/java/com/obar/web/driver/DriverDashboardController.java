@@ -1,6 +1,7 @@
 package com.obar.web.driver;
 
 import com.obar.bll.TripService;
+import com.obar.bll.ReviewService;
 import com.obar.bll.UserService;
 import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
@@ -44,13 +45,15 @@ public class DriverDashboardController {
     private final UserService userService;
     private final VehicleService vehicleService;
     private final SupabaseStorageService storageService;
+    private final ReviewService reviewService;
 
     public DriverDashboardController(TripService tripService, UserService userService, VehicleService vehicleService,
-            SupabaseStorageService storageService) {
+            SupabaseStorageService storageService, ReviewService reviewService) {
         this.tripService = tripService;
         this.userService = userService;
         this.vehicleService = vehicleService;
         this.storageService = storageService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/driver")
@@ -70,7 +73,8 @@ public class DriverDashboardController {
                 driver,
                 vehicleService.findByDriver(currentUser.id()),
                 tripService.findByDriver(currentUser.id()),
-                tripService.findByClient(currentUser.id())));
+                tripService.findByClient(currentUser.id()),
+                reviewService.countByReviewed(currentUser.id())));
         return "driver/profile";
     }
 
@@ -117,6 +121,7 @@ public class DriverDashboardController {
             VehicleView vehicle,
             int completedTrips,
             String averageRating,
+            int reviewCount,
             BigDecimal totalEarnings,
             WeeklyEarningsView weeklyEarnings,
             ActivityView lastDriverTrip,
@@ -125,7 +130,7 @@ public class DriverDashboardController {
             ActivityView lastClientTrip) {
 
         public static DriverProfileView from(User driver, List<Vehicle> vehicles, List<Trip> driverTrips,
-                List<Trip> clientTrips) {
+                List<Trip> clientTrips, int reviewCount) {
             List<Trip> completedDriverTrips = driverTrips.stream()
                     .filter(trip -> trip.getStatus() == TripStatus.COMPLETED)
                     .toList();
@@ -148,6 +153,7 @@ public class DriverDashboardController {
                             .orElse(null),
                     driver.getTotalTrips() == null ? completedDriverTrips.size() : driver.getTotalTrips(),
                     String.format(PT_LOCALE, "%.1f", driver.getAverageRating() == null ? 0f : driver.getAverageRating()),
+                    reviewCount,
                     completedDriverTrips.stream()
                             .map(trip -> trip.getFinalPrice() == null ? BigDecimal.ZERO : trip.getFinalPrice())
                             .reduce(BigDecimal.ZERO, BigDecimal::add),

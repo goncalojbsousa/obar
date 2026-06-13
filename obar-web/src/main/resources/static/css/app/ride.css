@@ -175,17 +175,22 @@
     background-repeat: no-repeat;
     background-size: 18px 18px;
     color-scheme: dark;
+    cursor: pointer;
     min-height: 38px;
     padding-right: 30px;
 }
 
 .client-page input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    bottom: 0;
     cursor: pointer;
     filter: none;
-    height: 18px;
+    height: 100%;
     margin: 0;
     opacity: 0;
-    width: 18px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 34px;
 }
 
 .client-page .field-note {

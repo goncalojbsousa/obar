@@ -77,6 +77,7 @@ elements.locateButton.addEventListener("click", locateUser);
 elements.originInput.addEventListener("input", (event) => handleLocationInput("origin", event));
 elements.destinationInput.addEventListener("input", (event) => handleLocationInput("destination", event));
 elements.vehicleCategory.addEventListener("change", () => state.origin && state.destination && estimateRoute());
+elements.scheduledAt.addEventListener("click", openSchedulePicker);
 elements.requestButton.addEventListener("click", requestTrip);
 elements.scheduleButton.addEventListener("click", scheduleTrip);
 elements.cancelTripButton.addEventListener("click", openCancelModal);
@@ -272,6 +273,7 @@ async function scheduleTrip() {
 
     if (!elements.scheduledAt.value) {
         setMessage("Escolhe a data e hora para agendar a viagem.");
+        openSchedulePicker();
         return;
     }
 
@@ -358,6 +360,21 @@ function handleModalKeydown(event) {
         closeCancelModal();
     } else if (event.key === "Escape" && !elements.reviewModal.hidden) {
         closeReviewModal();
+    }
+}
+
+function openSchedulePicker() {
+    if (elements.scheduledAt.disabled) {
+        return;
+    }
+
+    elements.scheduledAt.focus();
+    if (typeof elements.scheduledAt.showPicker === "function") {
+        try {
+            elements.scheduledAt.showPicker();
+        } catch {
+            // The native field remains usable when the browser blocks showPicker.
+        }
     }
 }
 

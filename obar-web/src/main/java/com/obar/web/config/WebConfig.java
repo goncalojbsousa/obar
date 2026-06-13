@@ -7,14 +7,20 @@ import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthService;
+import com.obar.web.session.WebSessionHelper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebCoreConfig {
+public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public AuthService authService() {
@@ -50,6 +56,32 @@ public class WebCoreConfig {
     @ConditionalOnProperty(name = "obar.core.lifecycle.enabled", havingValue = "true", matchIfMissing = true)
     public CoreLifecycleAdapter coreLifecycleAdapter() {
         return new CoreLifecycleAdapter(new CoreLifecycleService());
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authenticationInterceptor())
+                .addPathPatterns("/app/**", "/api/**");
+    }
+
+    private HandlerInterceptor authenticationInterceptor() {
+        return new HandlerInterceptor() {
+            @Override
+            public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+                    throws Exception {
+                if (WebSessionHelper.isLoggedIn(request.getSession(false))) {
+                    return true;
+                }
+
+                if (request.getRequestURI().startsWith(request.getContextPath() + "/api/")) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                    return false;
+                }
+
+                response.sendRedirect(request.getContextPath() + "/login");
+                return false;
+            }
+        };
     }
 
     static final class CoreLifecycleAdapter implements InitializingBean, DisposableBean {

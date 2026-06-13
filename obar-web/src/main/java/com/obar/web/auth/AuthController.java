@@ -30,10 +30,9 @@ public class AuthController {
 
     @GetMapping("/login")
     public String login(Model model, HttpSession session) {
-        if (WebSessionHelper.isLoggedIn(session)) {
-            return WebSessionHelper.getCurrentUser(session)
-                    .map(this::redirectFor)
-                    .orElse("redirect:/app");
+        var currentUser = WebSessionHelper.getCurrentUser(session);
+        if (currentUser.isPresent()) {
+            return redirectFor(currentUser.get());
         }
         model.addAttribute("loginForm", new LoginForm());
         return "auth/login";
@@ -57,8 +56,9 @@ public class AuthController {
 
     @GetMapping("/register")
     public String register(Model model, HttpSession session) {
-        if (WebSessionHelper.isLoggedIn(session)) {
-            return "redirect:/app";
+        var currentUser = WebSessionHelper.getCurrentUser(session);
+        if (currentUser.isPresent()) {
+            return redirectFor(currentUser.get());
         }
         model.addAttribute("registerForm", new RegisterForm());
         return "auth/register";
@@ -107,5 +107,85 @@ public class AuthController {
 
     private String redirectFor(AuthenticatedUserDto user) {
         return user.type() == UserType.DRIVER ? "redirect:/driver" : "redirect:/app";
+    }
+
+    public static class LoginForm {
+
+        private String email;
+        private String password;
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
+
+    public static class RegisterForm {
+
+        private String name;
+        private String email;
+        private String phone;
+        private String taxNumber;
+        private String password;
+        private String confirmPassword;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+        public String getTaxNumber() {
+            return taxNumber;
+        }
+
+        public void setTaxNumber(String taxNumber) {
+            this.taxNumber = taxNumber;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getConfirmPassword() {
+            return confirmPassword;
+        }
+
+        public void setConfirmPassword(String confirmPassword) {
+            this.confirmPassword = confirmPassword;
+        }
     }
 }

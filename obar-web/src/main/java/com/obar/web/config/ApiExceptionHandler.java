@@ -1,13 +1,17 @@
-package com.obar.web.driver;
+package com.obar.web.config;
 
+import com.obar.web.driver.DriverApiController;
+import com.obar.web.maps.MapsApiController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
-@RestControllerAdvice(assignableTypes = DriverApiController.class)
-public class DriverApiExceptionHandler {
+@RestControllerAdvice(assignableTypes = { MapsApiController.class, DriverApiController.class })
+public class ApiExceptionHandler {
+
+    private static final String DEFAULT_MESSAGE = "N\u00E3o foi poss\u00EDvel completar o pedido.";
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException exception) {
@@ -25,9 +29,8 @@ public class DriverApiExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleStateConflict(IllegalStateException exception) {
-        HttpStatus status = isPinError(exception) ? HttpStatus.BAD_REQUEST : HttpStatus.CONFLICT;
         return ResponseEntity
-                .status(status)
+                .status(isPinError(exception) ? HttpStatus.BAD_REQUEST : HttpStatus.CONFLICT)
                 .body(new ApiError(messageOrDefault(exception.getMessage())));
     }
 
@@ -35,7 +38,7 @@ public class DriverApiExceptionHandler {
     public ResponseEntity<ApiError> handleUnexpected() {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiError("Não foi possível completar o pedido."));
+                .body(new ApiError(DEFAULT_MESSAGE));
     }
 
     private boolean isPinError(IllegalStateException exception) {
@@ -44,9 +47,7 @@ public class DriverApiExceptionHandler {
     }
 
     private String messageOrDefault(String message) {
-        return message == null || message.isBlank()
-                ? "Não foi possível completar o pedido."
-                : message;
+        return message == null || message.isBlank() ? DEFAULT_MESSAGE : message;
     }
 
     private record ApiError(String message) {

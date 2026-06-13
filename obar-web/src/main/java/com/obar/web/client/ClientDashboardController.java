@@ -2,12 +2,12 @@ package com.obar.web.client;
 
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
+import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Trip;
 import com.obar.model.User;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.UserType;
-import com.obar.web.maps.utils.VehicleCategoryCatalog;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -24,10 +24,12 @@ public class ClientDashboardController {
 
     private final TripService tripService;
     private final UserService userService;
+    private final VehicleService vehicleService;
 
-    public ClientDashboardController(TripService tripService, UserService userService) {
+    public ClientDashboardController(TripService tripService, UserService userService, VehicleService vehicleService) {
         this.tripService = tripService;
         this.userService = userService;
+        this.vehicleService = vehicleService;
     }
 
     @GetMapping("/app")
@@ -40,7 +42,7 @@ public class ClientDashboardController {
             return "redirect:/driver";
         }
         model.addAttribute("currentUser", currentUser);
-        model.addAttribute("vehicleCategories", VehicleCategoryCatalog.supported());
+        model.addAttribute("vehicleCategories", vehicleService.supportedCategories());
         return "client/dashboard";
     }
 
@@ -52,7 +54,10 @@ public class ClientDashboardController {
         var scheduledTrips = tripService.findScheduledByClient(currentUser.id());
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("scheduledPage",
-                ScheduledTripsPageView.from(scheduledTrips, tripService.findByClient(currentUser.id()), recentPage));
+                ClientViews.ScheduledTripsPageView.from(
+                        scheduledTrips,
+                        tripService.findByClient(currentUser.id()),
+                        recentPage));
         return "client/scheduled";
     }
 
@@ -62,7 +67,8 @@ public class ClientDashboardController {
         User client = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente nao encontrado."));
         model.addAttribute("currentUser", currentUser);
-        model.addAttribute("clientProfile", ClientProfileView.from(client, tripService.findByClient(currentUser.id())));
+        model.addAttribute("clientProfile",
+                ClientViews.ClientProfileView.from(client, tripService.findByClient(currentUser.id())));
         return "client/profile";
     }
 

@@ -67,6 +67,8 @@ const elements = {
     cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
 };
 
+const responseButtons = [elements.acceptButton, elements.rejectButton];
+
 elements.acceptButton.addEventListener("click", acceptAssignment);
 elements.rejectButton.addEventListener("click", rejectAssignment);
 elements.startButton.addEventListener("click", startTrip);
@@ -91,7 +93,7 @@ initializeDriverMap();
 async function initializeDriverMap() {
     await loadOnlineStatus();
     if (state.online) {
-        await updateCurrentLocation({ silent: true });
+        await updateCurrentLocation(true);
     }
     loadSnapshot();
     pollAssignment();
@@ -103,13 +105,12 @@ async function initializeDriverMap() {
     }, 10000);
     state.locationPoll = window.setInterval(() => {
         if (state.assignment && state.assignment.status === "ACCEPTED") {
-            updateCurrentLocation({ silent: true });
+            updateCurrentLocation(true);
         }
     }, 10000);
 }
 
-function updateCurrentLocation(options = {}) {
-    const silent = options.silent === true;
+function updateCurrentLocation(silent = false) {
     if (!navigator.geolocation) {
         return Promise.resolve(null);
     }
@@ -189,14 +190,13 @@ function renderSnapshot(snapshot) {
     }
 
     state.markersLayer.clearLayers();
-    const markers = [];
-    [...snapshot.drivers, ...snapshot.clients].forEach((point) => {
+    const markers = [...snapshot.drivers, ...snapshot.clients].map((point) => {
         const marker = L.marker([point.lat, point.lng], {
             icon: buildMarkerIcon(point.type.toLowerCase()),
             pane: "tripMarkerPane"
         }).bindPopup(point.name);
         marker.addTo(state.markersLayer);
-        markers.push(marker);
+        return marker;
     });
 
     if (markers.length > 0) {
@@ -211,7 +211,11 @@ function renderAssignment(assignment) {
     clearRouteLayer();
     setMessage("");
 
-    elements.status.textContent = statusCopy(assignment);
+    elements.status.textContent = assignment.status === "ACCEPTED"
+        ? "Vai até à localização do cliente."
+        : assignment.status === "IN_PROGRESS"
+            ? "Viagem em curso."
+            : "Tens uma viagem para responder.";
     elements.empty.hidden = true;
     elements.trip.hidden = false;
     elements.originAddress.textContent = assignment.originAddress;
@@ -240,15 +244,16 @@ function renderAssignment(assignment) {
     elements.completeButton.disabled = !isInProgress;
     elements.cancelTripButton.disabled = !canCancel;
 
+    const pickupRoute = assignment.routeMode === "PICKUP";
     state.routeLayer = buildRouteLayer(assignment.geometry).addTo(map);
     const originMarker = L.marker([assignment.originLat, assignment.originLng], {
-        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "driver" : "client"),
+        icon: buildMarkerIcon(pickupRoute ? "driver" : "client"),
         pane: "tripMarkerPane"
-    }).bindPopup(assignment.routeMode === "PICKUP" ? "Motorista" : "Origem");
+    }).bindPopup(pickupRoute ? "Motorista" : "Origem");
     const destinationMarker = L.marker([assignment.destinationLat, assignment.destinationLng], {
-        icon: buildMarkerIcon(assignment.routeMode === "PICKUP" ? "client" : "destination"),
+        icon: buildMarkerIcon(pickupRoute ? "client" : "destination"),
         pane: "tripMarkerPane"
-    }).bindPopup(assignment.routeMode === "PICKUP" ? "Cliente" : "Destino");
+    }).bindPopup(pickupRoute ? "Cliente" : "Destino");
     originMarker.addTo(state.assignmentMarkers);
     destinationMarker.addTo(state.assignmentMarkers);
     map.fitBounds(L.featureGroup([state.routeLayer, originMarker, destinationMarker]).getBounds(), { padding: [36, 36] });
@@ -261,9 +266,11 @@ function renderAssignment(assignment) {
 }
 
 async function acceptAssignment() {
-    setActionBusy(true);
+    responseButtons.forEach((button) => {
+        button.disabled = true;
+    });
     try {
-        const point = await updateCurrentLocation({ silent: true });
+        const point = await updateCurrentLocation(true);
         const options = { method: "POST" };
         if (point) {
             options.headers = { "Content-Type": "application/json" };
@@ -274,7 +281,9 @@ async function acceptAssignment() {
         setMessage("Viagem aceite. Segue até ao cliente e introduz o PIN para começar.");
     } catch (error) {
         setMessage(error.message);
-        setActionBusy(false);
+        responseButtons.forEach((button) => {
+            button.disabled = false;
+        });
     }
 }
 
@@ -315,7 +324,7 @@ async function completeTrip() {
 
     elements.completeButton.disabled = true;
     try {
-        const point = await updateCurrentLocation({ silent: true });
+        const point = await updateCurrentLocation(true);
         if (!point) {
             throw new Error("Ativa a localização para calcular o preço final da viagem.");
         }
@@ -334,7 +343,9 @@ async function completeTrip() {
 }
 
 async function rejectAssignment() {
-    setActionBusy(true);
+    responseButtons.forEach((button) => {
+        button.disabled = true;
+    });
     try {
         const result = await fetchJson("/api/driver/assignment/reject", { method: "POST" });
         resetAssignmentView();
@@ -342,7 +353,9 @@ async function rejectAssignment() {
         loadSnapshot();
     } catch (error) {
         setMessage(error.message);
-        setActionBusy(false);
+        responseButtons.forEach((button) => {
+            button.disabled = false;
+        });
     }
 }
 
@@ -407,10 +420,10 @@ async function submitCancelTrip(event) {
 function startCountdown(secondsLeft) {
     stopCountdown();
     let remaining = Math.min(responseTimeoutSeconds, Math.max(0, secondsLeft));
-    renderCountdown(remaining);
+    elements.countdown.textContent = `00:${String(remaining).padStart(2, "0")}`;
     state.countdownTimer = window.setInterval(() => {
         remaining -= 1;
-        renderCountdown(remaining);
+        elements.countdown.textContent = `00:${String(Math.max(0, remaining)).padStart(2, "0")}`;
         if (remaining <= 0) {
             stopCountdown();
             resetAssignmentView();
@@ -418,11 +431,6 @@ function startCountdown(secondsLeft) {
             window.setTimeout(pollAssignment, 1200);
         }
     }, 1000);
-}
-
-function renderCountdown(seconds) {
-    const safeSeconds = Math.max(0, seconds);
-    elements.countdown.textContent = `00:${String(safeSeconds).padStart(2, "0")}`;
 }
 
 function stopCountdown() {
@@ -447,34 +455,20 @@ function resetAssignmentView() {
     elements.cancelTripButton.hidden = true;
     elements.startPin.value = "";
     elements.clientRatingInput.value = "";
-    setActionBusy(false);
-}
-
-function statusCopy(assignment) {
-    if (assignment.status === "ACCEPTED") {
-        return "Vai até à localização do cliente.";
-    }
-    if (assignment.status === "IN_PROGRESS") {
-        return "Viagem em curso.";
-    }
-    return "Tens uma viagem para responder.";
+    responseButtons.forEach((button) => {
+        button.disabled = false;
+    });
 }
 
 function buildRouteLayer(geometry) {
     return L.featureGroup([
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#17202a", weight: 10, opacity: 0.18, lineCap: "round", lineJoin: "round" }
-        }),
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#ffffff", weight: 8, opacity: 0.95, lineCap: "round", lineJoin: "round" }
-        }),
-        L.geoJSON(geometry, {
-            pane: "routePane",
-            style: { color: "#2563eb", weight: 5, opacity: 0.95, lineCap: "round", lineJoin: "round" }
-        })
-    ]);
+        { color: "#17202a", weight: 10, opacity: 0.18 },
+        { color: "#ffffff", weight: 8, opacity: 0.95 },
+        { color: "#2563eb", weight: 5, opacity: 0.95 }
+    ].map((style) => L.geoJSON(geometry, {
+        pane: "routePane",
+        style: { ...style, lineCap: "round", lineJoin: "round" }
+    })));
 }
 
 function buildMarkerIcon(type) {
@@ -492,11 +486,6 @@ function clearRouteLayer() {
         state.routeLayer.remove();
         state.routeLayer = null;
     }
-}
-
-function setActionBusy(isBusy) {
-    elements.acceptButton.disabled = isBusy;
-    elements.rejectButton.disabled = isBusy;
 }
 
 function setMessage(message) {

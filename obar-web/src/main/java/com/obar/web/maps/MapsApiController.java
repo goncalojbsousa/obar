@@ -3,6 +3,7 @@ package com.obar.web.maps;
 import com.obar.bll.RouteService;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
+import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Route;
 import com.obar.model.Trip;
@@ -10,14 +11,9 @@ import com.obar.model.User;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import com.obar.web.maps.client.MapsServiceClient;
-import com.obar.web.maps.dto.request.RouteEstimateRequest;
-import com.obar.web.maps.dto.request.TripCancellationRequest;
-import com.obar.web.maps.dto.response.ActiveTripResponse;
-import com.obar.web.maps.dto.response.LocationSuggestionResponse;
-import com.obar.web.maps.dto.response.RouteEstimateResponse;
-import com.obar.web.maps.dto.response.TripCancellationResponse;
-import com.obar.web.maps.dto.response.TripRequestResponse;
-import com.obar.web.maps.utils.VehicleCategoryCatalog;
+import com.obar.web.maps.client.MapsServiceClient.LocationSuggestionResponse;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateRequest;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateResponse;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -29,9 +25,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
-import java.util.List;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 public class MapsApiController {
@@ -89,13 +85,15 @@ public class MapsApiController {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Fica offline antes de pedires uma viagem.");
         }
-        if (tripType == TripType.IMMEDIATE && hasActiveTrip(client.getId())) {
+        if (tripType == TripType.IMMEDIATE && tripService.hasActiveImmediateTrip(client.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Já tens uma viagem ativa ou à espera de motorista.");
         }
-        LocalDateTime scheduledAt = tripType == TripType.SCHEDULED ? validateScheduledAt(request.scheduledAt()) : null;
+        LocalDateTime scheduledAt = tripType == TripType.SCHEDULED
+                ? tripService.validateScheduledTime(request.scheduledAt())
+                : null;
 
-        String vehicleCategory = VehicleCategoryCatalog.normalize(request.vehicleCategory());
+        String vehicleCategory = VehicleService.normalizeCategory(request.vehicleCategory());
         if (tripType == TripType.IMMEDIATE && !userService.hasOnlineAvailableDriverForCategory(vehicleCategory)) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Não existem motoristas online e disponíveis para esta categoria. Tenta novamente mais tarde.");
@@ -139,9 +137,7 @@ public class MapsApiController {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        return tripService.findByClient(currentUser.id()).stream()
-                .filter(this::isActiveTrip)
-                .max(Comparator.comparing(Trip::getRequestTime))
+        return tripService.findActiveImmediateTripByClient(currentUser.id())
                 .map(this::toActiveTripResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe viagem ativa."));
     }
@@ -180,18 +176,6 @@ public class MapsApiController {
 
     private String blankToDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private boolean hasActiveTrip(Integer clientId) {
-        return tripService.findByClient(clientId).stream()
-                .anyMatch(this::isActiveTrip);
-    }
-
-    private boolean isActiveTrip(Trip trip) {
-        return trip.getTripType() == TripType.IMMEDIATE
-                && (trip.getStatus() == TripStatus.PENDING
-                        || trip.getStatus() == TripStatus.ACCEPTED
-                        || trip.getStatus() == TripStatus.IN_PROGRESS);
     }
 
     private ActiveTripResponse toActiveTripResponse(Trip trip) {
@@ -239,15 +223,42 @@ public class MapsApiController {
         }
     }
 
-    private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {
-        if (scheduledAt == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolhe a data e hora da viagem.");
-        }
-        if (scheduledAt.isBefore(LocalDateTime.now().plusMinutes(15))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A viagem agendada deve ser marcada com pelo menos 15 minutos de antecedência.");
-        }
-        return scheduledAt;
+    public record ActiveTripResponse(
+            Integer tripId,
+            Integer routeId,
+            String status,
+            String originAddress,
+            String destinationAddress,
+            double originLat,
+            double originLng,
+            double destinationLat,
+            double destinationLng,
+            double distanceKm,
+            int durationMin,
+            BigDecimal estimatedPrice,
+            String vehicleCategory,
+            String startPin,
+            Integer driverArrivalMin) {
     }
 
+    public record TripCancellationRequest(String reason) {
+    }
+
+    public record TripCancellationResponse(
+            Integer tripId,
+            String status,
+            String message) {
+    }
+
+    public record TripRequestResponse(
+            Integer tripId,
+            Integer routeId,
+            double distanceKm,
+            int durationMin,
+            BigDecimal estimatedPrice,
+            String vehicleCategory,
+            String tripType,
+            LocalDateTime scheduledAt,
+            String status) {
+    }
 }

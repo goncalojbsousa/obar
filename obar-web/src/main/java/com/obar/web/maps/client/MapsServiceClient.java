@@ -2,10 +2,7 @@ package com.obar.web.maps.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.obar.web.maps.dto.request.RouteEstimateRequest;
-import com.obar.web.maps.dto.response.LocationSuggestionResponse;
-import com.obar.web.maps.dto.response.RouteEstimateResponse;
-import com.obar.web.maps.utils.VehicleCategoryCatalog;
+import com.obar.bll.VehicleService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -22,6 +19,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -299,7 +297,7 @@ public class MapsServiceClient {
     }
 
     private PriceProfile priceProfile(String vehicleCategory) {
-        return switch (VehicleCategoryCatalog.normalize(vehicleCategory)) {
+        return switch (VehicleService.normalizeCategory(vehicleCategory)) {
             case "XL" -> XL_PRICE;
             case "PREMIUM" -> PREMIUM_PRICE;
             default -> STANDARD_PRICE;
@@ -325,6 +323,30 @@ public class MapsServiceClient {
     private String trimTrailingSlash(String value) {
         String trimmed = value == null || value.isBlank() ? "" : value.trim();
         return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+    }
+
+    public record LocationSuggestionResponse(
+            String label,
+            double lat,
+            double lng) {
+    }
+
+    public record RouteEstimateRequest(
+            double originLat,
+            double originLng,
+            double destinationLat,
+            double destinationLng,
+            String originAddress,
+            String destinationAddress,
+            String vehicleCategory,
+            LocalDateTime scheduledAt) {
+    }
+
+    public record RouteEstimateResponse(
+            double distanceKm,
+            int durationMin,
+            BigDecimal estimatedPrice,
+            Object geometry) {
     }
 
     private record DirectionsRequest(List<List<Double>> coordinates) {

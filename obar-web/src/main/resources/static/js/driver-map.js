@@ -37,6 +37,7 @@ const elements = {
     destinationAddress: document.querySelector("[data-destination-address]"),
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
+    priceBlock: document.querySelector("[data-price-block]"),
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
     clientName: document.querySelector("[data-client-name]"),
@@ -211,6 +212,7 @@ function renderAssignment(assignment) {
     elements.destinationAddress.textContent = assignment.destinationAddress;
     elements.distance.textContent = `${assignment.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${assignment.durationMin} min`;
+    elements.priceBlock.hidden = assignment.routeMode === "PICKUP";
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;

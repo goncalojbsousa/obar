@@ -3,7 +3,8 @@
 
 <body>
 <header th:fragment="navbar(activePage)" class="topbar app-navbar">
-    <a class="brand app-navbar-brand" th:href="${activePage == 'driver'} ? @{/driver} : @{/app}"
+    <a class="brand app-navbar-brand"
+       th:href="${activePage == 'driver' or activePage == 'driver-profile'} ? @{/driver} : @{/app}"
        aria-label="OBAR">
         <span class="brand-mark" aria-hidden="true">O</span><span class="brand-text">bar</span>
     </a>
@@ -50,7 +51,8 @@
             </span>
             <span>Motorista</span>
         </a>
-        <a th:href="@{/app/profile}" th:classappend="${activePage == 'profile'} ? ' active'">
+        <a th:href="${currentUser.type().name() == 'DRIVER'} ? @{/driver/profile} : @{/app/profile}"
+           th:classappend="${activePage == 'profile' or activePage == 'driver-profile'} ? ' active'">
             <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"></path>
@@ -83,7 +85,7 @@
                 </span>
             </summary>
             <div class="account-dropdown">
-                <a href="#" aria-disabled="true">Perfil</a>
+                <a th:href="${currentUser.type().name() == 'DRIVER'} ? @{/driver/profile} : @{/app/profile}">Perfil</a>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit">Sair</button>
                 </form>

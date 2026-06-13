@@ -255,3 +255,241 @@
     grid-template-columns: 130px minmax(0, 1fr) 110px;
 }
 
+.driver-profile-shell {
+    grid-template-columns: 280px minmax(0, 1fr);
+    padding: 22px 24px 20px;
+}
+
+.driver-profile-main {
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.driver-profile-identity {
+    min-height: 0;
+}
+
+.driver-profile-online {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-status-pill.is-offline {
+    background: rgba(140, 140, 150, 0.12);
+    border-color: #34343b;
+    color: #b5b5bf;
+}
+
+.driver-profile-panel {
+    gap: 14px;
+}
+
+.driver-vehicle-card {
+    align-items: stretch;
+    background: #15161a;
+    border: 1px solid #2b2b33;
+    border-radius: 8px;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 150px minmax(0, 1fr) 170px;
+    min-height: 132px;
+    padding: 14px;
+}
+
+.driver-vehicle-visual {
+    align-items: center;
+    background: linear-gradient(145deg, rgba(255, 96, 30, 0.22), rgba(255, 96, 30, 0.05));
+    border: 1px solid rgba(255, 96, 30, 0.28);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.driver-vehicle-visual span {
+    background: var(--brand);
+    border-radius: 18px 22px 10px 10px;
+    box-shadow:
+        -42px 26px 0 -18px #f5f5f6,
+        42px 26px 0 -18px #f5f5f6,
+        0 14px 24px rgba(0, 0, 0, 0.22);
+    height: 34px;
+    position: relative;
+    width: 92px;
+}
+
+.driver-vehicle-visual span::before {
+    background: #f5f5f6;
+    border-radius: 12px 12px 4px 4px;
+    content: "";
+    height: 20px;
+    left: 22px;
+    position: absolute;
+    top: -14px;
+    width: 48px;
+}
+
+.driver-vehicle-details {
+    align-content: center;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.driver-vehicle-details>span,
+.driver-activity-strip>span {
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.driver-vehicle-details strong {
+    color: #f5f5f6;
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.driver-vehicle-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.driver-vehicle-meta span {
+    background: #1d1e23;
+    border: 1px solid #34343b;
+    border-radius: 999px;
+    color: #d8d8df;
+    font-size: 0.78rem;
+    font-weight: 850;
+    padding: 5px 9px;
+}
+
+.driver-vehicle-state {
+    align-content: space-between;
+    display: grid;
+    justify-items: end;
+}
+
+.driver-profile-actions {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+}
+
+.driver-profile-actions a {
+    align-items: center;
+    border: 1px solid rgba(255, 96, 30, 0.55);
+    border-radius: 7px;
+    color: var(--brand);
+    display: inline-flex;
+    font-size: 0.84rem;
+    font-weight: 850;
+    justify-content: center;
+    min-height: 36px;
+    text-decoration: none;
+}
+
+.driver-profile-actions a:first-child {
+    background: var(--brand);
+    color: #ffffff;
+}
+
+.driver-profile-actions a[aria-disabled="true"] {
+    cursor: default;
+}
+
+.driver-profile-empty {
+    background: #15161a;
+    border: 1px solid #2b2b33;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.driver-profile-empty strong {
+    color: #f5f5f6;
+}
+
+.driver-profile-empty p {
+    color: #858593;
+    margin: 6px 0 0;
+}
+
+.driver-profile-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+}
+
+.driver-career-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.driver-activity-strip {
+    background: #15161a;
+    border: 1px solid #2b2b33;
+    border-radius: 8px;
+    display: grid;
+    gap: 7px;
+    padding: 12px;
+}
+
+.driver-activity-strip strong {
+    color: #f5f5f6;
+    font-size: 0.94rem;
+    line-height: 1.35;
+}
+
+.driver-activity-strip p {
+    color: #858593;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    font-weight: 800;
+    gap: 6px;
+    margin: 0;
+}
+
+.driver-client-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .driver-vehicle-card,
+    .driver-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .driver-vehicle-visual {
+        min-height: 110px;
+    }
+
+    .driver-vehicle-state {
+        align-content: start;
+        gap: 12px;
+        justify-items: stretch;
+    }
+}
+
+@media (max-width: 760px) {
+    .driver-profile-shell {
+        padding: 22px 18px 34px;
+    }
+
+    .driver-profile-main {
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    .driver-career-stats,
+    .driver-client-info {
+        grid-template-columns: 1fr;
+    }
+
+    .driver-profile-actions {
+        grid-template-columns: 1fr;
+    }
+}
+

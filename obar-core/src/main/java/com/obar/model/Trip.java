@@ -74,7 +74,7 @@ public class Trip {
     private BigDecimal estimatedPrice;
 
     @Column(name = "tax_rate_applied")
-    private BigDecimal taxRateApplied;
+    private BigDecimal taxRateApplied = new BigDecimal("0.2300");
 
     @Column(name = "final_price")
     private BigDecimal finalPrice;

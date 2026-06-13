@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record DriverAssignmentResponse(
         Integer tripId,
         String clientName,
+        Float clientRating,
         String originAddress,
         String destinationAddress,
         double originLat,

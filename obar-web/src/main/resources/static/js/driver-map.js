@@ -39,6 +39,7 @@ const elements = {
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
     clientName: document.querySelector("[data-client-name]"),
+    clientRating: document.querySelector("[data-client-rating]"),
     countdownBlock: document.querySelector("[data-countdown-block]"),
     responseActions: document.querySelector("[data-response-actions]"),
     acceptButton: document.querySelector("[data-accept-trip]"),
@@ -46,6 +47,9 @@ const elements = {
     startPanel: document.querySelector("[data-start-panel]"),
     startPin: document.querySelector("[data-start-pin]"),
     startButton: document.querySelector("[data-start-trip]"),
+    completePanel: document.querySelector("[data-complete-panel]"),
+    clientRatingInput: document.querySelector("[data-client-rating-input]"),
+    completeButton: document.querySelector("[data-complete-trip]"),
     cancelTripButton: document.querySelector("[data-cancel-trip]"),
     message: document.querySelector("[data-driver-message]"),
     alertModal: document.querySelector("[data-alert-modal]"),
@@ -63,6 +67,7 @@ const elements = {
 elements.acceptButton.addEventListener("click", acceptAssignment);
 elements.rejectButton.addEventListener("click", rejectAssignment);
 elements.startButton.addEventListener("click", startTrip);
+elements.completeButton.addEventListener("click", completeTrip);
 elements.cancelTripButton.addEventListener("click", openCancelModal);
 elements.cancelForm.addEventListener("submit", submitCancelTrip);
 elements.alertCloseButtons.forEach((button) => button.addEventListener("click", closeAlertModal));
@@ -181,16 +186,22 @@ function renderAssignment(assignment) {
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;
+    elements.clientRating.textContent = assignment.clientRating > 0
+        ? `★ ${assignment.clientRating.toFixed(1)}`
+        : "Sem avaliações";
     const isPending = assignment.status === "PENDING";
     const isAccepted = assignment.status === "ACCEPTED";
+    const isInProgress = assignment.status === "IN_PROGRESS";
     const canCancel = assignment.status === "ACCEPTED" || assignment.status === "IN_PROGRESS";
     elements.countdownBlock.hidden = !isPending;
     elements.responseActions.hidden = !isPending;
     elements.startPanel.hidden = !isAccepted;
+    elements.completePanel.hidden = !isInProgress;
     elements.cancelTripButton.hidden = !canCancel;
     elements.acceptButton.disabled = !isPending;
     elements.rejectButton.disabled = !isPending;
     elements.startButton.disabled = !isAccepted;
+    elements.completeButton.disabled = !isInProgress;
     elements.cancelTripButton.disabled = !canCancel;
 
     state.routeLayer = buildRouteLayer(assignment.geometry).addTo(map);
@@ -256,6 +267,29 @@ async function startTrip() {
         );
         elements.startPin.select();
         elements.startButton.disabled = false;
+    }
+}
+
+async function completeTrip() {
+    const rating = Number(elements.clientRatingInput.value);
+    if (rating < 1 || rating > 5) {
+        setMessage("Escolhe uma nota para o cliente.");
+        return;
+    }
+
+    elements.completeButton.disabled = true;
+    try {
+        const result = await fetchJson("/api/driver/assignment/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rating })
+        });
+        resetAssignmentView();
+        setMessage(result.message);
+        loadSnapshot();
+    } catch (error) {
+        setMessage(error.message);
+        elements.completeButton.disabled = false;
     }
 }
 
@@ -369,8 +403,10 @@ function resetAssignmentView() {
     elements.countdownBlock.hidden = false;
     elements.responseActions.hidden = false;
     elements.startPanel.hidden = true;
+    elements.completePanel.hidden = true;
     elements.cancelTripButton.hidden = true;
     elements.startPin.value = "";
+    elements.clientRatingInput.value = "";
     setActionBusy(false);
 }
 

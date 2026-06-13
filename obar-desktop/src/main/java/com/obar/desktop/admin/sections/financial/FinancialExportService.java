@@ -14,6 +14,7 @@ import com.obar.bll.admin.AdminFinancialOverviewDTO;
 import com.obar.bll.admin.AdminPaymentByTripDTO;
 import com.obar.bll.admin.AdminTaxRateDTO;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.model.enums.PaymentStatus;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -43,28 +44,29 @@ final class FinancialExportService {
 
             AdminFinancialOverviewDTO overview = snapshot.overview();
             writer.write(
-                    csvLine("RESUMO", "Receita total", AdminFormatUtils.formatCurrency(overview.getTotalIncome())));
+                    csvLine("RESUMO", "Receita total", AdminFormatUtils.formatCurrency(overview.totalIncome())));
             writer.newLine();
             writer.write(
-                    csvLine("RESUMO", "Receita periodo", AdminFormatUtils.formatCurrency(overview.getPeriodIncome())));
+                    csvLine("RESUMO", "Receita periodo", AdminFormatUtils.formatCurrency(overview.periodIncome())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Pagamentos totais", String.valueOf(overview.getTotalPayments())));
+            writer.write(csvLine("RESUMO", "Pagamentos totais", String.valueOf(overview.totalPayments())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Pagamentos processados", String.valueOf(overview.getProcessedPayments())));
+            writer.write(csvLine("RESUMO", "Pagamentos processados", String.valueOf(overview.processedPayments())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Pagamentos pendentes", String.valueOf(overview.getPendingPayments())));
+            writer.write(csvLine("RESUMO", "Pagamentos pendentes", String.valueOf(overview.pendingPayments())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Pagamentos falhados", String.valueOf(overview.getFailedPayments())));
+            writer.write(csvLine("RESUMO", "Pagamentos falhados", String.valueOf(overview.failedPayments())));
             writer.newLine();
-            writer.write(csvLine("RESUMO", "Pagamentos reembolsados", String.valueOf(overview.getRefundedPayments())));
+            writer.write(csvLine("RESUMO", "Pagamentos reembolsados", String.valueOf(overview.refundedPayments())));
             writer.newLine();
 
             writer.newLine();
             writer.write("Estado,Total");
             writer.newLine();
-            for (var status : overview.getPaymentStatuses()) {
-                writer.write(csvLine(AdminFormatUtils.prettyPaymentStatus(status.getStatus()),
-                        String.valueOf(status.getTotal())));
+            for (PaymentStatus status : PaymentStatus.values()) {
+                writer.write(csvLine(
+                        AdminFormatUtils.prettyPaymentStatus(status),
+                        String.valueOf(paymentCount(overview, status))));
                 writer.newLine();
             }
 
@@ -86,11 +88,11 @@ final class FinancialExportService {
             writer.newLine();
             for (AdminTaxRateDTO taxRate : snapshot.taxRates()) {
                 writer.write(csvLine(
-                        String.valueOf(taxRate.getId()),
-                        AdminFormatUtils.fallback(taxRate.getName()),
-                        taxRate.getRate() == null ? "-" : taxRate.getRate().toPlainString(),
-                        AdminFormatUtils.fallback(taxRate.getDescription()),
-                        Boolean.TRUE.equals(taxRate.getActive()) ? "Sim" : "Nao"));
+                        String.valueOf(taxRate.id()),
+                        AdminFormatUtils.fallback(taxRate.name()),
+                        taxRate.rate() == null ? "-" : taxRate.rate().toPlainString(),
+                        AdminFormatUtils.fallback(taxRate.description()),
+                        Boolean.TRUE.equals(taxRate.active()) ? "Sim" : "Nao"));
                 writer.newLine();
             }
 
@@ -99,17 +101,17 @@ final class FinancialExportService {
             writer.newLine();
             for (AdminPaymentByTripDTO payment : snapshot.payments()) {
                 writer.write(csvLine(
-                        payment.getPaymentId() == null ? "-" : String.valueOf(payment.getPaymentId()),
-                        payment.getTripId() == null ? "-" : String.valueOf(payment.getTripId()),
-                        AdminFormatUtils.fallback(payment.getClientName()),
-                        AdminFormatUtils.fallback(payment.getDriverName()),
-                        AdminFormatUtils.prettyPaymentMethod(payment.getPaymentMethodType()),
-                        payment.getAmount() == null ? "0.00" : payment.getAmount().toPlainString(),
-                        AdminFormatUtils.fallback(payment.getCurrencyCode()),
-                        AdminFormatUtils.prettyPaymentStatus(payment.getStatus()),
-                        payment.getPaymentDate() == null ? "-"
-                                : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()),
-                        payment.getTaxRateApplied() == null ? "-" : payment.getTaxRateApplied().toPlainString()));
+                        payment.paymentId() == null ? "-" : String.valueOf(payment.paymentId()),
+                        payment.tripId() == null ? "-" : String.valueOf(payment.tripId()),
+                        AdminFormatUtils.fallback(payment.clientName()),
+                        AdminFormatUtils.fallback(payment.driverName()),
+                        AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()),
+                        payment.amount() == null ? "0.00" : payment.amount().toPlainString(),
+                        AdminFormatUtils.fallback(payment.currencyCode()),
+                        AdminFormatUtils.prettyPaymentStatus(payment.status()),
+                        payment.paymentDate() == null ? "-"
+                                : EXPORT_READABLE_FORMAT.format(payment.paymentDate()),
+                        payment.taxRateApplied() == null ? "-" : payment.taxRateApplied().toPlainString()));
                 writer.newLine();
             }
         }
@@ -145,13 +147,13 @@ final class FinancialExportService {
         addPdfHeader(summaryTable, "Reembolsados");
 
         AdminFinancialOverviewDTO overview = snapshot.overview();
-        addPdfCell(summaryTable, AdminFormatUtils.formatCurrency(overview.getTotalIncome()));
-        addPdfCell(summaryTable, AdminFormatUtils.formatCurrency(overview.getPeriodIncome()));
-        addPdfCell(summaryTable, String.valueOf(overview.getTotalPayments()));
-        addPdfCell(summaryTable, String.valueOf(overview.getProcessedPayments()));
-        addPdfCell(summaryTable, String.valueOf(overview.getPendingPayments()));
-        addPdfCell(summaryTable, String.valueOf(overview.getFailedPayments()));
-        addPdfCell(summaryTable, String.valueOf(overview.getRefundedPayments()));
+        addPdfCell(summaryTable, AdminFormatUtils.formatCurrency(overview.totalIncome()));
+        addPdfCell(summaryTable, AdminFormatUtils.formatCurrency(overview.periodIncome()));
+        addPdfCell(summaryTable, String.valueOf(overview.totalPayments()));
+        addPdfCell(summaryTable, String.valueOf(overview.processedPayments()));
+        addPdfCell(summaryTable, String.valueOf(overview.pendingPayments()));
+        addPdfCell(summaryTable, String.valueOf(overview.failedPayments()));
+        addPdfCell(summaryTable, String.valueOf(overview.refundedPayments()));
         document.add(summaryTable);
         document.add(new Paragraph(" "));
 
@@ -193,18 +195,18 @@ final class FinancialExportService {
         addPdfHeader(paymentsTablePdf, "Taxa");
 
         for (AdminPaymentByTripDTO payment : snapshot.payments()) {
-            addPdfCell(paymentsTablePdf, payment.getPaymentId() == null ? "-" : "#" + payment.getPaymentId());
-            addPdfCell(paymentsTablePdf, payment.getTripId() == null ? "-" : "#" + payment.getTripId());
-            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.getClientName()));
-            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.getDriverName()));
-            addPdfCell(paymentsTablePdf, AdminFormatUtils.prettyPaymentMethod(payment.getPaymentMethodType()));
-            addPdfCell(paymentsTablePdf, payment.getAmount() == null ? "0.00" : payment.getAmount().toPlainString());
-            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.getCurrencyCode()));
-            addPdfCell(paymentsTablePdf, AdminFormatUtils.prettyPaymentStatus(payment.getStatus()));
+            addPdfCell(paymentsTablePdf, payment.paymentId() == null ? "-" : "#" + payment.paymentId());
+            addPdfCell(paymentsTablePdf, payment.tripId() == null ? "-" : "#" + payment.tripId());
+            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.clientName()));
+            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.driverName()));
+            addPdfCell(paymentsTablePdf, AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()));
+            addPdfCell(paymentsTablePdf, payment.amount() == null ? "0.00" : payment.amount().toPlainString());
+            addPdfCell(paymentsTablePdf, AdminFormatUtils.fallback(payment.currencyCode()));
+            addPdfCell(paymentsTablePdf, AdminFormatUtils.prettyPaymentStatus(payment.status()));
             addPdfCell(paymentsTablePdf,
-                    payment.getPaymentDate() == null ? "-" : EXPORT_READABLE_FORMAT.format(payment.getPaymentDate()));
+                    payment.paymentDate() == null ? "-" : EXPORT_READABLE_FORMAT.format(payment.paymentDate()));
             addPdfCell(paymentsTablePdf,
-                    payment.getTaxRateApplied() == null ? "-" : payment.getTaxRateApplied().toPlainString());
+                    payment.taxRateApplied() == null ? "-" : payment.taxRateApplied().toPlainString());
         }
         document.add(paymentsTablePdf);
 
@@ -220,11 +222,11 @@ final class FinancialExportService {
         addPdfHeader(taxTable, "Descricao");
         addPdfHeader(taxTable, "Ativa");
         for (AdminTaxRateDTO taxRate : snapshot.taxRates()) {
-            addPdfCell(taxTable, taxRate.getId() == null ? "-" : String.valueOf(taxRate.getId()));
-            addPdfCell(taxTable, AdminFormatUtils.fallback(taxRate.getName()));
-            addPdfCell(taxTable, taxRate.getRate() == null ? "-" : taxRate.getRate().toPlainString());
-            addPdfCell(taxTable, AdminFormatUtils.fallback(taxRate.getDescription()));
-            addPdfCell(taxTable, Boolean.TRUE.equals(taxRate.getActive()) ? "Sim" : "Nao");
+            addPdfCell(taxTable, taxRate.id() == null ? "-" : String.valueOf(taxRate.id()));
+            addPdfCell(taxTable, AdminFormatUtils.fallback(taxRate.name()));
+            addPdfCell(taxTable, taxRate.rate() == null ? "-" : taxRate.rate().toPlainString());
+            addPdfCell(taxTable, AdminFormatUtils.fallback(taxRate.description()));
+            addPdfCell(taxTable, Boolean.TRUE.equals(taxRate.active()) ? "Sim" : "Nao");
         }
         document.add(taxTable);
 
@@ -249,6 +251,15 @@ final class FinancialExportService {
         return java.util.Arrays.stream(values)
                 .map(this::escapeCsv)
                 .collect(java.util.stream.Collectors.joining(","));
+    }
+
+    private long paymentCount(AdminFinancialOverviewDTO overview, PaymentStatus status) {
+        return switch (status) {
+            case PENDING -> overview.pendingPayments();
+            case PROCESSED -> overview.processedPayments();
+            case FAILED -> overview.failedPayments();
+            case REFUNDED -> overview.refundedPayments();
+        };
     }
 
     private String escapeCsv(String value) {

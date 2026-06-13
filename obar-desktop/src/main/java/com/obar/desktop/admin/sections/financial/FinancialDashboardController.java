@@ -111,11 +111,11 @@ final class FinancialDashboardController {
             return;
         }
 
-        BigDecimal periodIncome = AdminFormatUtils.defaultAmount(overview.getPeriodIncome());
+        BigDecimal periodIncome = AdminFormatUtils.defaultAmount(overview.periodIncome());
         BigDecimal commission = periodIncome.multiply(new BigDecimal("0.20"));
-        long processed = overview.getProcessedPayments();
-        long total = Math.max(overview.getTotalPayments(), 0);
-        long failed = overview.getFailedPayments();
+        long processed = overview.processedPayments();
+        long total = Math.max(overview.totalPayments(), 0);
+        long failed = overview.failedPayments();
         BigDecimal avgTicket = processed <= 0
                 ? BigDecimal.ZERO
                 : periodIncome.divide(BigDecimal.valueOf(processed), 2, RoundingMode.HALF_UP);
@@ -131,7 +131,7 @@ final class FinancialDashboardController {
         setText(billedTripsValueLabel, String.valueOf(processed));
         setText(avgTicketValueLabel, AdminFormatUtils.formatCurrency(avgTicket));
         setText(processedPaymentsValueLabel, String.valueOf(processed));
-        setText(refundedPaymentsValueLabel, String.valueOf(overview.getRefundedPayments()));
+        setText(refundedPaymentsValueLabel, String.valueOf(overview.refundedPayments()));
         setText(failedRateValueLabel, AdminFormatUtils.formatPercent(failedRate));
         setText(paidDriversValueLabel, String.valueOf(countPaidDrivers(payments)));
 
@@ -162,7 +162,7 @@ final class FinancialDashboardController {
         }
         for (AdminPaymentByTripDTO payment : payments) {
             String key = AdminFormatUtils
-                    .normalize(AdminFormatUtils.prettyPaymentMethod(payment.getPaymentMethodType()));
+                    .normalize(AdminFormatUtils.prettyPaymentMethod(payment.paymentMethodType()));
             grouped.put(key, grouped.getOrDefault(key, 0L) + 1);
         }
         return grouped;
@@ -173,8 +173,8 @@ final class FinancialDashboardController {
             return 0;
         }
         return payments.stream()
-                .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
-                .map(payment -> AdminFormatUtils.normalize(payment.getDriverName()))
+                .filter(payment -> payment.status() == PaymentStatus.PROCESSED)
+                .map(payment -> AdminFormatUtils.normalize(payment.driverName()))
                 .filter(name -> !name.isBlank())
                 .distinct()
                 .count();
@@ -255,9 +255,9 @@ final class FinancialDashboardController {
     private List<RevenueBucket> buildRevenueBuckets(AdminFinancialPeriod period, List<AdminPaymentByTripDTO> payments) {
         List<AdminPaymentByTripDTO> processed = payments == null ? List.of()
                 : payments.stream()
-                        .filter(payment -> payment.getStatus() == PaymentStatus.PROCESSED)
-                        .filter(payment -> payment.getPaymentDate() != null)
-                        .sorted(Comparator.comparing(AdminPaymentByTripDTO::getPaymentDate))
+                        .filter(payment -> payment.status() == PaymentStatus.PROCESSED)
+                        .filter(payment -> payment.paymentDate() != null)
+                        .sorted(Comparator.comparing(AdminPaymentByTripDTO::paymentDate))
                         .toList();
 
         return switch (period) {
@@ -326,7 +326,7 @@ final class FinancialDashboardController {
     private List<RevenueBucket> buildAllBuckets(List<AdminPaymentByTripDTO> payments) {
         List<RevenueBucket> buckets = new ArrayList<>();
         int currentYear = LocalDate.now().getYear();
-        int minYear = payments.stream().mapToInt(payment -> payment.getPaymentDate().getYear()).min()
+        int minYear = payments.stream().mapToInt(payment -> payment.paymentDate().getYear()).min()
                 .orElse(currentYear - 4);
         int startYear = Math.min(minYear, currentYear - 4);
         for (int year = startYear; year <= currentYear; year++) {
@@ -339,16 +339,16 @@ final class FinancialDashboardController {
 
     private BigDecimal sumForDay(List<AdminPaymentByTripDTO> payments, LocalDate day) {
         return payments.stream()
-                .filter(payment -> payment.getPaymentDate().toLocalDate().equals(day))
-                .map(payment -> AdminFormatUtils.defaultAmount(payment.getAmount()))
+                .filter(payment -> payment.paymentDate().toLocalDate().equals(day))
+                .map(payment -> AdminFormatUtils.defaultAmount(payment.amount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal sumBetween(List<AdminPaymentByTripDTO> payments, LocalDateTime start, LocalDateTime end) {
         return payments.stream()
-                .filter(payment -> !payment.getPaymentDate().isBefore(start))
-                .filter(payment -> payment.getPaymentDate().isBefore(end))
-                .map(payment -> AdminFormatUtils.defaultAmount(payment.getAmount()))
+                .filter(payment -> !payment.paymentDate().isBefore(start))
+                .filter(payment -> payment.paymentDate().isBefore(end))
+                .map(payment -> AdminFormatUtils.defaultAmount(payment.amount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

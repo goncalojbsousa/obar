@@ -1,5 +1,9 @@
 package com.obar.desktop.admin.shared;
 
+import com.obar.bll.admin.AdminTaxRateDTO;
+import com.obar.model.enums.AccountStatus;
+import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.TripType;
 import java.util.Locale;
 
 import javafx.fxml.FXML;
@@ -36,62 +40,62 @@ public class AdminModalIncludeController {
     private Label modalErrorLabel;
 
     @FXML
-    private VBox modalUsersFormSection;
+    public VBox modalUsersFormSection;
     @FXML
-    private TextField modalNameField;
+    public TextField modalNameField;
     @FXML
-    private TextField modalEmailField;
+    public TextField modalEmailField;
     @FXML
-    private TextField modalPhoneField;
+    public TextField modalPhoneField;
     @FXML
-    private Label modalReferenceLabel;
+    public Label modalReferenceLabel;
     @FXML
-    private TextField modalReferenceField;
+    public TextField modalReferenceField;
     @FXML
-    private ComboBox<?> modalStatusCombo;
+    public ComboBox<AccountStatus> modalStatusCombo;
     @FXML
-    private PasswordField modalPasswordField;
+    public PasswordField modalPasswordField;
     @FXML
-    private PasswordField modalConfirmPasswordField;
+    public PasswordField modalConfirmPasswordField;
 
     @FXML
-    private VBox modalTripsFormSection;
+    public VBox modalTripsFormSection;
     @FXML
-    private TextField modalTripClientIdField;
+    public TextField modalTripClientIdField;
     @FXML
-    private TextField modalTripDriverIdField;
+    public TextField modalTripDriverIdField;
     @FXML
-    private ComboBox<?> modalTripTypeCombo;
+    public ComboBox<TripType> modalTripTypeCombo;
     @FXML
-    private ComboBox<?> modalTripStatusCombo;
+    public ComboBox<TripStatus> modalTripStatusCombo;
     @FXML
-    private TextField modalTripOriginField;
+    public TextField modalTripOriginField;
     @FXML
-    private TextField modalTripDestinationField;
+    public TextField modalTripDestinationField;
     @FXML
-    private TextField modalTripEstimatedPriceField;
+    public TextField modalTripEstimatedPriceField;
     @FXML
-    private TextField modalTripFinalPriceField;
+    public TextField modalTripFinalPriceField;
     @FXML
-    private TextField modalTripNotesField;
+    public TextField modalTripNotesField;
 
     @FXML
-    private VBox modalTaxRateFormSection;
+    public VBox modalTaxRateFormSection;
     @FXML
-    private ComboBox<?> modalTaxRateCombo;
+    public ComboBox<AdminTaxRateDTO> modalTaxRateCombo;
     @FXML
-    private TextField modalTaxRateNameField;
+    public TextField modalTaxRateNameField;
     @FXML
-    private TextField modalTaxRateValueField;
+    public TextField modalTaxRateValueField;
     @FXML
-    private TextField modalTaxRateDescriptionField;
+    public TextField modalTaxRateDescriptionField;
     @FXML
-    private CheckBox modalTaxRateActiveCheck;
+    public CheckBox modalTaxRateActiveCheck;
 
     @FXML
-    private VBox modalDeleteSection;
+    public VBox modalDeleteSection;
     @FXML
-    private Label modalDeleteMessageLabel;
+    public Label modalDeleteMessageLabel;
     @FXML
     private Button modalCloseButton;
     @FXML
@@ -100,146 +104,6 @@ public class AdminModalIncludeController {
     private Button modalSaveButton;
     @FXML
     private Button modalDeleteConfirmButton;
-
-    public StackPane getModalOverlay() {
-        return modalOverlay;
-    }
-
-    public Label getModalTitleLabel() {
-        return modalTitleLabel;
-    }
-
-    public Label getModalSubtitleLabel() {
-        return modalSubtitleLabel;
-    }
-
-    public Label getModalErrorLabel() {
-        return modalErrorLabel;
-    }
-
-    public VBox getModalUsersFormSection() {
-        return modalUsersFormSection;
-    }
-
-    public TextField getModalNameField() {
-        return modalNameField;
-    }
-
-    public TextField getModalEmailField() {
-        return modalEmailField;
-    }
-
-    public TextField getModalPhoneField() {
-        return modalPhoneField;
-    }
-
-    public Label getModalReferenceLabel() {
-        return modalReferenceLabel;
-    }
-
-    public TextField getModalReferenceField() {
-        return modalReferenceField;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> ComboBox<T> getModalStatusCombo() {
-        return (ComboBox<T>) modalStatusCombo;
-    }
-
-    public PasswordField getModalPasswordField() {
-        return modalPasswordField;
-    }
-
-    public PasswordField getModalConfirmPasswordField() {
-        return modalConfirmPasswordField;
-    }
-
-    public VBox getModalTripsFormSection() {
-        return modalTripsFormSection;
-    }
-
-    public TextField getModalTripClientIdField() {
-        return modalTripClientIdField;
-    }
-
-    public TextField getModalTripDriverIdField() {
-        return modalTripDriverIdField;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> ComboBox<T> getModalTripTypeCombo() {
-        return (ComboBox<T>) modalTripTypeCombo;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> ComboBox<T> getModalTripStatusCombo() {
-        return (ComboBox<T>) modalTripStatusCombo;
-    }
-
-    public TextField getModalTripOriginField() {
-        return modalTripOriginField;
-    }
-
-    public TextField getModalTripDestinationField() {
-        return modalTripDestinationField;
-    }
-
-    public TextField getModalTripEstimatedPriceField() {
-        return modalTripEstimatedPriceField;
-    }
-
-    public TextField getModalTripFinalPriceField() {
-        return modalTripFinalPriceField;
-    }
-
-    public TextField getModalTripNotesField() {
-        return modalTripNotesField;
-    }
-
-    public VBox getModalTaxRateFormSection() {
-        return modalTaxRateFormSection;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> ComboBox<T> getModalTaxRateCombo() {
-        return (ComboBox<T>) modalTaxRateCombo;
-    }
-
-    public TextField getModalTaxRateNameField() {
-        return modalTaxRateNameField;
-    }
-
-    public TextField getModalTaxRateValueField() {
-        return modalTaxRateValueField;
-    }
-
-    public TextField getModalTaxRateDescriptionField() {
-        return modalTaxRateDescriptionField;
-    }
-
-    public CheckBox getModalTaxRateActiveCheck() {
-        return modalTaxRateActiveCheck;
-    }
-
-    public VBox getModalDeleteSection() {
-        return modalDeleteSection;
-    }
-
-    public Label getModalDeleteMessageLabel() {
-        return modalDeleteMessageLabel;
-    }
-
-    public Button getModalCancelButton() {
-        return modalCancelButton;
-    }
-
-    public Button getModalSaveButton() {
-        return modalSaveButton;
-    }
-
-    public Button getModalDeleteConfirmButton() {
-        return modalDeleteConfirmButton;
-    }
 
     public void prepareForForm(String title) {
         configureHeading(title, false);

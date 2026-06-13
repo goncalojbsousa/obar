@@ -19,9 +19,18 @@ public record ScheduledTripsPageView(
         BigDecimal nextDayExpectedTotal,
         String mostUsedCategory,
         ScheduledTripView nextDayTrip,
-        ScheduledTripView nextTrip) {
+        ScheduledTripView nextTrip,
+        int recentPage,
+        int recentTotalPages,
+        int recentTotalCount) {
+
+    private static final int RECENT_PAGE_SIZE = 3;
 
     public static ScheduledTripsPageView from(List<Trip> scheduledTrips, List<Trip> allTrips) {
+        return from(scheduledTrips, allTrips, 1);
+    }
+
+    public static ScheduledTripsPageView from(List<Trip> scheduledTrips, List<Trip> allTrips, int requestedRecentPage) {
         List<Trip> safeScheduledTrips = scheduledTrips == null ? List.of() : scheduledTrips;
         List<Trip> safeAllTrips = allTrips == null ? List.of() : allTrips;
         LocalDateTime now = LocalDateTime.now();
@@ -42,13 +51,19 @@ public record ScheduledTripsPageView(
                 .min(Comparator.comparing(ScheduledTripView::scheduledTime))
                 .orElse(null);
 
-        List<RecentTripView> recentTrips = safeAllTrips.stream()
-                .filter(trip -> trip.getStatus() == TripStatus.COMPLETED)
+        List<RecentTripView> allRecentTrips = safeAllTrips.stream()
+                .filter(ScheduledTripsPageView::isRecentTrip)
                 .sorted(Comparator.comparing(ScheduledTripsPageView::tripReferenceTime,
                         Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(4)
                 .map(RecentTripView::from)
                 .toList();
+
+        int recentTotalCount = allRecentTrips.size();
+        int recentTotalPages = Math.max(1, (int) Math.ceil((double) recentTotalCount / RECENT_PAGE_SIZE));
+        int recentPage = clamp(requestedRecentPage, 1, recentTotalPages);
+        int recentStart = Math.min((recentPage - 1) * RECENT_PAGE_SIZE, recentTotalCount);
+        int recentEnd = Math.min(recentStart + RECENT_PAGE_SIZE, recentTotalCount);
+        List<RecentTripView> recentTrips = allRecentTrips.subList(recentStart, recentEnd);
 
         BigDecimal expectedTotal = activeScheduled.stream()
                 .map(ScheduledTripView::estimatedPrice)
@@ -71,7 +86,7 @@ public record ScheduledTripsPageView(
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new ScheduledTripsPageView(
-                scheduledViews,
+                activeScheduled,
                 recentTrips,
                 activeScheduled.size(),
                 Math.toIntExact(nextDayCount),
@@ -79,7 +94,38 @@ public record ScheduledTripsPageView(
                 nextDayExpectedTotal,
                 mostUsedCategory(safeAllTrips),
                 nextDayTrips.isEmpty() ? null : nextDayTrips.get(0),
-                nextTrip);
+                nextTrip,
+                recentPage,
+                recentTotalPages,
+                recentTotalCount);
+    }
+
+    public boolean hasRecentPagination() {
+        return recentTotalPages > 1;
+    }
+
+    public boolean hasPreviousRecentPage() {
+        return recentPage > 1;
+    }
+
+    public boolean hasNextRecentPage() {
+        return recentPage < recentTotalPages;
+    }
+
+    public int previousRecentPage() {
+        return Math.max(1, recentPage - 1);
+    }
+
+    public int nextRecentPage() {
+        return Math.min(recentTotalPages, recentPage + 1);
+    }
+
+    private static boolean isRecentTrip(Trip trip) {
+        return trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED;
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static String mostUsedCategory(List<Trip> trips) {

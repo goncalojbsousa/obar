@@ -157,14 +157,38 @@
                                     <span>Pre&ccedil;o</span>
                                     <strong th:text="${#numbers.formatCurrency(trip.price())}">15,20 &euro;</strong>
                                 </div>
-                                <span class="status-pill is-completed" th:text="${trip.statusLabel()}">Conclu&iacute;da</span>
+                                <span class="status-pill" th:classappend="${trip.statusClass()}"
+                                    th:text="${trip.statusLabel()}">Conclu&iacute;da</span>
                                 <span class="scheduled-arrow" aria-hidden="true">&rsaquo;</span>
                             </article>
                         </div>
 
+                        <nav class="scheduled-pagination" aria-label="Paginacao do historico"
+                            th:if="${scheduledPage.hasRecentPagination()}">
+                            <a th:if="${scheduledPage.hasPreviousRecentPage()}"
+                                th:href="@{/app/scheduled(recentPage=${scheduledPage.previousRecentPage()})}">
+                                Anterior
+                            </a>
+                            <span class="scheduled-pagination-disabled" th:if="${!scheduledPage.hasPreviousRecentPage()}">
+                                Anterior
+                            </span>
+                            <span class="scheduled-pagination-status">
+                                <span th:text="${scheduledPage.recentPage()}">1</span>
+                                <span>/</span>
+                                <span th:text="${scheduledPage.recentTotalPages()}">1</span>
+                            </span>
+                            <a th:if="${scheduledPage.hasNextRecentPage()}"
+                                th:href="@{/app/scheduled(recentPage=${scheduledPage.nextRecentPage()})}">
+                                Seguinte
+                            </a>
+                            <span class="scheduled-pagination-disabled" th:if="${!scheduledPage.hasNextRecentPage()}">
+                                Seguinte
+                            </span>
+                        </nav>
+
                         <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(scheduledPage.recentTrips())}">
                             <strong>Sem hist&oacute;rico recente</strong>
-                            <p>As viagens conclu&iacute;das aparecem aqui.</p>
+                            <p>As viagens conclu&iacute;das e canceladas aparecem aqui.</p>
                         </div>
                     </section>
                 </div>

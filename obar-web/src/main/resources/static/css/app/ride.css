@@ -74,6 +74,10 @@
     padding: 8px 16px;
 }
 
+.client-page .ride-form[hidden] {
+    display: none;
+}
+
 .client-page .search-field {
     color: #7b7b85;
     gap: 6px;
@@ -113,17 +117,20 @@
 
 .client-page .search-field input,
 .client-page .search-field select,
+.client-page .search-field textarea,
 .client-page .field-note {
     margin-left: 22px;
 }
 
 .client-page .search-field input,
-.client-page .search-field select {
+.client-page .search-field select,
+.client-page .search-field textarea {
     width: calc(100% - 22px);
 }
 
 .client-page input,
-.client-page select {
+.client-page select,
+.client-page textarea {
     background: transparent;
     border: 0;
     border-radius: 0;
@@ -133,15 +140,34 @@
 }
 
 .client-page input:focus,
-.client-page select:focus {
+.client-page select:focus,
+.client-page textarea:focus {
     box-shadow: none;
     outline: none;
 }
 
 .client-page input:disabled,
-.client-page select:disabled {
+.client-page select:disabled,
+.client-page textarea:disabled {
     background: transparent;
     color: #b7b7bf;
+}
+
+.client-page .trip-notes-field::before {
+    display: none;
+}
+
+.client-page .trip-notes-field textarea {
+    color: #f5f5f6;
+    font: inherit;
+    line-height: 1.4;
+    min-height: 64px;
+    padding: 4px 0;
+    resize: vertical;
+}
+
+.client-page .trip-notes-field textarea::placeholder {
+    color: #696974;
 }
 
 .client-page select {
@@ -343,13 +369,11 @@
 }
 
 .waiting-panel {
-    align-items: center;
     background: #f8fafc;
     border: 1px solid var(--line);
     border-radius: 8px;
     display: grid;
     gap: 14px;
-    grid-template-columns: auto minmax(0, 1fr);
     padding: 16px;
 }
 
@@ -364,6 +388,134 @@
 
 .client-page .waiting-panel p {
     color: #8c8c96;
+}
+
+.waiting-header {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.active-trip-route {
+    border-bottom: 1px solid #2b2b33;
+    border-top: 1px solid #2b2b33;
+    display: grid;
+    gap: 12px;
+    padding: 14px 0;
+}
+
+.active-trip-route span,
+.active-trip-metrics span,
+.active-trip-notes span {
+    color: #8c8c96;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.active-trip-route strong {
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.active-trip-metrics {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.active-trip-metrics div,
+.active-trip-notes {
+    background: #25252c;
+    border: 1px solid #34343b;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.active-trip-metrics strong {
+    font-size: 0.9rem;
+}
+
+.active-trip-notes[hidden] {
+    display: none;
+}
+
+.active-trip-notes p {
+    color: #f5f5f6 !important;
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.active-trip-driver {
+    align-items: center;
+    background: linear-gradient(135deg, rgba(255, 96, 30, 0.16), rgba(255, 96, 30, 0.04));
+    border: 1px solid rgba(255, 96, 30, 0.3);
+    border-radius: 8px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 12px;
+}
+
+.active-trip-driver[hidden] {
+    display: none;
+}
+
+.active-trip-avatar {
+    align-items: center;
+    background: var(--brand);
+    background-position: center;
+    background-size: cover;
+    border-radius: 999px;
+    color: #fff;
+    display: flex;
+    font-size: 1.05rem;
+    font-weight: 900;
+    height: 52px;
+    justify-content: center;
+    width: 52px;
+}
+
+.active-trip-driver-copy > span {
+    color: #8c8c96;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.active-trip-driver-copy > strong {
+    color: #f5f5f6;
+}
+
+.active-trip-driver-copy p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 4px 0 0;
+}
+
+.active-trip-driver-copy p span {
+    color: #d4d4d8;
+}
+
+.active-trip-driver-copy p b {
+    color: var(--brand);
+}
+
+.active-trip-progress {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.active-trip-progress .trip-pin {
+    margin-top: 0;
 }
 
 .client-page .field-title,

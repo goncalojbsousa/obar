@@ -30,6 +30,7 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
 }).addTo(map);
 
 const elements = {
+    rideForm: document.querySelector("[data-ride-form]"),
     originStatus: document.querySelector("[data-origin-status]"),
     originInput: document.querySelector("[data-origin-input]"),
     originSuggestions: document.querySelector("[data-origin-suggestions]"),
@@ -37,6 +38,7 @@ const elements = {
     destinationInput: document.querySelector("[data-destination-input]"),
     destinationSuggestions: document.querySelector("[data-location-suggestions]"),
     vehicleCategory: document.querySelector("[data-vehicle-category]"),
+    notes: document.querySelector("[data-trip-notes]"),
     scheduledAt: document.querySelector("[data-scheduled-at]"),
     requestButton: document.querySelector("[data-request-button]"),
     scheduleButton: document.querySelector("[data-schedule-button]"),
@@ -47,6 +49,19 @@ const elements = {
     taxRate: document.querySelector("[data-tax-rate]"),
     message: document.querySelector("[data-ride-message]"),
     waitingPanel: document.querySelector("[data-waiting-panel]"),
+    summaryOrigin: document.querySelector("[data-summary-origin]"),
+    summaryDestination: document.querySelector("[data-summary-destination]"),
+    summaryCategory: document.querySelector("[data-summary-category]"),
+    summaryDistance: document.querySelector("[data-summary-distance]"),
+    summaryDuration: document.querySelector("[data-summary-duration]"),
+    summaryPrice: document.querySelector("[data-summary-price]"),
+    summaryNotesBlock: document.querySelector("[data-summary-notes-block]"),
+    summaryNotes: document.querySelector("[data-summary-notes]"),
+    driverDetails: document.querySelector("[data-driver-details]"),
+    driverAvatar: document.querySelector("[data-driver-avatar]"),
+    driverName: document.querySelector("[data-driver-name]"),
+    vehicleName: document.querySelector("[data-vehicle-name]"),
+    vehicleLicensePlate: document.querySelector("[data-vehicle-license-plate]"),
     driverArrivalBlock: document.querySelector("[data-driver-arrival-block]"),
     driverArrival: document.querySelector("[data-driver-arrival]"),
     tripPinBlock: document.querySelector("[data-trip-pin-block]"),
@@ -70,7 +85,13 @@ const elements = {
     reviewDismissButtons: document.querySelectorAll("[data-review-dismiss]")
 };
 
-const routeInputs = [elements.destinationInput, elements.originInput, elements.vehicleCategory, elements.scheduledAt];
+const routeInputs = [
+    elements.destinationInput,
+    elements.originInput,
+    elements.vehicleCategory,
+    elements.notes,
+    elements.scheduledAt
+];
 const tripButtons = [elements.requestButton, elements.scheduleButton];
 
 elements.locateButton.addEventListener("click", locateUser);
@@ -256,6 +277,7 @@ async function requestTrip() {
             body: JSON.stringify(buildRouteRequest())
         });
         state.activeTripId = trip.tripId;
+        renderTripSummary(trip);
         setTripLockedState(trip.status);
         renderTripPin(trip);
         setMessage("");
@@ -459,7 +481,8 @@ function buildRouteRequest(includeSchedule = false) {
         destinationLng: state.destination.lng,
         originAddress: state.origin.label,
         destinationAddress: state.destination.label,
-        vehicleCategory: elements.vehicleCategory.value
+        vehicleCategory: elements.vehicleCategory.value,
+        notes: elements.notes.value.trim()
     };
     if (includeSchedule) {
         request.scheduledAt = elements.scheduledAt.value;
@@ -499,10 +522,10 @@ async function renderActiveTrip(trip) {
     elements.originInput.value = trip.originAddress;
     elements.destinationInput.value = trip.destinationAddress;
     elements.vehicleCategory.value = trip.vehicleCategory || elements.vehicleCategory.value;
+    elements.notes.value = trip.notes || "";
     elements.originStatus.textContent = "Origem da viagem ativa.";
     setMarker("origin", state.origin, "Origem");
     setMarker("destination", state.destination, "Destino");
-    setTripLockedState(trip.status);
     renderDriverArrival(trip);
     renderTripPin(trip);
 
@@ -512,6 +535,8 @@ async function renderActiveTrip(trip) {
     elements.taxRate.textContent = formatTaxRate(trip.taxRate);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = true;
+    renderTripSummary(trip);
+    setTripLockedState(trip.status);
 
     try {
         const estimate = await fetchJson("/api/routes/estimate", {
@@ -590,6 +615,8 @@ function setBusy(isBusy) {
 
 function setTripLockedState(status) {
     state.tripLocked = Boolean(status);
+    elements.rideForm.hidden = state.tripLocked;
+    elements.estimatePanel.hidden = state.tripLocked || !state.origin || !state.destination;
     elements.waitingPanel.hidden = !state.tripLocked;
     tripButtons.forEach((button) => {
         button.disabled = state.tripLocked || elements.estimatePanel.hidden;
@@ -612,7 +639,7 @@ function setTripLockedState(status) {
 
 function updateWaitingCopy(status) {
     const title = elements.waitingPanel.querySelector("[data-waiting-title]");
-    const detail = elements.waitingPanel.querySelector("p");
+    const detail = elements.waitingPanel.querySelector("[data-waiting-detail]");
     if (status === "ACCEPTED") {
         title.textContent = "Motorista a caminho";
         detail.textContent = "A viagem foi aceite. Diz o PIN ao motorista quando ele chegar.";
@@ -623,6 +650,42 @@ function updateWaitingCopy(status) {
         title.textContent = "À espera de motorista";
         detail.textContent = "A procurar um motorista disponível para aceitar a viagem.";
     }
+}
+
+function renderTripSummary(trip) {
+    const notes = elements.notes.value.trim();
+    elements.summaryOrigin.textContent = trip.originAddress || state.origin?.label || elements.originInput.value;
+    elements.summaryDestination.textContent = trip.destinationAddress
+        || state.destination?.label
+        || elements.destinationInput.value;
+    elements.summaryCategory.textContent = trip.vehicleCategory || elements.vehicleCategory.value;
+    elements.summaryDistance.textContent = `${Number(trip.distanceKm || 0).toFixed(2)} km`;
+    elements.summaryDuration.textContent = `${trip.durationMin || 0} min`;
+    elements.summaryPrice.textContent = formatCurrency(trip.estimatedPrice || 0);
+    elements.summaryNotesBlock.hidden = !notes;
+    elements.summaryNotes.textContent = notes;
+    renderDriverDetails(trip);
+}
+
+function renderDriverDetails(trip) {
+    const hasDriver = Boolean(trip.driverName);
+    elements.driverDetails.hidden = !hasDriver;
+    if (!hasDriver) {
+        return;
+    }
+
+    elements.driverName.textContent = trip.driverName;
+    elements.vehicleName.textContent = [trip.vehicleBrand, trip.vehicleModel].filter(Boolean).join(" ") || "Veículo";
+    elements.vehicleLicensePlate.textContent = trip.vehicleLicensePlate || "Matrícula por confirmar";
+    setAvatar(elements.driverAvatar, trip.driverName, trip.driverPhotoUrl, "M");
+}
+
+function setAvatar(element, name, photoUrl, fallback) {
+    const hasPhoto = Boolean(photoUrl);
+    element.textContent = hasPhoto ? "" : (name?.trim().substring(0, 1).toUpperCase() || fallback);
+    element.style.backgroundImage = hasPhoto
+        ? `url("${photoUrl.replaceAll('"', "%22")}")`
+        : "";
 }
 
 async function refreshActiveTrip() {

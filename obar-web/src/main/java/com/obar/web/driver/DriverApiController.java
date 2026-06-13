@@ -124,6 +124,7 @@ public class DriverApiController {
                                         route.getOriginAddress(),
                                         "Local de conclusão",
                                         trip.getVehicleCategory(),
+                                        null,
                                         null));
                         int actualDurationMin = Math.max(1, (int) Math.ceil(
                                         Duration.between(trip.getStartTime(), LocalDateTime.now()).toSeconds() / 60.0));
@@ -275,6 +276,7 @@ public class DriverApiController {
                                 originAddress,
                                 destinationAddress,
                                 trip.getVehicleCategory(),
+                                null,
                                 null));
 
                 long secondsLeft = Math.max(0,
@@ -285,6 +287,8 @@ public class DriverApiController {
                                 trip.getId(),
                                 trip.getClient().getName(),
                                 trip.getClient().getAverageRating(),
+                                trip.getClient().getPhotoUrl(),
+                                trip.getNotes(),
                                 originAddress,
                                 destinationAddress,
                                 originLat,
@@ -325,6 +329,8 @@ public class DriverApiController {
                         Integer tripId,
                         String clientName,
                         Float clientRating,
+                        String clientPhotoUrl,
+                        String notes,
                         String originAddress,
                         String destinationAddress,
                         double originLat,

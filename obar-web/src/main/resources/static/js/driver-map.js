@@ -41,8 +41,11 @@ const elements = {
     priceBlock: document.querySelector("[data-price-block]"),
     price: document.querySelector("[data-price]"),
     category: document.querySelector("[data-category]"),
+    clientAvatar: document.querySelector("[data-client-avatar]"),
     clientName: document.querySelector("[data-client-name]"),
     clientRating: document.querySelector("[data-client-rating]"),
+    clientNotesBlock: document.querySelector("[data-client-notes-block]"),
+    clientNotes: document.querySelector("[data-client-notes]"),
     countdownBlock: document.querySelector("[data-countdown-block]"),
     responseActions: document.querySelector("[data-response-actions]"),
     acceptButton: document.querySelector("[data-accept-trip]"),
@@ -226,9 +229,13 @@ function renderAssignment(assignment) {
     elements.price.textContent = formatCurrency(assignment.estimatedPrice);
     elements.category.textContent = assignment.vehicleCategory;
     elements.clientName.textContent = assignment.clientName;
+    setAvatar(elements.clientAvatar, assignment.clientName, assignment.clientPhotoUrl, "C");
     elements.clientRating.textContent = assignment.clientRating > 0
         ? `★ ${assignment.clientRating.toFixed(1)}`
         : "Sem avaliações";
+    const notes = assignment.notes?.trim();
+    elements.clientNotesBlock.hidden = !notes;
+    elements.clientNotes.textContent = notes || "";
     const isPending = assignment.status === "PENDING";
     const isAccepted = assignment.status === "ACCEPTED";
     const isInProgress = assignment.status === "IN_PROGRESS";
@@ -263,6 +270,14 @@ function renderAssignment(assignment) {
     } else {
         stopCountdown();
     }
+}
+
+function setAvatar(element, name, photoUrl, fallback) {
+    const hasPhoto = Boolean(photoUrl);
+    element.textContent = hasPhoto ? "" : (name?.trim().substring(0, 1).toUpperCase() || fallback);
+    element.style.backgroundImage = hasPhoto
+        ? `url("${photoUrl.replaceAll('"', "%22")}")`
+        : "";
 }
 
 async function acceptAssignment() {

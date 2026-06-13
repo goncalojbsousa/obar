@@ -339,7 +339,8 @@ public class MapsServiceClient {
             String originAddress,
             String destinationAddress,
             String vehicleCategory,
-            LocalDateTime scheduledAt) {
+            LocalDateTime scheduledAt,
+            String notes) {
     }
 
     public record RouteEstimateResponse(

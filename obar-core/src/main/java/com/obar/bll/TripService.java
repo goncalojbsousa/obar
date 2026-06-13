@@ -26,6 +26,7 @@ public class TripService {
 
     private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration MIN_SCHEDULE_NOTICE = Duration.ofMinutes(15);
+    private static final Duration SCHEDULED_TRIP_ACTIVATION_LEAD = Duration.ofMinutes(30);
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double DISTANCE_SCORE_WEIGHT = 0.70;
     private static final double RATING_SCORE_WEIGHT = 0.20;
@@ -77,8 +78,10 @@ public class TripService {
         Trip acceptedTrip = tripRepository.update(trip);
 
         markDriverAssignmentAsAccepted(tripId, driver.getId());
-        driver.setAvailable(false);
-        userRepository.update(driver);
+        if (trip.getTripType() == TripType.IMMEDIATE) {
+            driver.setAvailable(false);
+            userRepository.update(driver);
+        }
 
         return acceptedTrip;
     }
@@ -180,13 +183,27 @@ public class TripService {
     }
 
     public List<Trip> findPendingForDriver(Integer driverId) {
-        List<String> categories = vehicleRepository.findByDriverId(driverId).stream()
-                .map(Vehicle::getCategory)
-                .filter(category -> category != null && !category.isBlank())
-                .map(String::toUpperCase)
-                .distinct()
-                .toList();
-        return tripRepository.findPendingByVehicleCategories(categories);
+        return tripRepository.findPendingByVehicleCategories(vehicleCategoriesForDriver(driverId));
+    }
+
+    public List<Trip> findPendingScheduledForDriver(Integer driverId) {
+        return tripRepository.findPendingScheduledByVehicleCategories(vehicleCategoriesForDriver(driverId));
+    }
+
+    public List<Trip> findAcceptedScheduledForDriver(Integer driverId) {
+        return tripRepository.findAcceptedScheduledByDriverId(driverId);
+    }
+
+    public Trip acceptScheduledTrip(Integer tripId, User driver) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Viagem n\u00E3o encontrada."));
+        if (trip.getTripType() != TripType.SCHEDULED) {
+            throw new IllegalStateException("Esta viagem n\u00E3o \u00E9 programada.");
+        }
+        if (trip.getScheduledTime() == null || trip.getScheduledTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("A hora marcada para esta viagem j\u00E1 passou.");
+        }
+        return acceptTrip(tripId, driver);
     }
 
     public Optional<Trip> findById(Integer id) {
@@ -198,7 +215,9 @@ public class TripService {
     }
 
     public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId) {
-        return tripDriverRepository.findCurrentAssignmentForDriver(driverId);
+        return tripDriverRepository.findCurrentAssignmentForDriver(
+                driverId,
+                LocalDateTime.now().plus(SCHEDULED_TRIP_ACTIVATION_LEAD));
     }
 
     public Optional<TripDriver> dispatchTripToNextBestAvailableDriver(Trip trip) {
@@ -263,6 +282,9 @@ public class TripService {
         // small tie-breakers.
         return compatibleDrivers.stream()
                 .filter(driver -> !alreadyTrackedDriverIds.contains(driver.getId()))
+                .filter(driver -> !tripRepository.hasAcceptedScheduledTripStartingBefore(
+                        driver.getId(),
+                        LocalDateTime.now().plus(SCHEDULED_TRIP_ACTIVATION_LEAD)))
                 .map(driver -> new DriverDispatchCandidate(
                         driver,
                         calculateDistanceKm(
@@ -328,6 +350,16 @@ public class TripService {
 
     private String generateStartPin() {
         return String.format("%04d", PIN_RANDOM.nextInt(10_000));
+    }
+
+    private List<String> vehicleCategoriesForDriver(Integer driverId) {
+        return vehicleRepository.findByDriverId(driverId).stream()
+                .filter(vehicle -> Boolean.TRUE.equals(vehicle.getActive()))
+                .map(Vehicle::getCategory)
+                .filter(category -> category != null && !category.isBlank())
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
     }
 
     private record DriverDispatchCandidate(User driver, double pickupDistanceKm) {

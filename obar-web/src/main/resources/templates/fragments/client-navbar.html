@@ -3,7 +3,7 @@
 
 <body>
 <header th:fragment="navbar(activePage)" class="topbar app-navbar">
-    <a class="brand app-navbar-brand" th:href="${activePage == 'driver'} ? @{/driver} : @{/app}"
+    <a class="brand app-navbar-brand" th:href="${#strings.startsWith(activePage, 'driver')} ? @{/driver} : @{/app}"
        aria-label="OBAR">
         <span class="brand-mark" aria-hidden="true">O</span><span class="brand-text">bar</span>
     </a>
@@ -49,6 +49,20 @@
                 </svg>
             </span>
             <span>Motorista</span>
+        </a>
+        <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver/scheduled}"
+           th:classappend="${activePage == 'driver-scheduled'} ? ' active'">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+                    <path d="M8 3v4"></path>
+                    <path d="M16 3v4"></path>
+                    <path d="M4 10h16"></path>
+                    <path d="M12 13v3"></path>
+                    <path d="M10.5 14.5h3"></path>
+                </svg>
+            </span>
+            <span>Programadas</span>
         </a>
         <a th:href="@{/app/profile}" th:classappend="${activePage == 'profile'} ? ' active'">
             <span class="nav-icon" aria-hidden="true">

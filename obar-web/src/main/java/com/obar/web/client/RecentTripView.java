@@ -1,6 +1,7 @@
 package com.obar.web.client;
 
 import com.obar.model.Trip;
+import com.obar.model.enums.TripStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public record RecentTripView(
         BigDecimal price,
         String vehicleCategory,
         String driverName,
-        String statusLabel,
+        TripStatus status,
         Float distanceKm) {
 
     private static final Locale PT_LOCALE = Locale.forLanguageTag("pt-PT");
@@ -31,7 +32,7 @@ public record RecentTripView(
                 price(trip),
                 valueOrFallback(trip.getVehicleCategory(), "-"),
                 trip.getDriver() == null ? null : trip.getDriver().getName(),
-                "Conclu\u00EDda",
+                trip.getStatus(),
                 trip.getRoute() == null ? null : trip.getRoute().getDistanceKm());
     }
 
@@ -62,6 +63,33 @@ public record RecentTripView(
             return "-";
         }
         return String.format(PT_LOCALE, "%.1f km", distanceKm);
+    }
+
+    public String statusLabel() {
+        if (status == null) {
+            return "-";
+        }
+        return switch (status) {
+            case COMPLETED -> "Conclu\u00EDda";
+            case CANCELLED -> "Cancelada";
+            case REJECTED -> "Rejeitada";
+            case PENDING -> "A confirmar";
+            case ACCEPTED -> "Agendada";
+            case IN_PROGRESS -> "Em curso";
+        };
+    }
+
+    public String statusClass() {
+        if (status == TripStatus.COMPLETED) {
+            return "is-completed";
+        }
+        if (status == TripStatus.CANCELLED || status == TripStatus.REJECTED) {
+            return "is-cancelled";
+        }
+        if (status == TripStatus.ACCEPTED) {
+            return "is-confirmed";
+        }
+        return "is-pending";
     }
 
     private static LocalDateTime referenceTime(Trip trip) {

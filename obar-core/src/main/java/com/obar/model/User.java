@@ -32,6 +32,9 @@ public class User {
 
     private String phone;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "account_status")
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)

@@ -30,6 +30,9 @@ public class Vehicle {
 
     private String color;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Column(name = "license_plate", nullable = false, unique = true)
     private String licensePlate;
 

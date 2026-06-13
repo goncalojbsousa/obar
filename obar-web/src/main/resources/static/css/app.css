@@ -1,9 +1,9 @@
-@import url("./app/navigation.css?v=driver-online-20260613");
+@import url("./app/navigation.css?v=profile-photo-20260613");
 @import url("./app/ride.css?v=trip-vat-20260613");
 @import url("./app/driver.css");
 @import url("./app/driver-scheduled.css");
 @import url("./app/modals.css");
 @import url("./app/scheduled.css");
-@import url("./app/profile.css");
+@import url("./app/profile.css?v=weekly-earnings-20260613");
 @import url("./app/maps.css");
 @import url("./app/responsive.css");

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=driver-online-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=profile-photo-20260613">
 </head>
 
 <body class="client-page profile-page">
@@ -14,7 +14,21 @@
 
     <main class="client-shell profile-shell">
         <aside class="profile-card profile-identity-card">
-            <div class="profile-avatar-large" th:text="${clientProfile.initials()}">C</div>
+            <form class="profile-photo-form" th:action="@{/app/profile/photo}" method="post"
+                enctype="multipart/form-data">
+                <label class="profile-avatar-large photo-upload-trigger" title="Atualizar foto de perfil">
+                    <img th:if="${clientProfile.photoUrl() != null and !clientProfile.photoUrl().isBlank()}"
+                        th:src="${clientProfile.photoUrl()}" alt="Foto de perfil">
+                    <span class="profile-avatar-initials"
+                        th:unless="${clientProfile.photoUrl() != null and !clientProfile.photoUrl().isBlank()}"
+                        th:text="${clientProfile.initials()}">C</span>
+                    <span class="photo-upload-overlay">Atualizar foto</span>
+                    <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                        aria-label="Atualizar foto de perfil" data-photo-upload required>
+                </label>
+            </form>
+            <p class="profile-upload-message is-success" th:if="${photoSuccess}" th:text="${photoSuccess}"></p>
+            <p class="profile-upload-message is-error" th:if="${photoError}" th:text="${photoError}"></p>
             <h1 th:text="${clientProfile.name()}">Cliente</h1>
             <p>Cliente desde <span th:text="${clientProfile.memberSince()}">-</span></p>
 
@@ -124,6 +138,7 @@
         </section>
     </main>
     <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+    <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
 </body>
 
 </html>

@@ -22,6 +22,7 @@ public final class ClientViews {
     public record ClientProfileView(
             String name,
             String initials,
+            String photoUrl,
             String email,
             String phone,
             String taxNumber,
@@ -49,6 +50,7 @@ public final class ClientViews {
             return new ClientProfileView(
                     valueOrFallback(user.getName(), "-"),
                     initials(user.getName()),
+                    user.getPhotoUrl(),
                     valueOrFallback(user.getEmail(), "-"),
                     valueOrFallback(user.getPhone(), "-"),
                     valueOrFallback(user.getTaxNumber(), "-"),

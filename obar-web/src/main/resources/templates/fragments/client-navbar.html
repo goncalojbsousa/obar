@@ -88,8 +88,12 @@
 
         <details class="account-menu">
             <summary class="account-menu-summary">
-                <span class="user-avatar" aria-hidden="true"
-                      th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
+                <span class="user-avatar" aria-hidden="true">
+                    <img th:if="${currentUser.photoUrl() != null and !currentUser.photoUrl().isBlank()}"
+                         th:src="${currentUser.photoUrl()}" alt="">
+                    <span th:unless="${currentUser.photoUrl() != null and !currentUser.photoUrl().isBlank()}"
+                          th:text="${#strings.substring(currentUser.name(),0,1)}">C</span>
+                </span>
                 <span class="user-name" th:text="${currentUser.name()}">Cliente</span>
                 <span class="account-chevron" aria-hidden="true">
                     <svg viewBox="0 0 24 24">

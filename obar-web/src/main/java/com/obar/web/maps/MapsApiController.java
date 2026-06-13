@@ -210,7 +210,33 @@ public class MapsApiController {
                 route.getEstimatedDurationMin(),
                 trip.getEstimatedPrice(),
                 trip.getVehicleCategory(),
-                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null);
+                trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
+                driverArrivalMin(trip));
+    }
+
+    private Integer driverArrivalMin(Trip trip) {
+        User driver = trip.getDriver();
+        Route route = trip.getRoute();
+        if (trip.getStatus() != TripStatus.ACCEPTED
+                || driver == null
+                || driver.getCurrentLatitude() == null
+                || driver.getCurrentLongitude() == null) {
+            return null;
+        }
+
+        try {
+            return mapsServiceClient.estimate(new RouteEstimateRequest(
+                    driver.getCurrentLatitude(),
+                    driver.getCurrentLongitude(),
+                    route.getOriginLatitude(),
+                    route.getOriginLongitude(),
+                    "Localização do motorista",
+                    route.getOriginAddress(),
+                    trip.getVehicleCategory(),
+                    null)).durationMin();
+        } catch (ResponseStatusException exception) {
+            return null;
+        }
     }
 
     private LocalDateTime validateScheduledAt(LocalDateTime scheduledAt) {

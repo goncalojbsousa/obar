@@ -406,3 +406,6 @@
     line-height: 1;
 }
 
+.trip-arrival strong {
+    font-size: 1.35rem;
+}

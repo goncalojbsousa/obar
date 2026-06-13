@@ -8,6 +8,7 @@ const state = {
     assignmentMarkers: L.layerGroup(),
     assignmentPoll: null,
     snapshotPoll: null,
+    locationPoll: null,
     countdownTimer: null,
     currentLocation: null,
     online: false
@@ -98,6 +99,11 @@ async function initializeDriverMap() {
     state.snapshotPoll = window.setInterval(() => {
         if (!state.assignment) {
             loadSnapshot();
+        }
+    }, 10000);
+    state.locationPoll = window.setInterval(() => {
+        if (state.assignment && state.assignment.status === "ACCEPTED") {
+            updateCurrentLocation({ silent: true });
         }
     }, 10000);
 }

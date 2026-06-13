@@ -45,6 +45,8 @@ const elements = {
     price: document.querySelector("[data-price]"),
     message: document.querySelector("[data-ride-message]"),
     waitingPanel: document.querySelector("[data-waiting-panel]"),
+    driverArrivalBlock: document.querySelector("[data-driver-arrival-block]"),
+    driverArrival: document.querySelector("[data-driver-arrival]"),
     tripPinBlock: document.querySelector("[data-trip-pin-block]"),
     tripPin: document.querySelector("[data-trip-pin]"),
     cancelTripButton: document.querySelector("[data-cancel-trip-button]"),
@@ -394,6 +396,7 @@ async function renderActiveTrip(trip) {
     setMarker("origin", state.origin, "Origem");
     setMarker("destination", state.destination, "Destino");
     setTripLockedState(trip.status);
+    renderDriverArrival(trip);
     renderTripPin(trip);
 
     elements.distance.textContent = `${trip.distanceKm.toFixed(2)} km`;
@@ -521,6 +524,7 @@ function setTripLockedState(status) {
         startActiveTripPolling();
     } else {
         stopActiveTripPolling();
+        renderDriverArrival(null);
         renderTripPin(null);
     }
     renderSuggestions("origin", []);
@@ -580,6 +584,12 @@ function renderTripPin(trip) {
     const pin = trip && trip.startPin ? trip.startPin : "";
     elements.tripPinBlock.hidden = !pin;
     elements.tripPin.textContent = pin || "0000";
+}
+
+function renderDriverArrival(trip) {
+    const arrivalMin = trip && trip.status === "ACCEPTED" ? trip.driverArrivalMin : null;
+    elements.driverArrivalBlock.hidden = arrivalMin == null;
+    elements.driverArrival.textContent = arrivalMin == null ? "0 min" : `${arrivalMin} min`;
 }
 
 function setMessage(message) {

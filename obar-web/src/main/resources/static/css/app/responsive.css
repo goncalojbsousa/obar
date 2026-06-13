@@ -1,0 +1,210 @@
+﻿@media (max-width: 760px) {
+
+    .auth-shell,
+    .client-shell {
+        padding: 18px;
+    }
+
+    .auth-panel {
+        padding: 24px;
+    }
+
+    .two-columns,
+    .ride-request,
+    .driver-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .ride-request {
+        min-height: auto;
+    }
+
+    .ride-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 22px;
+    }
+
+    .map-panel,
+    #ride-map {
+        min-height: 420px;
+    }
+
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px;
+    }
+
+    .user-area {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .client-page {
+        height: auto;
+        overflow: auto;
+    }
+
+    .profile-page {
+        height: auto;
+        overflow: auto;
+    }
+
+    .client-page .topbar {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        min-height: auto;
+        padding: 14px 16px 10px;
+    }
+
+    .client-page .topbar::after {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+
+    .client-page .client-nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        gap: 4px;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 4px;
+        width: 100%;
+    }
+
+    .client-page .client-nav a {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 0 12px;
+    }
+
+    .client-page .client-nav a.active::after {
+        left: 18px;
+        right: 18px;
+    }
+
+    .client-page .user-area {
+        justify-content: flex-end;
+        width: auto;
+    }
+
+    .account-menu-summary {
+        min-height: 46px;
+        min-width: auto;
+        padding: 6px 10px 6px 8px;
+    }
+
+    .account-menu-summary .user-avatar {
+        height: 32px;
+        width: 32px;
+    }
+
+    .account-menu-summary .user-name {
+        display: none;
+    }
+
+    .account-dropdown {
+        min-width: 160px;
+        right: 0;
+    }
+
+    .client-page .client-shell {
+        height: auto;
+    }
+
+    .client-page .profile-shell {
+        height: auto;
+        grid-template-columns: 1fr;
+        overflow: visible;
+        padding: 22px 18px 34px;
+    }
+
+    .scheduled-page-content {
+        padding: 24px 18px 34px;
+    }
+
+    .scheduled-hero,
+    .scheduled-dashboard-grid,
+    .scheduled-summary-grid,
+    .scheduled-next-card,
+    .scheduled-trip-card {
+        grid-template-columns: 1fr;
+    }
+
+    .scheduled-new-trip {
+        justify-self: stretch;
+    }
+
+    .scheduled-date-block {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-start;
+        min-height: auto;
+        text-align: left;
+    }
+
+    .scheduled-trip-title,
+    .panel-heading,
+    .recent-trip-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .scheduled-trip-actions {
+        justify-items: stretch;
+    }
+
+    .scheduled-trip-actions button {
+        width: 100%;
+    }
+
+    .profile-identity-card,
+    .profile-panel {
+        padding: 16px;
+    }
+
+    .profile-avatar-large {
+        height: 68px;
+        width: 68px;
+    }
+
+    .profile-title {
+        align-items: stretch;
+        display: grid;
+    }
+
+    .profile-info-grid,
+    .profile-stat-grid,
+    .profile-last-trip {
+        grid-template-columns: 1fr;
+    }
+
+    .client-page .ride-request {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .client-page .ride-sidebar {
+        border-bottom: 1px solid #25252b;
+        border-right: 0;
+        padding: 22px;
+    }
+
+    .client-page .map-panel,
+    .client-page #ride-map,
+    .driver-page #driver-map {
+        min-height: 58vh;
+    }
+
+    .driver-sidebar {
+        border-left: 0;
+        border-top: 1px solid #25252b;
+        padding: 22px;
+    }
+}
+

@@ -1,0 +1,625 @@
+.scheduled-page {
+    background:
+        linear-gradient(180deg, #121216 0%, #101014 52%, #0f0f12 100%);
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+}
+
+.scheduled-shell {
+    display: block;
+    min-height: calc(100vh - 78px);
+}
+
+.scheduled-page-content {
+    color: #f5f5f6;
+    margin: 0 auto;
+    max-width: 1500px;
+    padding: 38px 48px 58px;
+}
+
+.scheduled-page-header {
+    align-items: end;
+    display: grid;
+    gap: 28px;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+    margin-bottom: 28px;
+}
+
+.scheduled-page-header h1 {
+    color: #f7f7f8;
+    font-size: clamp(1.7rem, 2.4vw, 2.35rem);
+    line-height: 1.08;
+    margin: 0 0 6px;
+}
+
+.scheduled-page-header p {
+    color: #9a9aa8;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.scheduled-new-trip {
+    align-items: center;
+    border-radius: 8px;
+    box-shadow: 0 18px 42px rgba(255, 96, 30, 0.18);
+    display: inline-flex;
+    gap: 12px;
+    height: 48px;
+    justify-content: center;
+    justify-self: stretch;
+    text-decoration: none;
+    width: auto;
+}
+
+.scheduled-button-icon {
+    align-items: center;
+    border: 2px solid rgba(255, 255, 255, 0.82);
+    border-radius: 999px;
+    display: inline-flex;
+    height: 18px;
+    justify-content: center;
+    width: 18px;
+}
+
+.scheduled-button-icon svg {
+    fill: none;
+    height: 16px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.4;
+    width: 16px;
+}
+
+.scheduled-board {
+    align-items: start;
+    display: grid;
+    gap: 36px;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 368px);
+}
+
+.scheduled-main-flow,
+.scheduled-side-column {
+    display: grid;
+    gap: 26px;
+}
+
+.scheduled-side-column {
+    position: sticky;
+    top: 104px;
+}
+
+.scheduled-section-heading,
+.scheduled-side-title {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.scheduled-section-heading h2,
+.scheduled-side-title h2,
+.scheduled-side-card h2 {
+    color: #f7f7f8;
+    font-size: 1rem;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.section-icon,
+.summary-icon {
+    align-items: center;
+    color: var(--brand);
+    display: inline-flex;
+    justify-content: center;
+}
+
+.section-icon svg,
+.summary-icon svg,
+.scheduled-time-row svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.section-icon svg {
+    height: 20px;
+    stroke-width: 2.2;
+    width: 20px;
+}
+
+.scheduled-upcoming-list,
+.scheduled-history-table,
+.scheduled-summary-list {
+    display: grid;
+    gap: 12px;
+}
+
+.scheduled-ride-card,
+.scheduled-side-card,
+.scheduled-history-row,
+.empty-state {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+        #191a1f;
+    border: 1px solid #2c2d35;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.scheduled-ride-card {
+    align-items: center;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 150px minmax(210px, 1fr) minmax(318px, 0.78fr) minmax(128px, 148px) 18px;
+    min-height: 132px;
+    padding: 18px 18px 18px 20px;
+}
+
+.scheduled-card-time {
+    display: grid;
+    gap: 7px;
+}
+
+.scheduled-card-time>strong {
+    color: var(--brand);
+    font-size: 0.92rem;
+    line-height: 1.25;
+}
+
+.scheduled-time-row {
+    align-items: center;
+    color: #9a9aa8;
+    display: inline-flex;
+    font-size: 0.82rem;
+    font-weight: 750;
+    gap: 8px;
+}
+
+.scheduled-time-row svg {
+    height: 15px;
+    stroke-width: 2;
+    width: 15px;
+}
+
+.scheduled-card-time em {
+    align-self: start;
+    background: rgba(113, 132, 166, 0.2);
+    border-radius: 6px;
+    color: #b9c2d8;
+    font-size: 0.78rem;
+    font-style: normal;
+    font-weight: 850;
+    justify-self: start;
+    padding: 4px 9px;
+}
+
+.scheduled-route {
+    align-items: center;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 22px minmax(0, 1fr);
+    min-width: 0;
+}
+
+.scheduled-route-track {
+    align-items: center;
+    display: grid;
+    justify-items: center;
+    min-height: 70px;
+}
+
+.scheduled-route-track span {
+    background: #191a1f;
+    border: 3px solid var(--brand);
+    border-radius: 999px;
+    height: 16px;
+    width: 16px;
+}
+
+.scheduled-route-track span:last-child {
+    border-color: #e9edf5;
+}
+
+.scheduled-route-track i {
+    background: linear-gradient(180deg, rgba(255, 96, 30, 0.7), rgba(233, 237, 245, 0.7));
+    display: block;
+    height: 34px;
+    width: 2px;
+}
+
+.scheduled-route-copy {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+
+.scheduled-route-copy strong,
+.history-route strong {
+    color: #f7f7f8;
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.scheduled-route-copy p {
+    color: #9a9aa8;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.scheduled-trip-facts {
+    border-left: 1px solid #30313a;
+    border-right: 1px solid #30313a;
+    display: grid;
+    grid-template-columns: minmax(96px, 0.95fr) minmax(116px, 1.1fr) minmax(86px, 0.85fr);
+    min-width: 318px;
+}
+
+.scheduled-trip-facts div {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 0 12px;
+}
+
+.scheduled-trip-facts div+div {
+    border-left: 1px solid #30313a;
+}
+
+.scheduled-trip-facts span,
+.scheduled-history-row span,
+.scheduled-summary-item div>span,
+.scheduled-next-preview span,
+.scheduled-side-empty,
+.empty-state p {
+    color: #9a9aa8;
+}
+
+.scheduled-trip-facts span {
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.scheduled-trip-facts strong {
+    color: #f7f7f8;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.scheduled-trip-facts div:first-child strong,
+.scheduled-trip-facts div:nth-child(3) strong {
+    white-space: nowrap;
+}
+
+.scheduled-trip-facts div:last-child strong {
+    color: var(--brand);
+}
+
+.scheduled-status-area {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+}
+
+.status-pill {
+    align-items: center;
+    background: rgba(148, 163, 184, 0.14);
+    border-radius: 999px;
+    color: #dce3ee;
+    display: inline-flex;
+    font-size: 0.76rem;
+    font-weight: 850;
+    gap: 8px;
+    min-height: 30px;
+    padding: 6px 11px;
+    white-space: nowrap;
+}
+
+.status-pill::before {
+    background: #9ca3af;
+    border-radius: 999px;
+    content: "";
+    height: 8px;
+    width: 8px;
+}
+
+.status-pill.is-pending {
+    background: rgba(245, 158, 11, 0.14);
+    color: #facc15;
+}
+
+.status-pill.is-pending::before {
+    background: #facc15;
+}
+
+.status-pill.is-confirmed,
+.status-pill.is-completed {
+    background: rgba(34, 197, 94, 0.14);
+    color: #4ade80;
+}
+
+.status-pill.is-confirmed::before,
+.status-pill.is-completed::before {
+    background: #22c55e;
+}
+
+.status-pill.is-cancelled {
+    background: rgba(248, 113, 113, 0.14);
+    color: #fca5a5;
+}
+
+.status-pill.is-cancelled::before {
+    background: #f87171;
+}
+
+.scheduled-cancel-button {
+    background: transparent;
+    color: #9a9aa8;
+    font-size: 0.76rem;
+    min-height: 0;
+    padding: 0;
+}
+
+.scheduled-cancel-button:hover {
+    color: #f87171;
+}
+
+.scheduled-status-area form {
+    margin: 0;
+}
+
+.scheduled-arrow {
+    color: #d8dbe4;
+    font-size: 1.65rem;
+    line-height: 1;
+}
+
+.scheduled-side-card {
+    padding: 22px;
+}
+
+.scheduled-summary-item {
+    align-items: center;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 44px minmax(0, 1fr);
+}
+
+.summary-icon {
+    background: linear-gradient(135deg, #ff6b24, #d84b13);
+    border-radius: 8px;
+    color: #ffffff;
+    display: inline-flex;
+    flex: 0 0 44px;
+    height: 44px;
+    margin: 0;
+    width: 44px;
+}
+
+.summary-icon svg {
+    display: block;
+    height: 22px;
+    stroke-width: 2;
+    width: 22px;
+}
+
+.scheduled-summary-item strong {
+    color: #f7f7f8;
+    display: block;
+    font-size: 1.18rem;
+    line-height: 1.15;
+}
+
+.scheduled-summary-item div>span {
+    display: block;
+    font-size: 0.86rem;
+    margin-top: 2px;
+}
+
+.scheduled-next-metrics {
+    border-bottom: 1px solid #30313a;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 18px -22px 0;
+}
+
+.scheduled-next-metrics div {
+    display: grid;
+    gap: 4px;
+    padding: 0 22px 18px;
+}
+
+.scheduled-next-metrics div+div {
+    border-left: 1px solid #30313a;
+}
+
+.scheduled-next-metrics strong {
+    color: #f7f7f8;
+    font-size: 1.2rem;
+}
+
+.scheduled-next-metrics span {
+    color: #9a9aa8;
+    font-size: 0.84rem;
+}
+
+.scheduled-next-preview {
+    display: grid;
+    gap: 7px;
+    padding-top: 18px;
+}
+
+.scheduled-next-preview strong {
+    color: #f7f7f8;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.scheduled-next-preview p,
+.scheduled-side-empty {
+    line-height: 1.45;
+    margin: 0;
+}
+
+.scheduled-side-empty {
+    padding-top: 16px;
+}
+
+.scheduled-history-row {
+    align-items: center;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 140px minmax(260px, 1fr) 110px 112px auto 18px;
+    padding: 14px 18px;
+}
+
+.scheduled-history-row>div {
+    display: grid;
+    gap: 5px;
+}
+
+.scheduled-history-row strong {
+    color: #f7f7f8;
+    font-size: 0.88rem;
+}
+
+.scheduled-history-row span {
+    font-size: 0.8rem;
+}
+
+.history-route {
+    align-items: center;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.history-route span {
+    color: #9a9aa8;
+    font-size: 1.2rem;
+}
+
+.empty-state {
+    color: #f7f7f8;
+    padding: 22px;
+}
+
+.empty-state strong {
+    color: #f7f7f8;
+    display: block;
+    font-size: 1rem;
+}
+
+.empty-state p {
+    line-height: 1.5;
+    margin: 8px 0 16px;
+}
+
+.scheduled-empty-state .ghost-button {
+    align-items: center;
+    color: #f7f7f8;
+    display: inline-flex;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.compact-empty-state {
+    padding: 18px;
+}
+
+@media (max-width: 1180px) {
+    .scheduled-page-content {
+        max-width: 960px;
+        padding-inline: 28px;
+    }
+
+    .scheduled-board {
+        grid-template-columns: 1fr;
+    }
+
+    .scheduled-side-column {
+        position: static;
+    }
+
+    .scheduled-side-card {
+        max-width: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .scheduled-page-header {
+        align-items: stretch;
+        grid-template-columns: 1fr;
+    }
+
+    .scheduled-ride-card {
+        align-items: stretch;
+        grid-template-columns: 1fr;
+    }
+
+    .scheduled-trip-facts {
+        border: 0;
+        border-top: 1px solid #30313a;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding-top: 14px;
+    }
+
+    .scheduled-trip-facts div {
+        padding: 0 12px 0 0;
+    }
+
+    .scheduled-trip-facts div+div {
+        border-left: 0;
+    }
+
+    .scheduled-status-area {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .scheduled-arrow {
+        display: none;
+    }
+
+    .scheduled-history-row {
+        grid-template-columns: 1fr;
+    }
+
+    .history-route {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .scheduled-page-content {
+        padding: 24px 16px 34px;
+    }
+
+    .scheduled-page-header h1 {
+        font-size: 1.72rem;
+    }
+
+    .scheduled-trip-facts,
+    .scheduled-next-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .scheduled-trip-facts div {
+        padding: 0;
+    }
+
+    .scheduled-next-metrics div+div {
+        border-left: 0;
+        border-top: 1px solid #30313a;
+        padding-top: 18px;
+    }
+}

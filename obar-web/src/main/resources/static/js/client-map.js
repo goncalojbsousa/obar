@@ -43,6 +43,7 @@ const elements = {
     distance: document.querySelector("[data-distance]"),
     duration: document.querySelector("[data-duration]"),
     price: document.querySelector("[data-price]"),
+    taxRate: document.querySelector("[data-tax-rate]"),
     message: document.querySelector("[data-ride-message]"),
     waitingPanel: document.querySelector("[data-waiting-panel]"),
     driverArrivalBlock: document.querySelector("[data-driver-arrival-block]"),
@@ -367,6 +368,7 @@ function renderEstimate(estimate) {
     elements.distance.textContent = `${estimate.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${estimate.durationMin} min`;
     elements.price.textContent = formatCurrency(estimate.estimatedPrice);
+    elements.taxRate.textContent = formatTaxRate(estimate.taxRate);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = false;
     elements.scheduleButton.disabled = false;
@@ -401,6 +403,7 @@ async function renderActiveTrip(trip) {
     elements.distance.textContent = `${trip.distanceKm.toFixed(2)} km`;
     elements.duration.textContent = `${trip.durationMin} min`;
     elements.price.textContent = formatCurrency(trip.estimatedPrice);
+    elements.taxRate.textContent = formatTaxRate(trip.taxRate);
     elements.estimatePanel.hidden = false;
     elements.requestButton.disabled = true;
 
@@ -589,6 +592,13 @@ function formatCurrency(value) {
     return new Intl.NumberFormat("pt-PT", {
         style: "currency",
         currency: "EUR"
+    }).format(value);
+}
+
+function formatTaxRate(value) {
+    return new Intl.NumberFormat("pt-PT", {
+        style: "percent",
+        maximumFractionDigits: 2
     }).format(value);
 }
 

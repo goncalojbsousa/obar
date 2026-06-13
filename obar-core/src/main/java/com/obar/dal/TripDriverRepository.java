@@ -2,6 +2,8 @@ package com.obar.dal;
 
 import com.obar.model.TripDriver;
 import com.obar.model.enums.TripDriverStatus;
+import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.TripType;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -61,7 +63,7 @@ public class TripDriverRepository extends BaseRepository<TripDriver, Integer> {
         }
     }
 
-    public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId) {
+    public Optional<TripDriver> findCurrentAssignmentForDriver(Integer driverId, LocalDateTime scheduledActivationLimit) {
         try (Session session = getSession()) {
             return session.createQuery(
                     "SELECT td FROM TripDriver td "
@@ -72,6 +74,10 @@ public class TripDriverRepository extends BaseRepository<TripDriver, Integer> {
                             + "WHERE td.driver.id = :driverId "
                             + "AND td.status IN (:assignmentStatuses) "
                             + "AND t.status IN (:tripStatuses) "
+                            + "AND (t.tripType = :immediateType "
+                            + "OR (t.tripType = :scheduledType "
+                            + "AND t.status <> :pendingStatus "
+                            + "AND (t.status = :inProgressStatus OR t.scheduledTime <= :activationLimit))) "
                             + "ORDER BY td.assignedAt DESC",
                     TripDriver.class)
                     .setParameter("driverId", driverId)
@@ -79,9 +85,14 @@ public class TripDriverRepository extends BaseRepository<TripDriver, Integer> {
                             TripDriverStatus.ASSIGNED,
                             TripDriverStatus.ACCEPTED))
                     .setParameter("tripStatuses", List.of(
-                            com.obar.model.enums.TripStatus.PENDING,
-                            com.obar.model.enums.TripStatus.ACCEPTED,
-                            com.obar.model.enums.TripStatus.IN_PROGRESS))
+                            TripStatus.PENDING,
+                            TripStatus.ACCEPTED,
+                            TripStatus.IN_PROGRESS))
+                    .setParameter("immediateType", TripType.IMMEDIATE)
+                    .setParameter("scheduledType", TripType.SCHEDULED)
+                    .setParameter("pendingStatus", TripStatus.PENDING)
+                    .setParameter("inProgressStatus", TripStatus.IN_PROGRESS)
+                    .setParameter("activationLimit", scheduledActivationLimit)
                     .setMaxResults(1)
                     .uniqueResultOptional();
         }

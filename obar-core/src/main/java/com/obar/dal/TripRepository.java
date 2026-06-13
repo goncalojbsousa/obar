@@ -5,6 +5,7 @@ import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.TripType;
 import org.hibernate.Session;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class TripRepository extends BaseRepository<Trip, Integer> {
@@ -100,6 +101,69 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
                             .map(String::toUpperCase)
                             .toList())
                     .list();
+        }
+    }
+
+    public List<Trip> findPendingScheduledByVehicleCategories(List<String> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return List.of();
+        }
+
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.client "
+                            + "JOIN FETCH t.route "
+                            + "WHERE t.tripType = :tripType "
+                            + "AND t.status = :status "
+                            + "AND upper(t.vehicleCategory) IN (:categories) "
+                            + "AND t.scheduledTime > :now "
+                            + "ORDER BY t.scheduledTime ASC",
+                    Trip.class)
+                    .setParameter("tripType", TripType.SCHEDULED)
+                    .setParameter("status", TripStatus.PENDING)
+                    .setParameter("now", LocalDateTime.now())
+                    .setParameter("categories", categories.stream()
+                            .map(String::toUpperCase)
+                            .toList())
+                    .list();
+        }
+    }
+
+    public List<Trip> findAcceptedScheduledByDriverId(Integer driverId) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.client "
+                            + "JOIN FETCH t.route "
+                            + "LEFT JOIN FETCH t.vehicle "
+                            + "WHERE t.driver.id = :driverId "
+                            + "AND t.tripType = :tripType "
+                            + "AND t.status = :status "
+                            + "ORDER BY t.scheduledTime ASC",
+                    Trip.class)
+                    .setParameter("driverId", driverId)
+                    .setParameter("tripType", TripType.SCHEDULED)
+                    .setParameter("status", TripStatus.ACCEPTED)
+                    .list();
+        }
+    }
+
+    public boolean hasAcceptedScheduledTripStartingBefore(Integer driverId, LocalDateTime limit) {
+        try (Session session = getSession()) {
+            Long count = session.createQuery(
+                    "SELECT COUNT(t.id) FROM Trip t "
+                            + "WHERE t.driver.id = :driverId "
+                            + "AND t.tripType = :tripType "
+                            + "AND t.status = :status "
+                            + "AND t.scheduledTime <= :limit",
+                    Long.class)
+                    .setParameter("driverId", driverId)
+                    .setParameter("tripType", TripType.SCHEDULED)
+                    .setParameter("status", TripStatus.ACCEPTED)
+                    .setParameter("limit", limit)
+                    .uniqueResult();
+            return count != null && count > 0;
         }
     }
 

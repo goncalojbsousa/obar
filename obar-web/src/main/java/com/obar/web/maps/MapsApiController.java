@@ -1,6 +1,7 @@
 package com.obar.web.maps;
 
 import com.obar.bll.RouteService;
+import com.obar.bll.ReviewService;
 import com.obar.bll.TaxRateService;
 import com.obar.bll.TaxRateService.FareQuote;
 import com.obar.bll.TripService;
@@ -39,18 +40,21 @@ public class MapsApiController {
     private final TripService tripService;
     private final UserService userService;
     private final TaxRateService taxRateService;
+    private final ReviewService reviewService;
 
     public MapsApiController(
             MapsServiceClient mapsServiceClient,
             RouteService routeService,
             TripService tripService,
             UserService userService,
-            TaxRateService taxRateService) {
+            TaxRateService taxRateService,
+            ReviewService reviewService) {
         this.mapsServiceClient = mapsServiceClient;
         this.routeService = routeService;
         this.tripService = tripService;
         this.userService = userService;
         this.taxRateService = taxRateService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/api/locations/search")
@@ -147,6 +151,40 @@ public class MapsApiController {
         return tripService.findActiveImmediateTripByClient(currentUser.id())
                 .map(this::toActiveTripResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe viagem ativa."));
+    }
+
+    @GetMapping("/api/trips/review-pending")
+    public PendingReviewResponse pendingReview(HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        Trip trip = reviewService.findPendingClientReview(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sem avaliacao pendente."));
+        return new PendingReviewResponse(
+                trip.getId(),
+                trip.getDriver().getName(),
+                trip.getDriver().getPhotoUrl(),
+                trip.getRoute().getDestinationAddress(),
+                trip.getFinalPrice() == null ? trip.getEstimatedPrice() : trip.getFinalPrice());
+    }
+
+    @PostMapping("/api/trips/{tripId}/review")
+    public ReviewResponse reviewDriver(@PathVariable Integer tripId,
+            @RequestBody TripReviewRequest request,
+            HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        try {
+            reviewService.addClientReview(
+                    tripId,
+                    currentUser.id(),
+                    request == null ? null : request.rating(),
+                    request == null ? null : request.comment());
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, exception.getMessage(), exception);
+        }
+        return new ReviewResponse("Obrigado pela tua avaliacao.");
     }
 
     @PostMapping("/api/trips/{tripId}/cancel")
@@ -269,6 +307,20 @@ public class MapsApiController {
     }
 
     public record TripCancellationRequest(String reason) {
+    }
+
+    public record PendingReviewResponse(
+            Integer tripId,
+            String driverName,
+            String driverPhotoUrl,
+            String destinationAddress,
+            BigDecimal finalPrice) {
+    }
+
+    public record TripReviewRequest(Integer rating, String comment) {
+    }
+
+    public record ReviewResponse(String message) {
     }
 
     public record TripCancellationResponse(

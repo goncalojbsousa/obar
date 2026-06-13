@@ -28,6 +28,8 @@ public final class ClientViews {
             String taxNumber,
             String accountStatus,
             String memberSince,
+            String averageRating,
+            int reviewCount,
             int totalTrips,
             int completedTrips,
             int scheduledTrips,
@@ -40,7 +42,7 @@ public final class ClientViews {
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy",
                 Locale.forLanguageTag("pt-PT"));
 
-        public static ClientProfileView from(User user, List<Trip> trips) {
+        public static ClientProfileView from(User user, List<Trip> trips, int reviewCount) {
             List<Trip> safeTrips = trips == null ? List.of() : trips;
             Trip lastTrip = safeTrips.stream()
                     .max(Comparator.comparing(ClientProfileView::tripReferenceTime,
@@ -56,6 +58,9 @@ public final class ClientViews {
                     valueOrFallback(user.getTaxNumber(), "-"),
                     statusLabel(user),
                     formatMonth(user.getCreatedAt()),
+                    String.format(Locale.forLanguageTag("pt-PT"), "%.1f",
+                            user.getAverageRating() == null ? 0f : user.getAverageRating()),
+                    reviewCount,
                     safeTrips.size(),
                     (int) safeTrips.stream().filter(trip -> trip.getStatus() == TripStatus.COMPLETED).count(),
                     (int) safeTrips.stream().filter(ClientProfileView::isScheduledTrip).count(),

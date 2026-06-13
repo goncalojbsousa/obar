@@ -12,7 +12,8 @@ const state = {
     },
     activeTripId: null,
     activeTripPoll: null,
-    tripLocked: false
+    tripLocked: false,
+    pendingReviewTripId: null
 };
 
 const map = L.map("ride-map", { zoomControl: true }).setView(defaultCenter, 13);
@@ -56,7 +57,17 @@ const elements = {
     cancelReason: document.querySelector("[data-cancel-reason]"),
     cancelError: document.querySelector("[data-cancel-error]"),
     cancelSubmitButton: document.querySelector("[data-cancel-submit]"),
-    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
+    cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]"),
+    reviewModal: document.querySelector("[data-review-modal]"),
+    reviewForm: document.querySelector("[data-review-form]"),
+    reviewDriverAvatar: document.querySelector("[data-review-driver-avatar]"),
+    reviewDriverName: document.querySelector("[data-review-driver-name]"),
+    reviewDestination: document.querySelector("[data-review-destination]"),
+    reviewPrice: document.querySelector("[data-review-price]"),
+    reviewComment: document.querySelector("[data-review-comment]"),
+    reviewError: document.querySelector("[data-review-error]"),
+    reviewSubmitButton: document.querySelector("[data-review-submit]"),
+    reviewDismissButtons: document.querySelectorAll("[data-review-dismiss]")
 };
 
 const routeInputs = [elements.destinationInput, elements.originInput, elements.vehicleCategory, elements.scheduledAt];
@@ -71,6 +82,8 @@ elements.scheduleButton.addEventListener("click", scheduleTrip);
 elements.cancelTripButton.addEventListener("click", openCancelModal);
 elements.cancelForm.addEventListener("submit", submitCancelTrip);
 elements.cancelDismissButtons.forEach((button) => button.addEventListener("click", closeCancelModal));
+elements.reviewForm.addEventListener("submit", submitDriverReview);
+elements.reviewDismissButtons.forEach((button) => button.addEventListener("click", closeReviewModal));
 document.addEventListener("keydown", handleModalKeydown);
 
 initializeScheduleInput();
@@ -82,6 +95,7 @@ async function initializeRide() {
         await renderActiveTrip(activeTrip);
     } catch (error) {
         if (error.status === 404) {
+            await loadPendingReview();
             locateUser({ automatic: true });
             return;
         }
@@ -342,6 +356,81 @@ async function submitCancelTrip(event) {
 function handleModalKeydown(event) {
     if (event.key === "Escape" && !elements.cancelModal.hidden) {
         closeCancelModal();
+    } else if (event.key === "Escape" && !elements.reviewModal.hidden) {
+        closeReviewModal();
+    }
+}
+
+async function loadPendingReview() {
+    try {
+        const review = await fetchJson("/api/trips/review-pending");
+        openReviewModal(review);
+    } catch (error) {
+        if (error.status !== 404) {
+            setMessage(error.message);
+        }
+    }
+}
+
+function openReviewModal(review) {
+    state.pendingReviewTripId = review.tripId;
+    elements.reviewForm.reset();
+    elements.reviewError.hidden = true;
+    elements.reviewSubmitButton.disabled = false;
+    elements.reviewDriverName.textContent = review.driverName;
+    elements.reviewDestination.textContent = review.destinationAddress || "Viagem concluída";
+    elements.reviewPrice.textContent = formatCurrency(review.finalPrice || 0);
+    const hasDriverPhoto = Boolean(review.driverPhotoUrl);
+    elements.reviewDriverAvatar.textContent = hasDriverPhoto
+        ? ""
+        : review.driverName
+            ? review.driverName.trim().substring(0, 1).toUpperCase()
+            : "M";
+    elements.reviewDriverAvatar.style.backgroundImage = hasDriverPhoto
+        ? `url("${review.driverPhotoUrl.replaceAll('"', "%22")}")`
+        : "";
+    elements.reviewModal.hidden = false;
+}
+
+function closeReviewModal() {
+    if (elements.reviewSubmitButton.disabled) {
+        return;
+    }
+    elements.reviewModal.hidden = true;
+    elements.reviewError.hidden = true;
+}
+
+async function submitDriverReview(event) {
+    event.preventDefault();
+    const ratingInput = elements.reviewForm.querySelector('input[name="rating"]:checked');
+    if (!ratingInput) {
+        elements.reviewError.textContent = "Escolhe entre 1 e 5 estrelas.";
+        elements.reviewError.hidden = false;
+        return;
+    }
+    if (!state.pendingReviewTripId) {
+        elements.reviewModal.hidden = true;
+        return;
+    }
+
+    elements.reviewSubmitButton.disabled = true;
+    elements.reviewError.hidden = true;
+    try {
+        const result = await fetchJson(`/api/trips/${state.pendingReviewTripId}/review`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rating: Number(ratingInput.value),
+                comment: elements.reviewComment.value.trim()
+            })
+        });
+        state.pendingReviewTripId = null;
+        elements.reviewModal.hidden = true;
+        setMessage(result.message);
+    } catch (error) {
+        elements.reviewError.textContent = error.message;
+        elements.reviewError.hidden = false;
+        elements.reviewSubmitButton.disabled = false;
     }
 }
 
@@ -532,6 +621,7 @@ async function refreshActiveTrip() {
             state.activeTripId = null;
             setTripLockedState(null);
             setMessage("");
+            await loadPendingReview();
             return;
         }
         setMessage(error.message);

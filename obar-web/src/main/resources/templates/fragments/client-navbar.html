@@ -30,16 +30,6 @@
             </span>
             <span>Viagens</span>
         </a>
-        <a href="#" aria-disabled="true">
-            <span class="nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                    <rect x="3.5" y="6.5" width="17" height="11" rx="2"></rect>
-                    <path d="M3.5 10h17"></path>
-                    <path d="M7 14.5h3.5"></path>
-                </svg>
-            </span>
-            <span>Pagamentos</span>
-        </a>
         <a th:if="${currentUser.type().name() == 'DRIVER'}" th:href="@{/driver}"
            th:classappend="${activePage == 'driver'} ? ' active'">
             <span class="nav-icon" aria-hidden="true">

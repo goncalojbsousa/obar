@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=profile-photo-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=profile-reviews-20260613">
 </head>
 
 <body class="client-page profile-page">
@@ -31,6 +31,13 @@
             <p class="profile-upload-message is-error" th:if="${photoError}" th:text="${photoError}"></p>
             <h1 th:text="${clientProfile.name()}">Cliente</h1>
             <p>Cliente desde <span th:text="${clientProfile.memberSince()}">-</span></p>
+            <div class="profile-review-summary">
+                <span class="profile-review-star" aria-hidden="true">&#9733;</span>
+                <strong th:text="${clientProfile.averageRating()}">0,0</strong>
+                <span th:text="${clientProfile.reviewCount() == 1 ? '1 avaliação' : clientProfile.reviewCount() + ' avaliações'}">
+                    0 avaliações
+                </span>
+            </div>
 
             <dl class="profile-contact-list">
                 <div>

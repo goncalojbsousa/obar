@@ -1,6 +1,8 @@
 package com.obar.web.maps;
 
 import com.obar.bll.RouteService;
+import com.obar.bll.TaxRateService;
+import com.obar.bll.TaxRateService.FareQuote;
 import com.obar.bll.TripService;
 import com.obar.bll.UserService;
 import com.obar.bll.VehicleService;
@@ -36,16 +38,19 @@ public class MapsApiController {
     private final RouteService routeService;
     private final TripService tripService;
     private final UserService userService;
+    private final TaxRateService taxRateService;
 
     public MapsApiController(
             MapsServiceClient mapsServiceClient,
             RouteService routeService,
             TripService tripService,
-            UserService userService) {
+            UserService userService,
+            TaxRateService taxRateService) {
         this.mapsServiceClient = mapsServiceClient;
         this.routeService = routeService;
         this.tripService = tripService;
         this.userService = userService;
+        this.taxRateService = taxRateService;
     }
 
     @GetMapping("/api/locations/search")
@@ -61,8 +66,10 @@ public class MapsApiController {
     }
 
     @PostMapping("/api/routes/estimate")
-    public RouteEstimateResponse estimateRoute(@RequestBody RouteEstimateRequest request) {
-        return mapsServiceClient.estimate(request);
+    public FareEstimateResponse estimateRoute(@RequestBody RouteEstimateRequest request, HttpSession session) {
+        User client = currentClient(session);
+        RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
+        return toFareEstimate(estimate, taxRateService.quote(estimate.estimatedPrice(), client.getTaxNumber()));
     }
 
     @PostMapping("/api/trips/request")
@@ -76,10 +83,7 @@ public class MapsApiController {
     }
 
     private TripRequestResponse createTrip(RouteEstimateRequest request, HttpSession session, TripType tripType) {
-        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        User client = userService.findById(currentUser.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User client = currentClient(session);
 
         if (Boolean.TRUE.equals(client.getOnline())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -99,6 +103,7 @@ public class MapsApiController {
                     "Não existem motoristas online e disponíveis para esta categoria. Tenta novamente mais tarde.");
         }
         RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
+        FareQuote fare = taxRateService.quote(estimate.estimatedPrice(), client.getTaxNumber());
 
         Route route = new Route();
         route.setOriginAddress(blankToDefault(request.originAddress(), "Localização atual"));
@@ -117,7 +122,8 @@ public class MapsApiController {
         trip.setTripType(tripType);
         trip.setScheduledTime(scheduledAt);
         trip.setVehicleCategory(vehicleCategory);
-        trip.setEstimatedPrice(estimate.estimatedPrice());
+        trip.setEstimatedPrice(fare.totalAmount());
+        trip.setTaxRateApplied(fare.taxRate());
         Trip savedTrip = tripService.requestTrip(trip);
 
         return new TripRequestResponse(
@@ -125,7 +131,8 @@ public class MapsApiController {
                 savedRoute.getId(),
                 estimate.distanceKm(),
                 estimate.durationMin(),
-                estimate.estimatedPrice(),
+                fare.totalAmount(),
+                fare.taxRate(),
                 savedTrip.getVehicleCategory(),
                 savedTrip.getTripType().name(),
                 savedTrip.getScheduledTime(),
@@ -193,6 +200,7 @@ public class MapsApiController {
                 route.getDistanceKm(),
                 route.getEstimatedDurationMin(),
                 trip.getEstimatedPrice(),
+                trip.getTaxRateApplied(),
                 trip.getVehicleCategory(),
                 trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
                 driverArrivalMin(trip));
@@ -223,6 +231,24 @@ public class MapsApiController {
         }
     }
 
+    private User currentClient(HttpSession session) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        return userService.findById(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    }
+
+    private FareEstimateResponse toFareEstimate(RouteEstimateResponse estimate, FareQuote fare) {
+        return new FareEstimateResponse(
+                estimate.distanceKm(),
+                estimate.durationMin(),
+                fare.netAmount(),
+                fare.taxRate(),
+                fare.taxAmount(),
+                fare.totalAmount(),
+                estimate.geometry());
+    }
+
     public record ActiveTripResponse(
             Integer tripId,
             Integer routeId,
@@ -236,6 +262,7 @@ public class MapsApiController {
             double distanceKm,
             int durationMin,
             BigDecimal estimatedPrice,
+            BigDecimal taxRate,
             String vehicleCategory,
             String startPin,
             Integer driverArrivalMin) {
@@ -256,9 +283,20 @@ public class MapsApiController {
             double distanceKm,
             int durationMin,
             BigDecimal estimatedPrice,
+            BigDecimal taxRate,
             String vehicleCategory,
             String tripType,
             LocalDateTime scheduledAt,
             String status) {
+    }
+
+    public record FareEstimateResponse(
+            double distanceKm,
+            int durationMin,
+            BigDecimal netPrice,
+            BigDecimal taxRate,
+            BigDecimal taxAmount,
+            BigDecimal estimatedPrice,
+            Object geometry) {
     }
 }

@@ -409,3 +409,7 @@
 .trip-arrival strong {
     font-size: 1.35rem;
 }
+
+.client-page .estimate-panel div:nth-child(4) strong {
+    color: var(--brand);
+}

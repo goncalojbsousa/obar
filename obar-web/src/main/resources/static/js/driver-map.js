@@ -43,6 +43,8 @@ const elements = {
     category: document.querySelector("[data-category]"),
     clientName: document.querySelector("[data-client-name]"),
     clientRating: document.querySelector("[data-client-rating]"),
+    clientNotesBlock: document.querySelector("[data-client-notes-block]"),
+    clientNotes: document.querySelector("[data-client-notes]"),
     countdownBlock: document.querySelector("[data-countdown-block]"),
     responseActions: document.querySelector("[data-response-actions]"),
     acceptButton: document.querySelector("[data-accept-trip]"),
@@ -229,6 +231,9 @@ function renderAssignment(assignment) {
     elements.clientRating.textContent = assignment.clientRating > 0
         ? `★ ${assignment.clientRating.toFixed(1)}`
         : "Sem avaliações";
+    const notes = assignment.notes?.trim();
+    elements.clientNotesBlock.hidden = !notes;
+    elements.clientNotes.textContent = notes || "";
     const isPending = assignment.status === "PENDING";
     const isAccepted = assignment.status === "ACCEPTED";
     const isInProgress = assignment.status === "IN_PROGRESS";

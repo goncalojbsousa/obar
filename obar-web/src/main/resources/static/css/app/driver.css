@@ -61,7 +61,8 @@
 .countdown-block span,
 .trip-route-summary span,
 .driver-trip-metrics span,
-.driver-trip-client span {
+.driver-trip-client span,
+.driver-trip-notes span {
     color: #8c8c96;
     display: block;
     font-size: 0.78rem;
@@ -93,6 +94,25 @@
     display: block;
     font-weight: 800;
     margin-top: 5px;
+}
+
+.driver-trip-notes {
+    background: #25252c;
+    border: 1px solid #34343b;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.driver-trip-notes[hidden] {
+    display: none;
+}
+
+.driver-trip-notes p {
+    color: #f5f5f6;
+    line-height: 1.45;
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
 .driver-trip-metrics {

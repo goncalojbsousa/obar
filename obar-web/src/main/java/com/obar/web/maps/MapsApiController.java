@@ -128,6 +128,7 @@ public class MapsApiController {
         trip.setVehicleCategory(vehicleCategory);
         trip.setEstimatedPrice(fare.totalAmount());
         trip.setTaxRateApplied(fare.taxRate());
+        trip.setNotes(normalizeNotes(request.notes()));
         Trip savedTrip = tripService.requestTrip(trip);
 
         return new TripRequestResponse(
@@ -223,6 +224,18 @@ public class MapsApiController {
         return value == null || value.isBlank() ? fallback : value.trim();
     }
 
+    private String normalizeNotes(String notes) {
+        if (notes == null || notes.isBlank()) {
+            return null;
+        }
+        String normalized = notes.trim();
+        if (normalized.length() > 500) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "As observações não podem exceder 500 caracteres.");
+        }
+        return normalized;
+    }
+
     private ActiveTripResponse toActiveTripResponse(Trip trip) {
         Route route = trip.getRoute();
         return new ActiveTripResponse(
@@ -240,6 +253,7 @@ public class MapsApiController {
                 trip.getEstimatedPrice(),
                 trip.getTaxRateApplied(),
                 trip.getVehicleCategory(),
+                trip.getNotes(),
                 trip.getStatus() == TripStatus.ACCEPTED ? trip.getStartPin() : null,
                 driverArrivalMin(trip));
     }
@@ -263,6 +277,7 @@ public class MapsApiController {
                     "Localização do motorista",
                     route.getOriginAddress(),
                     trip.getVehicleCategory(),
+                    null,
                     null)).durationMin();
         } catch (ResponseStatusException exception) {
             return null;
@@ -302,6 +317,7 @@ public class MapsApiController {
             BigDecimal estimatedPrice,
             BigDecimal taxRate,
             String vehicleCategory,
+            String notes,
             String startPin,
             Integer driverArrivalMin) {
     }

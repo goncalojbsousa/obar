@@ -1,5 +1,6 @@
 (function () {
 const onlineInput = document.querySelector("[data-driver-online]");
+const clientHomeLink = document.querySelector("[data-client-home]");
 
 if (onlineInput) {
     onlineInput.addEventListener("change", updateOnlineStatus);
@@ -45,9 +46,28 @@ async function updateOnlineStatus() {
 
 function setOnlineStatus(online) {
     onlineInput.checked = online;
+    if (clientHomeLink) {
+        if (online) {
+            clientHomeLink.setAttribute("aria-disabled", "true");
+        } else {
+            clientHomeLink.removeAttribute("aria-disabled");
+        }
+    }
     document.dispatchEvent(new CustomEvent("driver-online-changed", {
         detail: { online }
     }));
+
+    if (online && window.location.pathname === "/app") {
+        window.location.href = "/driver";
+    }
+}
+
+if (clientHomeLink && onlineInput) {
+    clientHomeLink.addEventListener("click", (event) => {
+        if (onlineInput.checked) {
+            event.preventDefault();
+        }
+    });
 }
 
 function getCurrentLocation() {

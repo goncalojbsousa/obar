@@ -85,6 +85,10 @@ public class MapsApiController {
         User client = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
+        if (Boolean.TRUE.equals(client.getOnline())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Fica offline antes de pedires uma viagem.");
+        }
         if (tripType == TripType.IMMEDIATE && hasActiveTrip(client.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Já tens uma viagem ativa ou à espera de motorista.");

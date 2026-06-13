@@ -9,7 +9,8 @@
     </a>
 
     <nav class="client-nav" aria-label="Navega&#x00E7;&#x00E3;o principal">
-        <a th:href="@{/app}" th:classappend="${activePage == 'new'} ? ' active'">
+        <a th:href="@{/app}" th:classappend="${activePage == 'new'} ? ' active'"
+           data-client-home>
             <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                     <path d="M3 10.8 12 4l9 6.8"></path>

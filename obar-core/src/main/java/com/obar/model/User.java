@@ -71,6 +71,8 @@ public class User {
 
     private Boolean available = false;
 
+    private Boolean online = false;
+
     @Column(name = "average_rating")
     private Float averageRating = 0f;
 

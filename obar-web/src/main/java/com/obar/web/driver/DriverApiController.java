@@ -148,6 +148,36 @@ public class DriverApiController {
                 return new DriverActionResponse("Localização atualizada.");
         }
 
+        @GetMapping("/api/driver/online")
+        public DriverOnlineResponse onlineStatus(HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                User driver = userService.findById(currentUser.id())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                return new DriverOnlineResponse(Boolean.TRUE.equals(driver.getOnline()));
+        }
+
+        @PostMapping("/api/driver/online")
+        public DriverOnlineResponse updateOnlineStatus(@RequestBody DriverOnlineRequest request,
+                        HttpSession session) {
+                AuthenticatedUserDto currentUser = requireDriver(session);
+                if (tripService.findCurrentAssignmentForDriver(currentUser.id()).isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "Termina ou cancela a viagem antes de alterares o estado online.");
+                }
+                try {
+                        if (request.online() && request.lat() != null && request.lng() != null) {
+                                userService.updateDriverCurrentLocation(
+                                                currentUser.id(),
+                                                request.lat().floatValue(),
+                                                request.lng().floatValue());
+                        }
+                        userService.setDriverOnline(currentUser.id(), request.online());
+                } catch (IllegalArgumentException | IllegalStateException exception) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+                }
+                return new DriverOnlineResponse(request.online());
+        }
+
         @GetMapping("/api/driver/map-snapshot")
         public DriverMapSnapshotResponse mapSnapshot(HttpSession session) {
                 requireDriver(session);

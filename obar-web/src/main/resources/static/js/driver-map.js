@@ -9,7 +9,8 @@ const state = {
     assignmentPoll: null,
     snapshotPoll: null,
     countdownTimer: null,
-    currentLocation: null
+    currentLocation: null,
+    online: false
 };
 
 const map = L.map("driver-map", { zoomControl: true }).setView(defaultCenter, 12);
@@ -76,11 +77,20 @@ elements.startPin.addEventListener("input", () => {
     elements.startPin.value = elements.startPin.value.replace(/\D/g, "").slice(0, 4);
 });
 document.addEventListener("keydown", handleModalKeydown);
+document.addEventListener("driver-online-changed", (event) => {
+    renderOnlineStatus(event.detail.online);
+    if (event.detail.online) {
+        pollAssignment();
+    }
+});
 
 initializeDriverMap();
 
-function initializeDriverMap() {
-    updateCurrentLocation();
+async function initializeDriverMap() {
+    await loadOnlineStatus();
+    if (state.online) {
+        await updateCurrentLocation({ silent: true });
+    }
     loadSnapshot();
     pollAssignment();
     state.assignmentPoll = window.setInterval(pollAssignment, 2500);
@@ -125,7 +135,7 @@ function updateCurrentLocation(options = {}) {
 }
 
 async function pollAssignment() {
-    if (state.assignment) {
+    if (state.assignment || !state.online) {
         return;
     }
 
@@ -136,6 +146,24 @@ async function pollAssignment() {
         if (error.status !== 404) {
             setMessage(error.message);
         }
+    }
+}
+
+async function loadOnlineStatus() {
+    try {
+        const result = await fetchJson("/api/driver/online");
+        renderOnlineStatus(result.online);
+    } catch (error) {
+        setMessage(error.message);
+    }
+}
+
+function renderOnlineStatus(online) {
+    state.online = online;
+    if (!state.assignment) {
+        elements.status.textContent = online
+            ? "A procurar viagens para ti."
+            : "Fica online quando quiseres trabalhar.";
     }
 }
 

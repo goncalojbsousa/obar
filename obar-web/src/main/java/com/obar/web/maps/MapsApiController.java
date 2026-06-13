@@ -92,6 +92,10 @@ public class MapsApiController {
         LocalDateTime scheduledAt = tripType == TripType.SCHEDULED ? validateScheduledAt(request.scheduledAt()) : null;
 
         String vehicleCategory = VehicleCategoryCatalog.normalize(request.vehicleCategory());
+        if (tripType == TripType.IMMEDIATE && !userService.hasOnlineAvailableDriverForCategory(vehicleCategory)) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Não existem motoristas online e disponíveis para esta categoria. Tenta novamente mais tarde.");
+        }
         RouteEstimateResponse estimate = mapsServiceClient.estimate(request);
 
         Route route = new Route();

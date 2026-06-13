@@ -61,6 +61,15 @@
     </nav>
 
     <div class="user-area app-user-area">
+        <label class="navbar-online-switch"
+               th:if="${currentUser.type().name() == 'DRIVER'}">
+            <input type="checkbox" data-driver-online>
+            <span class="navbar-switch-options">
+                <span class="navbar-switch-off">Offline</span>
+                <span class="navbar-switch-on">Online</span>
+            </span>
+        </label>
+
         <details class="account-menu">
             <summary class="account-menu-summary">
                 <span class="user-avatar" aria-hidden="true"

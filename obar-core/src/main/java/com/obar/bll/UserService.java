@@ -46,6 +46,25 @@ public class UserService {
         });
     }
 
+    public void setDriverOnline(Integer driverId, boolean online) {
+        User driver = userRepository.findById(driverId)
+                .orElseThrow(() -> new IllegalArgumentException("Motorista não encontrado."));
+        if (driver.getType() != UserType.DRIVER) {
+            throw new IllegalArgumentException("Utilizador não é um condutor.");
+        }
+        if (online && (driver.getCurrentLatitude() == null || driver.getCurrentLongitude() == null)) {
+            throw new IllegalStateException("Ativa a localização para ficares online.");
+        }
+
+        driver.setOnline(online);
+        driver.setAvailable(online);
+        userRepository.update(driver);
+    }
+
+    public boolean hasOnlineAvailableDriverForCategory(String vehicleCategory) {
+        return !userRepository.findAvailableDriversByVehicleCategoryWithCurrentLocation(vehicleCategory).isEmpty();
+    }
+
     public void updateDriverCurrentLocation(Integer driverId, float currentLatitude, float currentLongitude) {
         userRepository.findById(driverId).ifPresent(u -> {
             if (u.getType() != UserType.DRIVER) {

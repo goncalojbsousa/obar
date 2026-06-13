@@ -11,8 +11,8 @@ import com.obar.model.TripDriver;
 import com.obar.model.User;
 import com.obar.model.enums.UserType;
 import com.obar.web.maps.client.MapsServiceClient;
-import com.obar.web.maps.dto.request.RouteEstimateRequest;
-import com.obar.web.maps.dto.response.RouteEstimateResponse;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateRequest;
+import com.obar.web.maps.client.MapsServiceClient.RouteEstimateResponse;
 import com.obar.web.session.WebSessionHelper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -306,5 +307,60 @@ public class DriverApiController {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica o motivo do cancelamento.");
                 }
                 return reason.trim();
+        }
+
+        public record DriverActionResponse(String message) {
+        }
+
+        public record DriverAssignmentResponse(
+                        Integer tripId,
+                        String clientName,
+                        Float clientRating,
+                        String originAddress,
+                        String destinationAddress,
+                        double originLat,
+                        double originLng,
+                        double destinationLat,
+                        double destinationLng,
+                        double distanceKm,
+                        int durationMin,
+                        BigDecimal estimatedPrice,
+                        String vehicleCategory,
+                        String status,
+                        LocalDateTime assignedAt,
+                        long secondsLeft,
+                        String routeMode,
+                        Object geometry) {
+        }
+
+        public record DriverCancelTripRequest(String reason) {
+        }
+
+        public record DriverCompleteTripRequest(Integer rating, Double lat, Double lng) {
+        }
+
+        public record DriverLocationUpdateRequest(double lat, double lng) {
+        }
+
+        public record DriverMapPointResponse(
+                        Integer id,
+                        String name,
+                        String type,
+                        double lat,
+                        double lng) {
+        }
+
+        public record DriverMapSnapshotResponse(
+                        List<DriverMapPointResponse> drivers,
+                        List<DriverMapPointResponse> clients) {
+        }
+
+        public record DriverOnlineRequest(boolean online, Double lat, Double lng) {
+        }
+
+        public record DriverOnlineResponse(boolean online) {
+        }
+
+        public record DriverStartTripRequest(String pin) {
         }
 }

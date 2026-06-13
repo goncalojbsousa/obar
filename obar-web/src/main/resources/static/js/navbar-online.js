@@ -2,10 +2,13 @@
 const onlineInput = document.querySelector("[data-driver-online]");
 const clientHomeLink = document.querySelector("[data-client-home]");
 
-if (onlineInput) {
-    onlineInput.addEventListener("change", updateOnlineStatus);
-    loadOnlineStatus();
+if (!onlineInput) {
+    return;
 }
+
+onlineInput.addEventListener("change", updateOnlineStatus);
+loadOnlineStatus();
+clientHomeLink?.addEventListener("click", (event) => onlineInput.checked && event.preventDefault());
 
 async function loadOnlineStatus() {
     try {
@@ -31,8 +34,8 @@ async function updateOnlineStatus() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 online,
-                lat: location ? location.lat : null,
-                lng: location ? location.lng : null
+                lat: location?.lat ?? null,
+                lng: location?.lng ?? null
             })
         });
         setOnlineStatus(result.online);
@@ -47,11 +50,7 @@ async function updateOnlineStatus() {
 function setOnlineStatus(online) {
     onlineInput.checked = online;
     if (clientHomeLink) {
-        if (online) {
-            clientHomeLink.setAttribute("aria-disabled", "true");
-        } else {
-            clientHomeLink.removeAttribute("aria-disabled");
-        }
+        online ? clientHomeLink.setAttribute("aria-disabled", "true") : clientHomeLink.removeAttribute("aria-disabled");
     }
     document.dispatchEvent(new CustomEvent("driver-online-changed", {
         detail: { online }
@@ -60,14 +59,6 @@ function setOnlineStatus(online) {
     if (online && window.location.pathname === "/app") {
         window.location.href = "/driver";
     }
-}
-
-if (clientHomeLink && onlineInput) {
-    clientHomeLink.addEventListener("click", (event) => {
-        if (onlineInput.checked) {
-            event.preventDefault();
-        }
-    });
 }
 
 function getCurrentLocation() {
@@ -93,7 +84,6 @@ async function fetchOnlineJson(url, options = {}) {
             const body = await response.json();
             message = body.message || body.detail || body.error || message;
         } catch {
-            // Keep the fallback message.
         }
         throw new Error(message);
     }

@@ -58,14 +58,13 @@ const elements = {
     cancelDismissButtons: document.querySelectorAll("[data-cancel-dismiss]")
 };
 
+const routeInputs = [elements.destinationInput, elements.originInput, elements.vehicleCategory, elements.scheduledAt];
+const tripButtons = [elements.requestButton, elements.scheduleButton];
+
 elements.locateButton.addEventListener("click", locateUser);
 elements.originInput.addEventListener("input", (event) => handleLocationInput("origin", event));
 elements.destinationInput.addEventListener("input", (event) => handleLocationInput("destination", event));
-elements.vehicleCategory.addEventListener("change", () => {
-    if (state.origin && state.destination) {
-        estimateRoute();
-    }
-});
+elements.vehicleCategory.addEventListener("change", () => state.origin && state.destination && estimateRoute());
 elements.requestButton.addEventListener("click", requestTrip);
 elements.scheduleButton.addEventListener("click", scheduleTrip);
 elements.cancelTripButton.addEventListener("click", openCancelModal);
@@ -267,7 +266,7 @@ async function scheduleTrip() {
         const trip = await fetchJson("/api/trips/schedule", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(buildRouteRequest({ scheduled: true }))
+            body: JSON.stringify(buildRouteRequest(true))
         });
         setMessage(`Viagem agendada para ${formatDateTime(trip.scheduledAt)}. Podes continuar a pedir viagens imediatas.`);
     } catch (error) {
@@ -345,7 +344,7 @@ function handleModalKeydown(event) {
     }
 }
 
-function buildRouteRequest(options = {}) {
+function buildRouteRequest(includeSchedule = false) {
     const request = {
         originLat: state.origin.lat,
         originLng: state.origin.lng,
@@ -355,7 +354,7 @@ function buildRouteRequest(options = {}) {
         destinationAddress: state.destination.label,
         vehicleCategory: elements.vehicleCategory.value
     };
-    if (options.scheduled) {
+    if (includeSchedule) {
         request.scheduledAt = elements.scheduledAt.value;
     }
     return request;
@@ -420,57 +419,28 @@ async function renderActiveTrip(trip) {
 }
 
 function buildRouteLayer(geometry) {
-    const routeOutline = L.geoJSON(geometry, {
+    return L.featureGroup([
+        { color: "#17202a", weight: 10, opacity: 0.14 },
+        { color: "#ffffff", weight: 8, opacity: 0.95 },
+        { color: "#2563eb", weight: 5, opacity: 0.95 }
+    ].map((style) => L.geoJSON(geometry, {
         pane: "routePane",
-        style: {
-            color: "#ffffff",
-            weight: 8,
-            opacity: 0.95,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-    const routeShadow = L.geoJSON(geometry, {
-        pane: "routePane",
-        style: {
-            color: "#17202a",
-            weight: 10,
-            opacity: 0.14,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-    const routeLine = L.geoJSON(geometry, {
-        pane: "routePane",
-        style: {
-            color: "#2563eb",
-            weight: 5,
-            opacity: 0.95,
-            lineCap: "round",
-            lineJoin: "round"
-        }
-    });
-
-    return L.featureGroup([routeShadow, routeOutline, routeLine]);
+        style: { ...style, lineCap: "round", lineJoin: "round" }
+    })));
 }
 
 function setMarker(type, point, label) {
+    const markerKey = type === "origin" ? "originMarker" : "destinationMarker";
     const marker = L.marker([point.lat, point.lng], {
         icon: buildMarkerIcon(type),
         pane: "tripMarkerPane",
         zIndexOffset: 1000
     }).bindPopup(label);
-    if (type === "origin") {
-        if (state.originMarker) {
-            state.originMarker.remove();
-        }
-        state.originMarker = marker.addTo(map);
-    } else {
-        if (state.destinationMarker) {
-            state.destinationMarker.remove();
-        }
-        state.destinationMarker = marker.addTo(map);
+
+    if (state[markerKey]) {
+        state[markerKey].remove();
     }
+    state[markerKey] = marker.addTo(map);
 }
 
 function buildMarkerIcon(type) {
@@ -498,37 +468,36 @@ function removeRouteLayer() {
 }
 
 function setBusy(isBusy) {
-    elements.requestButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
-    elements.scheduleButton.disabled = isBusy || state.tripLocked || elements.estimatePanel.hidden;
-    elements.destinationInput.disabled = isBusy || state.tripLocked;
-    elements.originInput.disabled = isBusy || state.tripLocked;
-    elements.vehicleCategory.disabled = isBusy || state.tripLocked;
-    elements.scheduledAt.disabled = isBusy || state.tripLocked;
-    elements.locateButton.disabled = isBusy || state.tripLocked;
+    const disabled = isBusy || state.tripLocked;
+    tripButtons.forEach((button) => {
+        button.disabled = disabled || elements.estimatePanel.hidden;
+    });
+    routeInputs.forEach((input) => {
+        input.disabled = disabled;
+    });
+    elements.locateButton.disabled = disabled;
     elements.cancelTripButton.disabled = isBusy && state.tripLocked;
 }
 
 function setTripLockedState(status) {
-    const isLocked = Boolean(status);
-    state.tripLocked = isLocked;
-    elements.waitingPanel.hidden = !isLocked;
-    elements.requestButton.disabled = isLocked || elements.estimatePanel.hidden;
-    elements.scheduleButton.disabled = isLocked || elements.estimatePanel.hidden;
-    elements.destinationInput.disabled = isLocked;
-    elements.originInput.disabled = isLocked;
-    elements.vehicleCategory.disabled = isLocked;
-    elements.scheduledAt.disabled = isLocked;
-    elements.locateButton.hidden = isLocked || Boolean(state.origin);
-    elements.cancelTripButton.hidden = !isLocked;
-    if (isLocked) {
+    state.tripLocked = Boolean(status);
+    elements.waitingPanel.hidden = !state.tripLocked;
+    tripButtons.forEach((button) => {
+        button.disabled = state.tripLocked || elements.estimatePanel.hidden;
+    });
+    routeInputs.forEach((input) => {
+        input.disabled = state.tripLocked;
+    });
+    elements.locateButton.hidden = state.tripLocked || Boolean(state.origin);
+    elements.cancelTripButton.hidden = !state.tripLocked;
+    if (state.tripLocked) {
         startActiveTripPolling();
     } else {
         stopActiveTripPolling();
         renderDriverArrival(null);
         renderTripPin(null);
     }
-    renderSuggestions("origin", []);
-    renderSuggestions("destination", []);
+    ["origin", "destination"].forEach((type) => renderSuggestions(type, []));
     updateWaitingCopy(status);
 }
 
@@ -626,12 +595,8 @@ function formatCurrency(value) {
 function initializeScheduleInput() {
     const now = new Date();
     now.setMinutes(now.getMinutes() + 15);
-    elements.scheduledAt.min = toLocalDateTimeValue(now);
-}
-
-function toLocalDateTimeValue(date) {
-    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return offsetDate.toISOString().slice(0, 16);
+    const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    elements.scheduledAt.min = offsetDate.toISOString().slice(0, 16);
 }
 
 function formatDateTime(value) {

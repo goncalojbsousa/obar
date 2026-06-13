@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 public class TripService {
 
     private static final Duration DRIVER_RESPONSE_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration MIN_SCHEDULE_NOTICE = Duration.ofMinutes(15);
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double DISTANCE_SCORE_WEIGHT = 0.70;
     private static final double RATING_SCORE_WEIGHT = 0.20;
@@ -145,6 +146,27 @@ public class TripService {
         return tripRepository.findByClientId(clientId);
     }
 
+    public boolean hasActiveImmediateTrip(Integer clientId) {
+        return findActiveImmediateTripByClient(clientId).isPresent();
+    }
+
+    public Optional<Trip> findActiveImmediateTripByClient(Integer clientId) {
+        return findByClient(clientId).stream()
+                .filter(this::isActiveImmediateTrip)
+                .max(Comparator.comparing(Trip::getRequestTime));
+    }
+
+    public LocalDateTime validateScheduledTime(LocalDateTime scheduledAt) {
+        if (scheduledAt == null) {
+            throw new IllegalArgumentException("Escolhe a data e hora da viagem.");
+        }
+        if (scheduledAt.isBefore(LocalDateTime.now().plus(MIN_SCHEDULE_NOTICE))) {
+            throw new IllegalArgumentException(
+                    "A viagem agendada deve ser marcada com pelo menos 15 minutos de anteced\u00EAncia.");
+        }
+        return scheduledAt;
+    }
+
     public List<Trip> findScheduledByClient(Integer clientId) {
         return tripRepository.findScheduledByClientId(clientId);
     }
@@ -251,6 +273,13 @@ public class TripService {
                 .sorted(Comparator.comparingDouble(DriverDispatchCandidate::dispatchScore))
                 .map(DriverDispatchCandidate::driver)
                 .findFirst();
+    }
+
+    private boolean isActiveImmediateTrip(Trip trip) {
+        return trip.getTripType() == TripType.IMMEDIATE
+                && (trip.getStatus() == TripStatus.PENDING
+                        || trip.getStatus() == TripStatus.ACCEPTED
+                        || trip.getStatus() == TripStatus.IN_PROGRESS);
     }
 
     private void markDriverAssignmentAsAccepted(Integer tripId, Integer driverId) {

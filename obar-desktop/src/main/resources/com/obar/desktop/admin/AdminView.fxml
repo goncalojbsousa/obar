@@ -15,6 +15,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.obar.desktop.admin.AdminController"
@@ -69,7 +70,11 @@
                     <children>
                         <HBox spacing="10.0" alignment="CENTER_LEFT">
                             <children>
-                                <Label fx:id="sidebarUserInitialsLabel" text="MA" styleClass="sidebar-user-avatar" />
+                                <StackPane minWidth="30.0" minHeight="30.0" maxWidth="30.0" maxHeight="30.0">
+                                    <Label fx:id="sidebarUserInitialsLabel" text="MA" styleClass="sidebar-user-avatar" />
+                                    <ImageView fx:id="sidebarUserPhotoImage" fitWidth="30.0" fitHeight="30.0"
+                                        preserveRatio="false" visible="false" />
+                                </StackPane>
                                 <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label fx:id="sidebarUserNameLabel" text="Marcelo Admin" styleClass="sidebar-user-name" />

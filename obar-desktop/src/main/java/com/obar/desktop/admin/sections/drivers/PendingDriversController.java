@@ -4,6 +4,7 @@ import com.obar.bll.admin.AdminService;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,6 +17,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 import java.time.format.DateTimeFormatter;
@@ -63,6 +65,10 @@ public class PendingDriversController implements AdminSectionController {
 
     @FXML
     private VBox detailPanel;
+    @FXML
+    private ImageView detailPhotoImage;
+    @FXML
+    private Label detailPhotoFallback;
     @FXML
     private Label detailNameLabel;
     @FXML
@@ -177,6 +183,7 @@ public class PendingDriversController implements AdminSectionController {
     private void reload() {
         if (adminService != null) {
             allPendingDrivers.setAll(adminService.listPendingDrivers());
+            allPendingDrivers.forEach(driver -> AdminImageUtils.preload(driver.photoUrl()));
             applySearchFilter();
         }
         updateInfoLabel();
@@ -210,6 +217,8 @@ public class PendingDriversController implements AdminSectionController {
     }
 
     private void bindDetailPanel(AdminUserDTO driver) {
+        detailPhotoFallback.setText(AdminFormatUtils.extractInitials(driver.name()));
+        AdminImageUtils.showAvatar(detailPhotoImage, detailPhotoFallback, driver.photoUrl(), 54);
         setText(detailNameLabel, driver.name());
         setText(detailEmailLabel, driver.email());
         setText(detailPhoneLabel, driver.phone());

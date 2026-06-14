@@ -7,6 +7,7 @@ import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.model.enums.AccountStatus;
@@ -22,6 +23,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
@@ -109,6 +111,8 @@ public abstract class UsersController implements AdminSectionController {
     protected VBox detailPanel;
     @FXML
     protected Label detailInitialsLabel;
+    @FXML
+    protected ImageView detailPhotoImage;
     @FXML
     protected Label detailTitleLabel;
     @FXML
@@ -392,6 +396,7 @@ public abstract class UsersController implements AdminSectionController {
             return;
         }
         allUsers.setAll(adminService.listUsersByType(sectionConfig().type()));
+        allUsers.forEach(user -> AdminImageUtils.preload(user.photoUrl()));
         applyUserFilter();
         updateCountLabels();
     }
@@ -422,6 +427,10 @@ public abstract class UsersController implements AdminSectionController {
     }
 
     private boolean matchesStatus(AdminUserDTO user) {
+        if (sectionConfig().type() == UserType.DRIVER
+                && activeStatusFilter == AccountStatus.INACTIVE) {
+            return !Boolean.TRUE.equals(user.online());
+        }
         return activeStatusFilter == null || user.status() == activeStatusFilter;
     }
 
@@ -485,7 +494,7 @@ public abstract class UsersController implements AdminSectionController {
         emailColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
                 AdminFormatUtils.fallback(cellData.getValue().email())));
         statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
-                AdminFormatUtils.prettyStatus(cellData.getValue().status())));
+                displayedStatus(cellData.getValue())));
         metricColumn.setCellValueFactory(cellData -> new SimpleStringProperty(metricValue(cellData.getValue())));
         volumeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(volumeValue(cellData.getValue())));
         referenceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(referenceValue(cellData.getValue())));
@@ -504,17 +513,13 @@ public abstract class UsersController implements AdminSectionController {
                     return;
                 }
                 setText(statusLabel);
-                AdminUserDTO user = getIndex() >= 0 && getIndex() < getTableView().getItems().size()
-                        ? getTableView().getItems().get(getIndex())
-                        : null;
-                if (user == null || user.status() == null) {
-                    return;
-                }
-                switch (user.status()) {
-                    case ACTIVE -> getStyleClass().add("status-online");
-                    case INACTIVE -> getStyleClass().add("status-offline");
-                    case BLOCKED -> getStyleClass().add("status-blocked");
-                    case PENDING -> getStyleClass().add("status-pending");
+                switch (statusLabel) {
+                    case "Online" -> getStyleClass().add("status-online");
+                    case "Offline", "Inativo" -> getStyleClass().add("status-offline");
+                    case "Bloqueado" -> getStyleClass().add("status-blocked");
+                    case "Pendente" -> getStyleClass().add("status-pending");
+                    default -> {
+                    }
                 }
             }
         });
@@ -529,10 +534,11 @@ public abstract class UsersController implements AdminSectionController {
 
         UserSectionConfig config = sectionConfig();
         setLabelText(detailInitialsLabel, AdminFormatUtils.extractInitials(user.name()));
+        AdminImageUtils.showAvatar(detailPhotoImage, detailInitialsLabel, user.photoUrl(), 54);
         setLabelText(detailTitleLabel, "Detalhe do " + config.badgeLabel().toLowerCase(Locale.ROOT));
         setLabelText(detailNameLabel, AdminFormatUtils.fallback(user.name()));
         setLabelText(detailEmailLabel, AdminFormatUtils.fallback(user.email()));
-        setLabelText(detailStatusLabel, AdminFormatUtils.prettyStatus(user.status()));
+        setLabelText(detailStatusLabel, displayedStatus(user));
         setLabelText(detailRoleLabel, config.badgeLabel());
         setLabelText(detailPhoneValueLabel, AdminFormatUtils.fallback(user.phone()));
         setLabelText(detailCreatedValueLabel, user.createdAt() == null ? "-" : user.createdAt().toString());
@@ -633,7 +639,7 @@ public abstract class UsersController implements AdminSectionController {
                     column("Nome", 2.1f, AdminUserDTO::name),
                     column("Email", 2.4f, AdminUserDTO::email),
                     column("Telefone", 1.3f, AdminUserDTO::phone),
-                    column("Estado", 1.2f, user -> AdminFormatUtils.prettyStatus(user.status())),
+                    column("Estado", 1.2f, this::displayedStatus),
                     column("Licenca", 1.4f, AdminUserDTO::licenseNumber),
                     column("Avaliacao", 1f, user -> AdminFormatUtils.starRating(user.averageRating())),
                     column("Viagens", 0.9f, user -> String.valueOf(AdminFormatUtils.defaultInteger(user.totalTrips()))),
@@ -679,7 +685,7 @@ public abstract class UsersController implements AdminSectionController {
 
     private String cardThreeValue(AdminUserDTO user) {
         return sectionConfig().type() == UserType.DRIVER
-                ? (Boolean.TRUE.equals(user.available()) ? "Online" : "Offline")
+                ? (Boolean.TRUE.equals(user.available()) ? "Sim" : "Nao")
                 : (user.defaultPaymentMethodId() == null ? "-" : "#" + user.defaultPaymentMethodId());
     }
 
@@ -687,6 +693,15 @@ public abstract class UsersController implements AdminSectionController {
         return sectionConfig().type() == UserType.DRIVER
                 ? AdminFormatUtils.prettyStatus(user.status())
                 : "Cliente";
+    }
+
+    private String displayedStatus(AdminUserDTO user) {
+        if (sectionConfig().type() != UserType.DRIVER
+                || user.status() == AccountStatus.BLOCKED
+                || user.status() == AccountStatus.PENDING) {
+            return AdminFormatUtils.prettyStatus(user.status());
+        }
+        return Boolean.TRUE.equals(user.online()) ? "Online" : "Offline";
     }
 
     private void clearExtraDetailLabels() {

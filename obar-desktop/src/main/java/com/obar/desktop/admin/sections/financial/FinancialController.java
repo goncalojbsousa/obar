@@ -613,7 +613,7 @@ public class FinancialController implements AdminSectionController {
         setLabelText(detailCardThreeTitleLabel, "Estado");
         setLabelText(detailCardThreeValueLabel, AdminFormatUtils.prettyPaymentStatus(payment.status()));
         setLabelText(detailCardFourTitleLabel, "Moeda");
-        setLabelText(detailCardFourValueLabel, AdminFormatUtils.fallback(payment.currencyCode()));
+        setLabelText(detailCardFourValueLabel, "\u20AC");
         setLabelText(detailReferenceTitleLabel, "Taxa aplicada");
         setLabelText(detailReferenceValueLabel, taxRate);
         setLabelText(detailExtraOneTitleLabel, "Motorista");

@@ -1,123 +1,162 @@
 <!doctype html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Viagens programadas | Obar</title>
-    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=driver-scheduled-20260613">
-</head>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Viagens programadas | Obar</title>
+        <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+        <link rel="stylesheet" href="/css/app.css?v=driver-scheduled-20260613">
+    </head>
 
-<body class="client-page driver-scheduled-page">
-    <header th:replace="~{fragments/client-navbar :: navbar('driver-scheduled')}"></header>
+    <body class="client-page driver-scheduled-page">
+        <header
+            th:replace="~{fragments/client-navbar :: navbar('driver-scheduled')}"></header>
 
-    <main class="driver-scheduled-shell">
-        <section class="driver-scheduled-content">
-            <header class="driver-scheduled-header">
-                <div>
-                    <h1>Viagens programadas</h1>
-                    <p>Aceita pedidos futuros compat&iacute;veis com os teus ve&iacute;culos.</p>
-                </div>
-            </header>
-
-            <p class="scheduled-feedback is-success" th:if="${successMessage}" th:text="${successMessage}"></p>
-            <p class="scheduled-feedback is-error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
-
-            <section class="driver-scheduled-section">
-                <div class="driver-scheduled-title">
+        <main class="driver-scheduled-shell">
+            <section class="driver-scheduled-content">
+                <header class="driver-scheduled-header">
                     <div>
-                        <h2>Pedidos dispon&iacute;veis</h2>
-                        <p>O primeiro motorista compat&iacute;vel a aceitar fica respons&aacute;vel pela viagem.</p>
+                        <h1>Viagens programadas</h1>
+                        <p>Aceita pedidos futuros compat&iacute;veis com os teus
+                            ve&iacute;culos.</p>
                     </div>
-                    <strong th:text="${#lists.size(scheduledPage.availableTrips())}">0</strong>
-                </div>
+                </header>
 
-                <div class="driver-scheduled-grid" th:if="${!#lists.isEmpty(scheduledPage.availableTrips())}">
-                    <article class="driver-scheduled-card" th:each="trip : ${scheduledPage.availableTrips()}">
-                        <div class="driver-scheduled-date">
-                            <span class="driver-scheduled-date-day" th:text="${trip.dayLabel()}">Amanh&atilde;</span>
-                            <span class="driver-scheduled-date-time" th:text="${trip.timeLabel()}">09:30</span>
-                        </div>
-                        <div class="driver-scheduled-route">
-                            <div>
-                                <span>Origem</span>
-                                <strong th:text="${trip.originAddress()}">Origem</strong>
-                            </div>
-                            <div>
-                                <span>Destino</span>
-                                <strong th:text="${trip.destinationAddress()}">Destino</strong>
-                            </div>
-                        </div>
-                        <div class="driver-scheduled-details">
-                            <div class="driver-scheduled-facts-row">
-                                <span th:text="${trip.vehicleCategory()}">STANDARD</span>
-                                <span th:text="${trip.distanceLabel()}">12,4 km</span>
-                                <span th:text="${trip.durationLabel()}">18 min</span>
-                            </div>
-                            <span class="driver-scheduled-price" th:text="${#numbers.formatCurrency(trip.estimatedPrice())}">14,20 &euro;</span>
-                        </div>
-                        <div class="driver-scheduled-client">
-                            <span>Cliente</span>
-                            <strong th:text="${trip.clientName()}">Cliente</strong>
-                            <small th:text="${trip.ratingLabel()}">Sem avalia&ccedil;&otilde;es</small>
-                        </div>
-                        <form th:action="@{/driver/scheduled/{id}/accept(id=${trip.id()})}" method="post">
-                            <button class="primary-button" type="submit">Aceitar viagem</button>
-                        </form>
-                    </article>
-                </div>
+                <p class="scheduled-feedback is-success"
+                    th:if="${successMessage}" th:text="${successMessage}"></p>
+                <p class="scheduled-feedback is-error" th:if="${errorMessage}"
+                    th:text="${errorMessage}"></p>
 
-                <div class="driver-scheduled-empty" th:if="${#lists.isEmpty(scheduledPage.availableTrips())}">
-                    <strong>Sem pedidos programados dispon&iacute;veis</strong>
-                    <p>Novos pedidos compat&iacute;veis com os teus ve&iacute;culos aparecem aqui.</p>
-                </div>
-            </section>
-
-            <section class="driver-scheduled-section">
-                <div class="driver-scheduled-title">
-                    <div>
-                        <h2>As minhas viagens aceites</h2>
-                        <p>Entram automaticamente no painel normal 30 minutos antes da partida.</p>
+                <section class="driver-scheduled-section">
+                    <div class="driver-scheduled-title">
+                        <div>
+                            <h2>Pedidos dispon&iacute;veis</h2>
+                            <p>O primeiro motorista compat&iacute;vel a aceitar
+                                fica respons&aacute;vel pela viagem.</p>
+                        </div>
+                        <strong
+                            th:text="${#lists.size(scheduledPage.availableTrips())}">0</strong>
                     </div>
-                    <strong th:text="${#lists.size(scheduledPage.acceptedTrips())}">0</strong>
-                </div>
 
-                <div class="driver-accepted-list" th:if="${!#lists.isEmpty(scheduledPage.acceptedTrips())}">
-                    <article class="driver-accepted-row" th:each="trip : ${scheduledPage.acceptedTrips()}">
-                        <div>
-                            <span th:text="${trip.dayLabel()}">Amanh&atilde;</span>
-                            <strong th:text="${trip.timeLabel()}">09:30</strong>
-                        </div>
-                        <div>
-                            <span>Rota</span>
-                            <strong>
-                                <span th:text="${trip.originAddress()}">Origem</span>
-                                <span aria-hidden="true">&rarr;</span>
-                                <span th:text="${trip.destinationAddress()}">Destino</span>
-                            </strong>
-                        </div>
-                        <div>
-                            <span>Cliente</span>
-                            <strong th:text="${trip.clientName()}">Cliente</strong>
-                        </div>
-                        <div>
-                            <span>Categoria</span>
-                            <strong th:text="${trip.vehicleCategory()}">STANDARD</strong>
-                        </div>
-                        <span class="status-pill is-confirmed">Confirmada</span>
-                    </article>
-                </div>
+                    <div class="driver-scheduled-grid"
+                        th:if="${!#lists.isEmpty(scheduledPage.availableTrips())}">
+                        <article class="driver-scheduled-card"
+                            th:each="trip : ${scheduledPage.availableTrips()}">
+                            <div class="driver-scheduled-date">
+                                <span class="driver-scheduled-date-day"
+                                    th:text="${trip.dayLabel()}">Amanh&atilde;</span>
+                                <span class="driver-scheduled-date-time"
+                                    th:text="${trip.timeLabel()}">09:30</span>
+                            </div>
+                            <div class="driver-scheduled-route">
+                                <div>
+                                    <span>Origem</span>
+                                    <strong
+                                        th:text="${trip.originAddress()}">Origem</strong>
+                                </div>
+                                <div>
+                                    <span>Destino</span>
+                                    <strong
+                                        th:text="${trip.destinationAddress()}">Destino</strong>
+                                </div>
+                            </div>
+                            <div class="driver-scheduled-details">
+                                <div class="driver-scheduled-facts-row">
+                                    <span
+                                        th:text="${trip.vehicleCategory()}">STANDARD</span>
+                                    <span th:text="${trip.distanceLabel()}">12,4
+                                        km</span>
+                                    <span th:text="${trip.durationLabel()}">18
+                                        min</span>
+                                </div>
+                                <span class="driver-scheduled-price"
+                                    th:text="${#numbers.formatDecimal(trip.estimatedPrice(), 1, 'POINT', 2, 'COMMA') + ' €'}">14,20
+                                    &euro;</span>
+                            </div>
+                            <div class="driver-scheduled-client">
+                                <span>Cliente</span>
+                                <strong
+                                    th:text="${trip.clientName()}">Cliente</strong>
+                                <small th:text="${trip.ratingLabel()}">Sem
+                                    avalia&ccedil;&otilde;es</small>
+                            </div>
+                            <form
+                                th:action="@{/driver/scheduled/{id}/accept(id=${trip.id()})}"
+                                method="post">
+                                <button class="primary-button"
+                                    type="submit">Aceitar viagem</button>
+                            </form>
+                        </article>
+                    </div>
 
-                <div class="driver-scheduled-empty compact" th:if="${#lists.isEmpty(scheduledPage.acceptedTrips())}">
-                    <strong>Ainda n&atilde;o aceitaste viagens futuras</strong>
-                    <p>As reservas que aceitares ficam organizadas nesta lista.</p>
-                </div>
+                    <div class="driver-scheduled-empty"
+                        th:if="${#lists.isEmpty(scheduledPage.availableTrips())}">
+                        <strong>Sem pedidos programados
+                            dispon&iacute;veis</strong>
+                        <p>Novos pedidos compat&iacute;veis com os teus
+                            ve&iacute;culos aparecem aqui.</p>
+                    </div>
+                </section>
+
+                <section class="driver-scheduled-section">
+                    <div class="driver-scheduled-title">
+                        <div>
+                            <h2>As minhas viagens aceites</h2>
+                            <p>Entram automaticamente no painel normal 30
+                                minutos antes da partida.</p>
+                        </div>
+                        <strong
+                            th:text="${#lists.size(scheduledPage.acceptedTrips())}">0</strong>
+                    </div>
+
+                    <div class="driver-accepted-list"
+                        th:if="${!#lists.isEmpty(scheduledPage.acceptedTrips())}">
+                        <article class="driver-accepted-row"
+                            th:each="trip : ${scheduledPage.acceptedTrips()}">
+                            <div>
+                                <span
+                                    th:text="${trip.dayLabel()}">Amanh&atilde;</span>
+                                <strong
+                                    th:text="${trip.timeLabel()}">09:30</strong>
+                            </div>
+                            <div>
+                                <span>Rota</span>
+                                <strong>
+                                    <span
+                                        th:text="${trip.originAddress()}">Origem</span>
+                                    <span aria-hidden="true">&rarr;</span>
+                                    <span
+                                        th:text="${trip.destinationAddress()}">Destino</span>
+                                </strong>
+                            </div>
+                            <div>
+                                <span>Cliente</span>
+                                <strong
+                                    th:text="${trip.clientName()}">Cliente</strong>
+                            </div>
+                            <div>
+                                <span>Categoria</span>
+                                <strong
+                                    th:text="${trip.vehicleCategory()}">STANDARD</strong>
+                            </div>
+                            <span
+                                class="status-pill is-confirmed">Confirmada</span>
+                        </article>
+                    </div>
+
+                    <div class="driver-scheduled-empty compact"
+                        th:if="${#lists.isEmpty(scheduledPage.acceptedTrips())}">
+                        <strong>Ainda n&atilde;o aceitaste viagens
+                            futuras</strong>
+                        <p>As reservas que aceitares ficam organizadas nesta
+                            lista.</p>
+                    </div>
+                </section>
             </section>
-        </section>
-    </main>
+        </main>
 
-    <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
-</body>
+        <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+    </body>
 
 </html>

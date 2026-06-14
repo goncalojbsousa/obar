@@ -1,165 +1,195 @@
 <!doctype html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Motorista | Obar</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY=" crossorigin="">
-    <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=trip-people-details-20260613">
-</head>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Motorista | Obar</title>
+        <link rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIINfQroZ4p+Jz93T2IFf6pHfWqfHcYjtdY="
+            crossorigin>
+        <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+        <link rel="stylesheet"
+            href="/css/app.css?v=trip-people-details-20260613">
+    </head>
 
-<body class="client-page driver-page">
-    <header th:replace="~{fragments/client-navbar :: navbar('driver')}"></header>
+    <body class="client-page driver-page">
+        <header
+            th:replace="~{fragments/client-navbar :: navbar('driver')}"></header>
 
-    <main class="client-shell">
-        <section class="driver-workspace" aria-label="Painel do motorista">
-            <div class="map-panel">
-                <div id="driver-map"></div>
-            </div>
-
-            <aside class="driver-sidebar">
-                <div>
-                    <h1>Viagens atribu&#x00ED;das</h1>
-                    <p class="muted" data-driver-status>A procurar viagens para ti.</p>
+        <main class="client-shell">
+            <section class="driver-workspace" aria-label="Painel do motorista">
+                <div class="map-panel">
+                    <div id="driver-map"></div>
                 </div>
 
-                <div class="driver-empty" data-driver-empty>
-                    <div class="waiting-indicator" aria-hidden="true"></div>
+                <aside class="driver-sidebar">
                     <div>
-                        <strong>Sem viagem atribu&#x00ED;da</strong>
-                        <p>Enquanto aguardas, o mapa mostra motoristas online e clientes com pedidos ativos.</p>
+                        <h1>Viagens atribu&#x00ED;das</h1>
+                        <p class="muted" data-driver-status>A procurar viagens
+                            para ti.</p>
                     </div>
+
+                    <div class="driver-empty" data-driver-empty>
+                        <div class="waiting-indicator" aria-hidden="true"></div>
+                        <div>
+                            <strong>Sem viagem atribu&#x00ED;da</strong>
+                            <p>Enquanto aguardas, o mapa mostra motoristas
+                                online e clientes com pedidos ativos.</p>
+                        </div>
+                    </div>
+
+                    <div class="driver-trip-card" data-driver-trip hidden>
+                        <div class="countdown-block" data-countdown-block>
+                            <span>Tempo para responder</span>
+                            <strong data-countdown>00:30</strong>
+                        </div>
+
+                        <div class="trip-route-summary">
+                            <div>
+                                <span>Origem</span>
+                                <strong data-origin-address>Origem</strong>
+                            </div>
+                            <div>
+                                <span>Destino</span>
+                                <strong
+                                    data-destination-address>Destino</strong>
+                            </div>
+                        </div>
+
+                        <div class="driver-trip-metrics">
+                            <div>
+                                <span>Kms</span>
+                                <strong data-distance>0 km</strong>
+                            </div>
+                            <div>
+                                <span>Tempo</span>
+                                <strong data-duration>0 min</strong>
+                            </div>
+                            <div data-price-block>
+                                <span>Pre&#x00E7;o</span>
+                                <strong data-price>0,00 &#x20AC;</strong>
+                            </div>
+                            <div>
+                                <span>Categoria</span>
+                                <strong data-category>STANDARD</strong>
+                            </div>
+                        </div>
+
+                        <div class="driver-trip-client">
+                            <span class="driver-client-avatar"
+                                data-client-avatar aria-hidden="true">C</span>
+                            <div>
+                                <span>Cliente</span>
+                                <strong data-client-name>Cliente</strong>
+                                <small data-client-rating>Sem
+                                    avalia&#x00E7;&#x00F5;es</small>
+                            </div>
+                        </div>
+
+                        <div class="driver-trip-notes" data-client-notes-block
+                            hidden>
+                            <span>Observa&#x00E7;&#x00F5;es do cliente</span>
+                            <p data-client-notes></p>
+                        </div>
+
+                        <div class="driver-start-panel" data-start-panel hidden>
+                            <label class="driver-pin-field">
+                                PIN do cliente
+                                <input type="text" inputmode="numeric"
+                                    maxlength="4" autocomplete="off"
+                                    data-start-pin>
+                            </label>
+                            <button class="primary-button" type="button"
+                                data-start-trip>Come&#x00E7;ar viagem</button>
+                        </div>
+
+                        <div class="driver-start-panel" data-complete-panel
+                            hidden>
+                            <label class="driver-pin-field">
+                                Avalia&#x00E7;&#x00E3;o do cliente
+                                <select data-client-rating-input>
+                                    <option value>Escolher nota</option>
+                                    <option value="1">1 estrela</option>
+                                    <option value="2">2 estrelas</option>
+                                    <option value="3">3 estrelas</option>
+                                    <option value="4">4 estrelas</option>
+                                    <option value="5">5 estrelas</option>
+                                </select>
+                            </label>
+                            <button class="primary-button" type="button"
+                                data-complete-trip>Concluir viagem</button>
+                        </div>
+
+                        <button
+                            class="ghost-button danger-button driver-cancel-button"
+                            type="button" data-cancel-trip
+                            hidden>Cancelar viagem</button>
+
+                        <div class="driver-actions" data-response-actions>
+                            <button class="primary-button" type="button"
+                                data-accept-trip>Aceitar</button>
+                            <button class="ghost-button danger-button"
+                                type="button" data-reject-trip>Rejeitar</button>
+                        </div>
+                    </div>
+
+                    <p class="ride-message" data-driver-message hidden></p>
+                </aside>
+            </section>
+        </main>
+
+        <div class="app-modal" data-alert-modal hidden>
+            <div class="app-modal-backdrop" data-alert-close></div>
+            <section class="app-modal-panel" role="dialog" aria-modal="true"
+                aria-labelledby="driver-alert-title">
+                <button class="modal-close-button" type="button"
+                    aria-label="Fechar" data-alert-close>&times;</button>
+                <span class="modal-kicker">Aviso</span>
+                <h2 id="driver-alert-title" data-alert-title>Algo correu
+                    mal</h2>
+                <p data-alert-message>Não foi possível completar o pedido.</p>
+                <div class="modal-actions modal-actions-single">
+                    <button class="primary-button" type="button"
+                        data-alert-close>Entendido</button>
                 </div>
+            </section>
+        </div>
 
-                <div class="driver-trip-card" data-driver-trip hidden>
-                    <div class="countdown-block" data-countdown-block>
-                        <span>Tempo para responder</span>
-                        <strong data-countdown>00:30</strong>
+        <div class="app-modal" data-cancel-modal hidden>
+            <div class="app-modal-backdrop" data-cancel-dismiss></div>
+            <section class="app-modal-panel" role="dialog" aria-modal="true"
+                aria-labelledby="driver-cancel-title">
+                <button class="modal-close-button" type="button"
+                    aria-label="Fechar" data-cancel-dismiss>&times;</button>
+                <span class="modal-kicker">Cancelamento</span>
+                <h2 id="driver-cancel-title">Cancelar viagem</h2>
+                <p>Indica o motivo para ficar registado no pedido.</p>
+                <form class="modal-form" data-cancel-form>
+                    <label class="modal-field">
+                        Motivo
+                        <textarea rows="4" minlength="3" maxlength="255"
+                            required data-cancel-reason
+                            placeholder="Ex.: cliente não apareceu"></textarea>
+                    </label>
+                    <p class="modal-error" data-cancel-error hidden>Indica o
+                        motivo do cancelamento.</p>
+                    <div class="modal-actions">
+                        <button class="ghost-button" type="button"
+                            data-cancel-dismiss>Voltar</button>
+                        <button class="primary-button" type="submit"
+                            data-cancel-submit>Confirmar cancelamento</button>
                     </div>
+                </form>
+            </section>
+        </div>
 
-                    <div class="trip-route-summary">
-                        <div>
-                            <span>Origem</span>
-                            <strong data-origin-address>Origem</strong>
-                        </div>
-                        <div>
-                            <span>Destino</span>
-                            <strong data-destination-address>Destino</strong>
-                        </div>
-                    </div>
-
-                    <div class="driver-trip-metrics">
-                        <div>
-                            <span>Kms</span>
-                            <strong data-distance>0 km</strong>
-                        </div>
-                        <div>
-                            <span>Tempo</span>
-                            <strong data-duration>0 min</strong>
-                        </div>
-                        <div data-price-block>
-                            <span>Pre&#x00E7;o</span>
-                            <strong data-price>0,00 &#x20AC;</strong>
-                        </div>
-                        <div>
-                            <span>Categoria</span>
-                            <strong data-category>STANDARD</strong>
-                        </div>
-                    </div>
-
-                    <div class="driver-trip-client">
-                        <span class="driver-client-avatar" data-client-avatar aria-hidden="true">C</span>
-                        <div>
-                            <span>Cliente</span>
-                            <strong data-client-name>Cliente</strong>
-                            <small data-client-rating>Sem avalia&#x00E7;&#x00F5;es</small>
-                        </div>
-                    </div>
-
-                    <div class="driver-trip-notes" data-client-notes-block hidden>
-                        <span>Observa&#x00E7;&#x00F5;es do cliente</span>
-                        <p data-client-notes></p>
-                    </div>
-
-                    <div class="driver-start-panel" data-start-panel hidden>
-                        <label class="driver-pin-field">
-                            PIN do cliente
-                            <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" data-start-pin>
-                        </label>
-                        <button class="primary-button" type="button" data-start-trip>Come&#x00E7;ar viagem</button>
-                    </div>
-
-                    <div class="driver-start-panel" data-complete-panel hidden>
-                        <label class="driver-pin-field">
-                            Avalia&#x00E7;&#x00E3;o do cliente
-                            <select data-client-rating-input>
-                                <option value="">Escolher nota</option>
-                                <option value="1">1 estrela</option>
-                                <option value="2">2 estrelas</option>
-                                <option value="3">3 estrelas</option>
-                                <option value="4">4 estrelas</option>
-                                <option value="5">5 estrelas</option>
-                            </select>
-                        </label>
-                        <button class="primary-button" type="button" data-complete-trip>Concluir viagem</button>
-                    </div>
-
-                    <button class="ghost-button danger-button driver-cancel-button" type="button" data-cancel-trip
-                        hidden>Cancelar viagem</button>
-
-                    <div class="driver-actions" data-response-actions>
-                        <button class="primary-button" type="button" data-accept-trip>Aceitar</button>
-                        <button class="ghost-button danger-button" type="button" data-reject-trip>Rejeitar</button>
-                    </div>
-                </div>
-
-                <p class="ride-message" data-driver-message hidden></p>
-            </aside>
-        </section>
-    </main>
-
-    <div class="app-modal" data-alert-modal hidden>
-        <div class="app-modal-backdrop" data-alert-close></div>
-        <section class="app-modal-panel" role="dialog" aria-modal="true" aria-labelledby="driver-alert-title">
-            <button class="modal-close-button" type="button" aria-label="Fechar" data-alert-close>&times;</button>
-            <span class="modal-kicker">Aviso</span>
-            <h2 id="driver-alert-title" data-alert-title>Algo correu mal</h2>
-            <p data-alert-message>Não foi possível completar o pedido.</p>
-            <div class="modal-actions modal-actions-single">
-                <button class="primary-button" type="button" data-alert-close>Entendido</button>
-            </div>
-        </section>
-    </div>
-
-    <div class="app-modal" data-cancel-modal hidden>
-        <div class="app-modal-backdrop" data-cancel-dismiss></div>
-        <section class="app-modal-panel" role="dialog" aria-modal="true" aria-labelledby="driver-cancel-title">
-            <button class="modal-close-button" type="button" aria-label="Fechar" data-cancel-dismiss>&times;</button>
-            <span class="modal-kicker">Cancelamento</span>
-            <h2 id="driver-cancel-title">Cancelar viagem</h2>
-            <p>Indica o motivo para ficar registado no pedido.</p>
-            <form class="modal-form" data-cancel-form>
-                <label class="modal-field">
-                    Motivo
-                    <textarea rows="4" minlength="3" maxlength="255" required data-cancel-reason
-                        placeholder="Ex.: cliente não apareceu"></textarea>
-                </label>
-                <p class="modal-error" data-cancel-error hidden>Indica o motivo do cancelamento.</p>
-                <div class="modal-actions">
-                    <button class="ghost-button" type="button" data-cancel-dismiss>Voltar</button>
-                    <button class="primary-button" type="submit" data-cancel-submit>Confirmar cancelamento</button>
-                </div>
-            </form>
-        </section>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
-    <script src="/js/driver-map.js?v=trip-people-details-20260613"></script>
-</body>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin></script>
+        <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
+        <script src="/js/driver-map.js?v=euro-format-20260614"></script>
+    </body>
 
 </html>

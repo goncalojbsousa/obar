@@ -90,6 +90,23 @@
     text-transform: uppercase;
 }
 
+.modal-field input,
+.modal-field select {
+    background: #101114;
+    border: 1px solid #34343b;
+    border-radius: 8px;
+    color: #f5f5f6;
+    font: inherit;
+    min-height: 44px;
+    padding: 10px 12px;
+    text-transform: none;
+    width: 100%;
+}
+
+.modal-field select {
+    appearance: none;
+}
+
 .modal-field textarea {
     background: #101114;
     border: 1px solid #34343b;
@@ -104,6 +121,8 @@
     width: 100%;
 }
 
+.modal-field input:focus,
+.modal-field select:focus,
 .modal-field textarea:focus {
     border-color: var(--brand);
     box-shadow: 0 0 0 3px rgba(255, 96, 30, 0.16);
@@ -292,12 +311,29 @@
     min-width: 0;
 }
 
+.vehicle-edit-modal-panel {
+    width: min(620px, 100%);
+}
+
+.vehicle-edit-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vehicle-edit-form-grid .modal-field {
+    min-width: 0;
+}
+
 @media (max-width: 560px) {
-    .review-modal-panel {
+    .review-modal-panel,
+    .vehicle-edit-modal-panel {
         padding: 20px;
     }
 
-    .review-modal-panel .modal-actions {
+    .review-modal-panel .modal-actions,
+    .vehicle-edit-modal-panel .modal-actions,
+    .vehicle-edit-form-grid {
         grid-template-columns: 1fr;
     }
 }

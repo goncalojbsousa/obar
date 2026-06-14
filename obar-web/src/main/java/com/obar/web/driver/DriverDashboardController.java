@@ -28,11 +28,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Controller
 public class DriverDashboardController {
@@ -40,6 +42,13 @@ public class DriverDashboardController {
     private static final Locale PT_LOCALE = Locale.forLanguageTag("pt-PT");
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("MMM yyyy", PT_LOCALE);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy", PT_LOCALE);
+    private static final String LETTER_PAIR = "[A-HJ-NPR-Z]{2}";
+    private static final String DIGIT_PAIR = "\\d{2}";
+    private static final Pattern LICENSE_PLATE_PATTERN = Pattern.compile(
+            LETTER_PAIR + DIGIT_PAIR + DIGIT_PAIR
+                    + "|" + DIGIT_PAIR + DIGIT_PAIR + LETTER_PAIR
+                    + "|" + DIGIT_PAIR + LETTER_PAIR + DIGIT_PAIR
+                    + "|" + LETTER_PAIR + DIGIT_PAIR + LETTER_PAIR);
 
     private final TripService tripService;
     private final UserService userService;
@@ -63,15 +72,18 @@ public class DriverDashboardController {
     }
 
     @GetMapping("/driver/profile")
-    public String profile(HttpSession session, Model model) {
+    public String profile(@RequestParam(value = "vehicleId", required = false) Integer selectedVehicleId,
+            HttpSession session, Model model) {
         AuthenticatedUserDto currentUser = requireDriver(session);
         User driver = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Motorista nao encontrado."));
 
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("vehicleCategories", vehicleService.supportedCategories());
         model.addAttribute("driverProfile", DriverProfileView.from(
                 driver,
-                vehicleService.findByDriver(currentUser.id()),
+                vehicleService.findAllByDriver(currentUser.id()),
+                selectedVehicleId,
                 tripService.findByDriver(currentUser.id()),
                 tripService.findByClient(currentUser.id()),
                 reviewService.countByReviewed(currentUser.id())));
@@ -84,11 +96,8 @@ public class DriverDashboardController {
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         AuthenticatedUserDto currentUser = requireDriver(session);
-        Vehicle vehicle = vehicleService.findById(vehicleId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veiculo nao encontrado."));
-        if (!vehicle.getDriver().getId().equals(currentUser.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nao podes alterar este veiculo.");
-        }
+        Vehicle vehicle = requireOwnedVehicle(vehicleId, currentUser);
+        redirectAttributes.addAttribute("vehicleId", vehicle.getId());
 
         try {
             vehicle.setPhotoUrl(storageService.uploadVehiclePhoto(vehicle.getId(), photo));
@@ -100,12 +109,111 @@ public class DriverDashboardController {
         return "redirect:/driver/profile";
     }
 
+    @PostMapping("/driver/vehicles/{vehicleId}/activate")
+    public String activateVehicle(@PathVariable Integer vehicleId,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = requireDriver(session);
+        Vehicle vehicle = requireOwnedVehicle(vehicleId, currentUser);
+        vehicle.setActive(true);
+        vehicleService.update(vehicle);
+
+        redirectAttributes.addAttribute("vehicleId", vehicle.getId());
+        redirectAttributes.addFlashAttribute("vehicleEditSuccess", "Veiculo ativo atualizado.");
+        return "redirect:/driver/profile";
+    }
+
+    @PostMapping("/driver/vehicles/{vehicleId}")
+    public String updateVehicle(@PathVariable Integer vehicleId,
+            @RequestParam("brand") String brand,
+            @RequestParam("model") String model,
+            @RequestParam("licensePlate") String licensePlate,
+            @RequestParam("category") String category,
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(value = "color", required = false) String color,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = requireDriver(session);
+        Vehicle vehicle = requireOwnedVehicle(vehicleId, currentUser);
+        redirectAttributes.addAttribute("vehicleId", vehicle.getId());
+
+        try {
+            String normalizedPlate = normalizeLicensePlate(licensePlate);
+            vehicleService.findByLicensePlate(normalizedPlate)
+                    .filter(existing -> !existing.getId().equals(vehicle.getId()))
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Matricula ja registada.");
+                    });
+
+            vehicle.setBrand(requiredText(brand, "Marca e obrigatoria."));
+            vehicle.setModel(requiredText(model, "Modelo e obrigatorio."));
+            vehicle.setLicensePlate(normalizedPlate);
+            vehicle.setCategory(VehicleService.normalizeCategory(category));
+            vehicle.setYear(parseYear(year));
+            vehicle.setColor(nullableText(color));
+            vehicleService.update(vehicle);
+            redirectAttributes.addFlashAttribute("vehicleEditSuccess", "Dados do veiculo atualizados.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("vehicleEditError", exception.getMessage());
+        }
+
+        return "redirect:/driver/profile";
+    }
+
     private AuthenticatedUserDto requireDriver(HttpSession session) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
         if (currentUser.type() != UserType.DRIVER) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "\u00C1rea reservada a motoristas.");
         }
         return currentUser;
+    }
+
+    private Vehicle requireOwnedVehicle(Integer vehicleId, AuthenticatedUserDto currentUser) {
+        Vehicle vehicle = vehicleService.findById(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veiculo nao encontrado."));
+        if (!vehicle.getDriver().getId().equals(currentUser.id())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nao podes alterar este veiculo.");
+        }
+        return vehicle;
+    }
+
+    private static String normalizeLicensePlate(String licensePlate) {
+        String compact = text(licensePlate).toUpperCase(Locale.ROOT).replace("-", "").replace(" ", "");
+        if (!LICENSE_PLATE_PATTERN.matcher(compact).matches()) {
+            throw new IllegalArgumentException(
+                    "Matricula portuguesa invalida. Use AA-00-00, 00-00-AA, 00-AA-00 ou AA-00-AA.");
+        }
+        return compact.substring(0, 2) + "-" + compact.substring(2, 4) + "-" + compact.substring(4, 6);
+    }
+
+    private static Integer parseYear(String year) {
+        String value = text(year);
+        if (value.isBlank()) {
+            return null;
+        }
+
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed < 1980 || parsed > Year.now().getValue() + 1) {
+                throw new IllegalArgumentException("Ano do veiculo invalido.");
+            }
+            return parsed;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Ano do veiculo invalido.");
+        }
+    }
+
+    private static String requiredText(String value, String message) {
+        String result = text(value);
+        if (result.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        return result;
+    }
+
+    private static String nullableText(String value) {
+        String result = text(value);
+        return result.isBlank() ? null : result;
     }
 
     public record DriverProfileView(
@@ -118,6 +226,7 @@ public class DriverDashboardController {
             String taxNumber,
             String licenseNumber,
             boolean online,
+            List<VehicleView> vehicles,
             VehicleView vehicle,
             int completedTrips,
             String averageRating,
@@ -129,10 +238,24 @@ public class DriverDashboardController {
             int scheduledClientTrips,
             ActivityView lastClientTrip) {
 
-        public static DriverProfileView from(User driver, List<Vehicle> vehicles, List<Trip> driverTrips,
+        public static DriverProfileView from(User driver, List<Vehicle> vehicles, Integer selectedVehicleId,
+                List<Trip> driverTrips,
                 List<Trip> clientTrips, int reviewCount) {
             List<Trip> completedDriverTrips = driverTrips.stream()
                     .filter(trip -> trip.getStatus() == TripStatus.COMPLETED)
+                    .toList();
+            List<Vehicle> sortedVehicles = vehicles.stream()
+                    .sorted(Comparator
+                            .comparing((Vehicle vehicle) -> Boolean.TRUE.equals(vehicle.getActive())).reversed()
+                            .thenComparing(vehicle -> vehicle.getId() == null ? 0 : vehicle.getId()))
+                    .toList();
+            Vehicle selectedVehicle = sortedVehicles.stream()
+                    .filter(vehicle -> selectedVehicleId != null && selectedVehicleId.equals(vehicle.getId()))
+                    .findFirst()
+                    .orElse(sortedVehicles.stream().findFirst().orElse(null));
+            List<VehicleView> vehicleViews = sortedVehicles.stream()
+                    .map(vehicle -> VehicleView.from(vehicle,
+                            selectedVehicle != null && selectedVehicle.getId().equals(vehicle.getId())))
                     .toList();
 
             return new DriverProfileView(
@@ -145,12 +268,8 @@ public class DriverDashboardController {
                     valueOrFallback(driver.getTaxNumber(), "-"),
                     valueOrFallback(driver.getLicenseNumber(), "-"),
                     Boolean.TRUE.equals(driver.getOnline()),
-                    vehicles.stream()
-                            .sorted(Comparator.comparing((Vehicle vehicle) -> Boolean.TRUE.equals(vehicle.getActive()))
-                                    .reversed())
-                            .findFirst()
-                            .map(VehicleView::from)
-                            .orElse(null),
+                    vehicleViews,
+                    selectedVehicle == null ? null : VehicleView.from(selectedVehicle, true),
                     driver.getTotalTrips() == null ? completedDriverTrips.size() : driver.getTotalTrips(),
                     String.format(PT_LOCALE, "%.1f", driver.getAverageRating() == null ? 0f : driver.getAverageRating()),
                     reviewCount,
@@ -264,28 +383,46 @@ public class DriverDashboardController {
 
     public record VehicleView(
             Integer id,
+            String brand,
             String model,
+            String displayName,
             String photoUrl,
             String licensePlate,
             String category,
             String color,
-            String year,
-            boolean active) {
+            Integer year,
+            boolean active,
+            boolean selected) {
 
         public static VehicleView from(Vehicle vehicle) {
+            return from(vehicle, false);
+        }
+
+        public static VehicleView from(Vehicle vehicle, boolean selected) {
             return new VehicleView(
                     vehicle.getId(),
+                    vehicle.getBrand(),
+                    vehicle.getModel(),
                     valueOrFallback(vehicle.getBrand(), "Marca") + " " + valueOrFallback(vehicle.getModel(), "Modelo"),
                     vehicle.getPhotoUrl(),
                     valueOrFallback(vehicle.getLicensePlate(), "-"),
                     valueOrFallback(vehicle.getCategory(), "STANDARD"),
-                    valueOrFallback(vehicle.getColor(), "-"),
-                    vehicle.getYear() == null ? "-" : vehicle.getYear().toString(),
-                    Boolean.TRUE.equals(vehicle.getActive()));
+                    vehicle.getColor(),
+                    vehicle.getYear(),
+                    Boolean.TRUE.equals(vehicle.getActive()),
+                    selected);
         }
 
         public String statusLabel() {
             return active ? "Ativo" : "Inativo";
+        }
+
+        public String colorLabel() {
+            return valueOrFallback(color, "-");
+        }
+
+        public String yearLabel() {
+            return year == null ? "-" : year.toString();
         }
     }
 
@@ -353,5 +490,9 @@ public class DriverDashboardController {
 
     private static String valueOrFallback(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private static String text(String value) {
+        return value == null ? "" : value.trim();
     }
 }

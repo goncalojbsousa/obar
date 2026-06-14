@@ -315,6 +315,24 @@
     width: min(620px, 100%);
 }
 
+.profile-edit-modal-panel {
+    width: min(620px, 100%);
+}
+
+.profile-edit-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-edit-form-grid .modal-field {
+    min-width: 0;
+}
+
+.profile-edit-wide-field {
+    grid-column: 1 / -1;
+}
+
 .vehicle-edit-form-grid {
     display: grid;
     gap: 12px;
@@ -327,14 +345,21 @@
 
 @media (max-width: 560px) {
     .review-modal-panel,
-    .vehicle-edit-modal-panel {
+    .vehicle-edit-modal-panel,
+    .profile-edit-modal-panel {
         padding: 20px;
     }
 
     .review-modal-panel .modal-actions,
     .vehicle-edit-modal-panel .modal-actions,
+    .profile-edit-modal-panel .modal-actions,
+    .profile-edit-form-grid,
     .vehicle-edit-form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .profile-edit-wide-field {
+        grid-column: auto;
     }
 }
 

@@ -178,6 +178,21 @@ public class TripService {
         return tripRepository.findByDriverId(driverId);
     }
 
+    public List<Trip> findDriverHistory(Integer driverId, TripStatus status, LocalDateTime from,
+            LocalDateTime to, String clientQuery, int offset, int limit) {
+        return tripRepository.findDriverHistory(driverId, status, from, to, clientQuery, offset, limit);
+    }
+
+    public long countDriverHistory(Integer driverId, TripStatus status, LocalDateTime from,
+            LocalDateTime to, String clientQuery) {
+        return tripRepository.countDriverHistory(driverId, status, from, to, clientQuery);
+    }
+
+    public BigDecimal sumCompletedDriverHistory(Integer driverId, LocalDateTime from,
+            LocalDateTime to, String clientQuery) {
+        return tripRepository.sumCompletedDriverHistory(driverId, from, to, clientQuery);
+    }
+
     public List<Trip> findPending() {
         return tripRepository.findByStatus(TripStatus.PENDING);
     }

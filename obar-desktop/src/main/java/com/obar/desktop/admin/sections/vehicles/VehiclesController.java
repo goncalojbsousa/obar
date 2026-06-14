@@ -617,7 +617,7 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private static String formatMoney(BigDecimal value) {
-        return value == null ? "-" : "EUR " + value;
+        return value == null ? "-" : value + " \u20AC";
     }
 
     private static String blankIfMissing(String value) {

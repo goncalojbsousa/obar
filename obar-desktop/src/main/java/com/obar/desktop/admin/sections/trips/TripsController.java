@@ -519,9 +519,9 @@ public class TripsController implements AdminSectionController {
         setLabelText(detailCardFourValueLabel, trip.distanceKm() == null ? "-" : trip.distanceKm() + " km");
         setLabelText(detailReferenceTitleLabel, "Preco estimado");
         setLabelText(detailReferenceValueLabel,
-                trip.estimatedPrice() == null ? "-" : "EUR " + trip.estimatedPrice());
+                trip.estimatedPrice() == null ? "-" : trip.estimatedPrice() + " \u20AC");
         setLabelText(detailExtraOneTitleLabel, "Preco final");
-        setLabelText(detailExtraOneValueLabel, trip.finalPrice() == null ? "-" : "EUR " + trip.finalPrice());
+        setLabelText(detailExtraOneValueLabel, trip.finalPrice() == null ? "-" : trip.finalPrice() + " \u20AC");
         setLabelText(detailExtraTwoTitleLabel, "Inicio");
         setLabelText(detailExtraTwoValueLabel, trip.startTime() == null ? "-" : trip.startTime().toString());
         setLabelText(detailExtraThreeTitleLabel, "Fim");
@@ -613,6 +613,6 @@ public class TripsController implements AdminSectionController {
     }
 
     private String formatMoney(java.math.BigDecimal value) {
-        return value == null ? "-" : "EUR " + value;
+        return value == null ? "-" : value + " \u20AC";
     }
 }

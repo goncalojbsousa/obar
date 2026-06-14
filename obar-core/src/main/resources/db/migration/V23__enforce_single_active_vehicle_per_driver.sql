@@ -7,6 +7,7 @@ WITH ranked_active_vehicles AS (
         ) AS active_rank
     FROM vehicles
     WHERE active = true
+      AND removed = false
 )
 UPDATE vehicles
 SET active = false
@@ -18,4 +19,5 @@ WHERE id IN (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_vehicles_one_active_per_driver
     ON vehicles (driver_id)
-    WHERE active = true;
+    WHERE active = true
+      AND removed = false;

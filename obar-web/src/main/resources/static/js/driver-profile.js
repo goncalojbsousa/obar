@@ -4,6 +4,9 @@ const vehicleCreateCloseControls = document.querySelectorAll("[data-vehicle-crea
 const vehicleEditModal = document.querySelector("[data-vehicle-edit-modal]");
 const vehicleEditOpen = document.querySelector("[data-vehicle-edit-open]");
 const vehicleEditCloseControls = document.querySelectorAll("[data-vehicle-edit-close]");
+const vehicleRemoveModal = document.querySelector("[data-vehicle-remove-modal]");
+const vehicleRemoveOpen = document.querySelector("[data-vehicle-remove-open]");
+const vehicleRemoveCloseControls = document.querySelectorAll("[data-vehicle-remove-close]");
 const vehicleSelector = document.querySelector("[data-vehicle-selector]");
 const profileEditModal = document.querySelector("[data-profile-edit-modal]");
 const profileEditOpen = document.querySelector("[data-profile-edit-open]");
@@ -72,6 +75,32 @@ if (vehicleEditModal && vehicleEditOpen) {
     if (vehicleEditModal.dataset.open === "true") {
         openVehicleEditModal();
     }
+}
+
+if (vehicleRemoveModal && vehicleRemoveOpen) {
+    const openVehicleRemoveModal = () => {
+        vehicleRemoveModal.hidden = false;
+        const cancelButton = vehicleRemoveModal.querySelector("[data-vehicle-remove-close]");
+        if (cancelButton) {
+            cancelButton.focus();
+        }
+    };
+
+    const closeVehicleRemoveModal = () => {
+        vehicleRemoveModal.hidden = true;
+        vehicleRemoveOpen.focus();
+    };
+
+    vehicleRemoveOpen.addEventListener("click", openVehicleRemoveModal);
+    vehicleRemoveCloseControls.forEach((control) => {
+        control.addEventListener("click", closeVehicleRemoveModal);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !vehicleRemoveModal.hidden) {
+            closeVehicleRemoveModal();
+        }
+    });
 }
 
 if (vehicleSelector) {

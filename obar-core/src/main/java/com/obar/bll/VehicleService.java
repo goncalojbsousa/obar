@@ -28,12 +28,20 @@ public class VehicleService {
         return vehicleRepository.findByDriverId(driverId);
     }
 
+    public List<Vehicle> findAllByDriver(Integer driverId) {
+        return vehicleRepository.findAllByDriverId(driverId);
+    }
+
     public List<String> findActiveCategories() {
         return vehicleRepository.findActiveCategories();
     }
 
     public List<String> supportedCategories() {
         return SUPPORTED_CATEGORIES;
+    }
+
+    public Optional<Vehicle> findByLicensePlate(String licensePlate) {
+        return vehicleRepository.findByLicensePlate(licensePlate);
     }
 
     public static String normalizeCategory(String category) {

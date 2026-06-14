@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil do Motorista | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=profile-reviews-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=vehicle-selector-20260614">
 </head>
 
 <body class="client-page profile-page driver-profile-page">
@@ -88,6 +88,22 @@
                     <h3>Ve&iacute;culo</h3>
                 </div>
 
+                <form class="driver-vehicle-selector" th:if="${driverProfile.vehicles().size() > 1}"
+                    th:action="@{/driver/profile}" method="get" data-vehicle-selector-form>
+                    <label class="driver-vehicle-selector-field">
+                        <span>Ve&iacute;culo associado</span>
+                        <select name="vehicleId" data-vehicle-selector>
+                            <option th:each="vehicleOption : ${driverProfile.vehicles()}"
+                                th:value="${vehicleOption.id()}"
+                                th:selected="${vehicleOption.selected()}"
+                                th:text="${vehicleOption.displayName() + ' | ' + vehicleOption.licensePlate() + ' | ' + vehicleOption.statusLabel()}">
+                                Toyota Corolla | AA-24-OB | Ativo
+                            </option>
+                        </select>
+                    </label>
+                    <button class="driver-vehicle-selector-button" type="submit">Ver</button>
+                </form>
+
                 <div class="driver-vehicle-card" th:if="${driverProfile.vehicle() != null}">
                     <form class="vehicle-photo-form"
                         th:action="@{/driver/vehicles/{vehicleId}/photo(vehicleId=${driverProfile.vehicle().id()})}"
@@ -97,7 +113,15 @@
                                 th:src="${driverProfile.vehicle().photoUrl()}" alt="Foto do veiculo">
                             <span class="vehicle-placeholder"
                                 th:unless="${driverProfile.vehicle().photoUrl() != null and !driverProfile.vehicle().photoUrl().isBlank()}"
-                                aria-hidden="true"></span>
+                                aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 17h14"></path>
+                                    <path d="M7 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                                    <path d="M17 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                                    <path d="M5 13l1.8-4.2A2 2 0 0 1 8.6 7h6.8a2 2 0 0 1 1.8 1.2L19 13"></path>
+                                    <path d="M7.4 10h9.2"></path>
+                                </svg>
+                            </span>
                             <span class="photo-upload-overlay">Atualizar foto</span>
                             <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
                                 aria-label="Atualizar foto do veiculo" data-photo-upload required>
@@ -105,23 +129,38 @@
                     </form>
                     <div class="driver-vehicle-details">
                         <span>Gest&atilde;o do ve&iacute;culo</span>
-                        <strong th:text="${driverProfile.vehicle().model()}">Toyota Corolla</strong>
+                        <strong th:text="${driverProfile.vehicle().displayName()}">Toyota Corolla</strong>
                         <div class="driver-vehicle-meta">
                             <span th:text="${driverProfile.vehicle().licensePlate()}">AA-24-OB</span>
                             <span th:text="${driverProfile.vehicle().category()}">STANDARD</span>
-                            <span th:text="${driverProfile.vehicle().year()}">2021</span>
-                            <span th:text="${driverProfile.vehicle().color()}">Preto</span>
+                            <span th:text="${driverProfile.vehicle().yearLabel()}">2021</span>
+                            <span th:text="${driverProfile.vehicle().colorLabel()}">Preto</span>
                         </div>
                     </div>
                     <div class="driver-vehicle-state">
                         <span class="profile-status-pill" th:classappend="${driverProfile.vehicle().active()} ? '' : ' is-offline'"
                             th:text="${driverProfile.vehicle().statusLabel()}">Ativo</span>
+                        <form class="driver-vehicle-activate-form"
+                            th:if="${!driverProfile.vehicle().active()}"
+                            th:action="@{/driver/vehicles/{vehicleId}/activate(vehicleId=${driverProfile.vehicle().id()})}"
+                            method="post">
+                            <button class="driver-vehicle-activate-button" type="submit">
+                                Ativar
+                            </button>
+                        </form>
+                        <button class="driver-vehicle-edit-button" type="button" data-vehicle-edit-open>
+                            Editar
+                        </button>
                     </div>
                 </div>
                 <p class="profile-upload-message is-success" th:if="${vehiclePhotoSuccess}"
                     th:text="${vehiclePhotoSuccess}"></p>
                 <p class="profile-upload-message is-error" th:if="${vehiclePhotoError}"
                     th:text="${vehiclePhotoError}"></p>
+                <p class="profile-upload-message is-success" th:if="${vehicleEditSuccess}"
+                    th:text="${vehicleEditSuccess}"></p>
+                <p class="profile-upload-message is-error" th:if="${vehicleEditError}"
+                    th:text="${vehicleEditError}"></p>
 
                 <div class="driver-profile-empty" th:if="${driverProfile.vehicle() == null}">
                     <strong>Sem ve&iacute;culo ativo</strong>
@@ -237,8 +276,73 @@
         </section>
     </main>
 
+    <div class="app-modal" data-vehicle-edit-modal
+        th:if="${driverProfile.vehicle() != null}"
+        th:attr="data-open=${vehicleEditError != null}" hidden>
+        <div class="app-modal-backdrop" data-vehicle-edit-close></div>
+        <section class="app-modal-panel vehicle-edit-modal-panel" role="dialog" aria-modal="true"
+            aria-labelledby="vehicle-edit-title">
+            <button class="modal-close-button" type="button" aria-label="Fechar" data-vehicle-edit-close>&times;</button>
+            <span class="modal-kicker">Ve&iacute;culo</span>
+            <h2 id="vehicle-edit-title">Editar carro</h2>
+            <p>Atualiza os dados usados para identificar o teu ve&iacute;culo nas viagens.</p>
+            <p class="modal-error" th:if="${vehicleEditError}" th:text="${vehicleEditError}"></p>
+
+            <form class="modal-form vehicle-edit-form"
+                th:action="@{/driver/vehicles/{vehicleId}(vehicleId=${driverProfile.vehicle().id()})}"
+                method="post">
+                <div class="vehicle-edit-form-grid">
+                    <label class="modal-field">
+                        <span>Marca</span>
+                        <input type="text" name="brand" th:value="${driverProfile.vehicle().brand()}"
+                            autocomplete="off" required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Modelo</span>
+                        <input type="text" name="model" th:value="${driverProfile.vehicle().model()}"
+                            autocomplete="off" required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Matr&iacute;cula</span>
+                        <input type="text" name="licensePlate" th:value="${driverProfile.vehicle().licensePlate()}"
+                            placeholder="AA-00-00" autocomplete="off" required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Categoria</span>
+                        <select name="category" required>
+                            <option th:each="category : ${vehicleCategories}" th:value="${category}"
+                                th:selected="${category == driverProfile.vehicle().category()}"
+                                th:text="${category}">STANDARD</option>
+                        </select>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Ano</span>
+                        <input type="number" name="year" th:value="${driverProfile.vehicle().year()}" min="1980"
+                            max="2100" inputmode="numeric">
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Cor</span>
+                        <input type="text" name="color" th:value="${driverProfile.vehicle().color()}"
+                            autocomplete="off">
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-vehicle-edit-close>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
     <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
+    <script src="/js/driver-profile.js?v=vehicle-selector-20260614"></script>
 </body>
 
 </html>

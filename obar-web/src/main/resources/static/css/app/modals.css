@@ -343,6 +343,10 @@
     min-width: 0;
 }
 
+.vehicle-create-photo-field {
+    grid-column: 1 / -1;
+}
+
 @media (max-width: 560px) {
     .review-modal-panel,
     .vehicle-edit-modal-panel,
@@ -359,6 +363,10 @@
     }
 
     .profile-edit-wide-field {
+        grid-column: auto;
+    }
+
+    .vehicle-create-photo-field {
         grid-column: auto;
     }
 }

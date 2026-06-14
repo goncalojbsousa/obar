@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Criar conta | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/login.css?v=font-20260613">
+    <link rel="stylesheet" href="/css/login.css?v=register-panel-20260614">
 </head>
 
 <body class="login-auth-page">
@@ -18,7 +18,7 @@
 
             <div class="login-hero-copy">
                 <h1>A tua viagem,<span>no teu ritmo.</span></h1>
-                <p>Pede viagens, acompanha pedidos e gere os teus dados de cliente.</p>
+                <p>Pede viagens, acompanha pedidos e gere a tua conta Obar.</p>
             </div>
 
             <div class="login-route-preview" aria-hidden="true">
@@ -52,57 +52,134 @@
                 </nav>
 
                 <div class="login-heading">
-                    <h1 id="register-title">Criar conta cliente</h1>
-                    <p>Cria uma conta cliente para pedir viagens pela web.</p>
+                    <h1 id="register-title">Criar conta</h1>
+                    <p>Escolhe o tipo de conta e preenche os dados necessarios.</p>
                 </div>
 
                 <p class="login-alert" th:if="${error}" th:text="${error}"></p>
 
                 <form class="login-form register-form" th:action="@{/register}" th:object="${registerForm}"
                     method="post">
-                    <div class="register-fields-grid">
-                        <label class="login-field">
-                            <span>Nome</span>
-                            <input type="text" th:field="*{name}" placeholder="O teu nome" autocomplete="name" required
-                                autofocus>
+                    <div class="register-type-choice" role="radiogroup" aria-label="Tipo de conta">
+                        <label class="register-type-option">
+                            <input type="radio" th:field="*{userType}" value="CLIENT" data-account-type>
+                            <span>
+                                <strong>Cliente</strong>
+                                <small>Pedir e acompanhar viagens</small>
+                            </span>
                         </label>
 
-                        <label class="login-field">
-                            <span>Email</span>
-                            <input type="email" th:field="*{email}" placeholder="o.teu@email.com" autocomplete="email"
-                                required>
-                        </label>
-
-                        <label class="login-field">
-                            <span>Telefone</span>
-                            <input type="tel" th:field="*{phone}" placeholder="912 345 678" autocomplete="tel">
-                        </label>
-
-                        <label class="login-field">
-                            <span>NIF</span>
-                            <input type="text" th:field="*{taxNumber}" placeholder="123456789" inputmode="numeric">
-                        </label>
-
-                        <label class="login-field">
-                            <span>Palavra-passe</span>
-                            <input type="password" th:field="*{password}" placeholder="********"
-                                autocomplete="new-password" required>
-                        </label>
-
-                        <label class="login-field">
-                            <span>Confirmar palavra-passe</span>
-                            <input type="password" th:field="*{confirmPassword}" placeholder="********"
-                                autocomplete="new-password" required>
+                        <label class="register-type-option">
+                            <input type="radio" th:field="*{userType}" value="DRIVER" data-account-type>
+                            <span>
+                                <strong>Motorista</strong>
+                                <small>Aguarda aprovacao do admin</small>
+                            </span>
                         </label>
                     </div>
+
+                    <fieldset class="register-form-panel" data-register-panel="CLIENT"
+                        th:hidden="${registerForm.userType == 'DRIVER'}"
+                        th:disabled="${registerForm.userType == 'DRIVER'}">
+                        <div class="register-panel-copy">
+                            <strong>Dados de cliente</strong>
+                            <span>Usados para identificar a conta e pedir viagens.</span>
+                        </div>
+
+                        <div class="register-fields-grid">
+                            <label class="login-field">
+                                <span>Nome</span>
+                                <input id="client-name" type="text" name="name" th:value="*{name}"
+                                    placeholder="O teu nome" autocomplete="name" required autofocus>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Email</span>
+                                <input id="client-email" type="email" name="email" th:value="*{email}"
+                                    placeholder="o.teu@email.com" autocomplete="email" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Telefone</span>
+                                <input id="client-phone" type="tel" name="phone" th:value="*{phone}"
+                                    placeholder="912 345 678" autocomplete="tel">
+                            </label>
+
+                            <label class="login-field">
+                                <span>NIF</span>
+                                <input id="client-tax-number" type="text" name="taxNumber" th:value="*{taxNumber}"
+                                    placeholder="123456789" inputmode="numeric" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Palavra-passe</span>
+                                <input id="client-password" type="password" name="password" placeholder="********"
+                                    autocomplete="new-password" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Confirmar palavra-passe</span>
+                                <input id="client-confirm-password" type="password" name="confirmPassword"
+                                    placeholder="********" autocomplete="new-password" required>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="register-form-panel" data-register-panel="DRIVER"
+                        th:hidden="${registerForm.userType != 'DRIVER'}"
+                        th:disabled="${registerForm.userType != 'DRIVER'}">
+                        <div class="register-panel-copy">
+                            <strong>Dados de motorista</strong>
+                            <span>A conta fica pendente ate o admin aprovar no desktop.</span>
+                        </div>
+
+                        <div class="register-fields-grid">
+                            <label class="login-field">
+                                <span>Nome</span>
+                                <input id="driver-name" type="text" name="name" th:value="*{name}"
+                                    placeholder="O teu nome" autocomplete="name" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Email</span>
+                                <input id="driver-email" type="email" name="email" th:value="*{email}"
+                                    placeholder="o.teu@email.com" autocomplete="email" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Telefone</span>
+                                <input id="driver-phone" type="tel" name="phone" th:value="*{phone}"
+                                    placeholder="912 345 678" autocomplete="tel">
+                            </label>
+
+                            <label class="login-field">
+                                <span>Numero da carta</span>
+                                <input id="driver-license-number" type="text" name="licenseNumber"
+                                    th:value="*{licenseNumber}" placeholder="PT123456789" autocomplete="off" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Palavra-passe</span>
+                                <input id="driver-password" type="password" name="password" placeholder="********"
+                                    autocomplete="new-password" required>
+                            </label>
+
+                            <label class="login-field">
+                                <span>Confirmar palavra-passe</span>
+                                <input id="driver-confirm-password" type="password" name="confirmPassword"
+                                    placeholder="********" autocomplete="new-password" required>
+                            </label>
+                        </div>
+                    </fieldset>
 
                     <button class="login-submit" type="submit">Criar conta</button>
                 </form>
 
-                <p class="login-security-note">Acesso seguro para clientes Obar</p>
+                <p class="login-security-note">Acesso seguro para clientes e motoristas Obar</p>
             </div>
         </section>
     </main>
+    <script src="/js/register.js?v=register-panel-20260614"></script>
 </body>
 
 </html>

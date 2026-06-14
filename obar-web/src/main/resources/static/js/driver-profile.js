@@ -1,3 +1,6 @@
+const vehicleCreateModal = document.querySelector("[data-vehicle-create-modal]");
+const vehicleCreateOpenControls = document.querySelectorAll("[data-vehicle-create-open]");
+const vehicleCreateCloseControls = document.querySelectorAll("[data-vehicle-create-close]");
 const vehicleEditModal = document.querySelector("[data-vehicle-edit-modal]");
 const vehicleEditOpen = document.querySelector("[data-vehicle-edit-open]");
 const vehicleEditCloseControls = document.querySelectorAll("[data-vehicle-edit-close]");
@@ -5,6 +8,41 @@ const vehicleSelector = document.querySelector("[data-vehicle-selector]");
 const profileEditModal = document.querySelector("[data-profile-edit-modal]");
 const profileEditOpen = document.querySelector("[data-profile-edit-open]");
 const profileEditCloseControls = document.querySelectorAll("[data-profile-edit-close]");
+
+if (vehicleCreateModal && vehicleCreateOpenControls.length) {
+    const openVehicleCreateModal = () => {
+        vehicleCreateModal.hidden = false;
+        const firstField = vehicleCreateModal.querySelector("input, select");
+        if (firstField) {
+            firstField.focus();
+        }
+    };
+
+    const closeVehicleCreateModal = () => {
+        vehicleCreateModal.hidden = true;
+        const firstOpenControl = vehicleCreateOpenControls[0];
+        if (firstOpenControl) {
+            firstOpenControl.focus();
+        }
+    };
+
+    vehicleCreateOpenControls.forEach((control) => {
+        control.addEventListener("click", openVehicleCreateModal);
+    });
+    vehicleCreateCloseControls.forEach((control) => {
+        control.addEventListener("click", closeVehicleCreateModal);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !vehicleCreateModal.hidden) {
+            closeVehicleCreateModal();
+        }
+    });
+
+    if (vehicleCreateModal.dataset.open === "true") {
+        openVehicleCreateModal();
+    }
+}
 
 if (vehicleEditModal && vehicleEditOpen) {
     const openVehicleEditModal = () => {

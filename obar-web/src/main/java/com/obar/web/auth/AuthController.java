@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AuthController {
@@ -65,7 +66,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String createAccount(@ModelAttribute RegisterForm registerForm, Model model, HttpSession session) {
+    public String createAccount(@ModelAttribute RegisterForm registerForm, Model model, HttpSession session,
+                                RedirectAttributes redirectAttributes) {
         if (!safe(registerForm.getPassword()).equals(safe(registerForm.getConfirmPassword()))) {
             model.addAttribute("error", "As palavras-passe não coincidem.");
             model.addAttribute("registerForm", registerForm);
@@ -73,13 +75,20 @@ public class AuthController {
         }
 
         try {
+            UserType userType = resolveRegistrationType(registerForm.getUserType());
             AuthenticatedUserDto authenticatedUser = authService.register(
                     registerForm.getName(),
                     registerForm.getEmail(),
                     registerForm.getPassword(),
-                    UserType.CLIENT,
+                    userType,
                     blankToNull(registerForm.getPhone()),
-                    blankToNull(registerForm.getTaxNumber()));
+                    registrationReference(registerForm, userType));
+
+            if (authenticatedUser.type() == UserType.DRIVER) {
+                redirectAttributes.addFlashAttribute("success",
+                        "Conta de motorista criada. Aguarda a aprovacao do administrador antes de iniciar sessao.");
+                return "redirect:/login";
+            }
 
             WebSessionHelper.login(session, authenticatedUser);
             return "redirect:/app";
@@ -103,6 +112,23 @@ public class AuthController {
     private String blankToNull(String value) {
         String safeValue = value == null ? "" : value.trim();
         return safeValue.isBlank() ? null : safeValue;
+    }
+
+    private UserType resolveRegistrationType(String userType) {
+        String normalizedType = userType == null ? "" : userType.trim().toUpperCase();
+        if (normalizedType.isBlank() || "CLIENT".equals(normalizedType)) {
+            return UserType.CLIENT;
+        }
+        if ("DRIVER".equals(normalizedType)) {
+            return UserType.DRIVER;
+        }
+        throw new AuthenticationException("Tipo de conta invalido.");
+    }
+
+    private String registrationReference(RegisterForm registerForm, UserType userType) {
+        return userType == UserType.DRIVER
+                ? blankToNull(registerForm.getLicenseNumber())
+                : blankToNull(registerForm.getTaxNumber());
     }
 
     private String redirectFor(AuthenticatedUserDto user) {
@@ -135,8 +161,10 @@ public class AuthController {
 
         private String name;
         private String email;
+        private String userType = "CLIENT";
         private String phone;
         private String taxNumber;
+        private String licenseNumber;
         private String password;
         private String confirmPassword;
 
@@ -156,6 +184,14 @@ public class AuthController {
             this.email = email;
         }
 
+        public String getUserType() {
+            return userType;
+        }
+
+        public void setUserType(String userType) {
+            this.userType = userType;
+        }
+
         public String getPhone() {
             return phone;
         }
@@ -170,6 +206,14 @@ public class AuthController {
 
         public void setTaxNumber(String taxNumber) {
             this.taxNumber = taxNumber;
+        }
+
+        public String getLicenseNumber() {
+            return licenseNumber;
+        }
+
+        public void setLicenseNumber(String licenseNumber) {
+            this.licenseNumber = licenseNumber;
         }
 
         public String getPassword() {

@@ -105,6 +105,39 @@ public class ClientDashboardController {
                 : "redirect:/app/profile";
     }
 
+    @PostMapping("/app/profile")
+    public String updateProfile(@RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "taxNumber", required = false) String taxNumber,
+            @RequestParam(value = "licenseNumber", required = false) String licenseNumber,
+            @RequestParam(value = "newPassword", required = false) String newPassword,
+            @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+
+        try {
+            User updatedUser = userService.updateProfile(
+                    currentUser.id(),
+                    name,
+                    email,
+                    phone,
+                    taxNumber,
+                    licenseNumber,
+                    newPassword,
+                    confirmPassword);
+            WebSessionHelper.login(session, AuthenticatedUserDto.from(updatedUser));
+            redirectAttributes.addFlashAttribute("profileEditSuccess", "Perfil atualizado.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("profileEditError", exception.getMessage());
+        }
+
+        return currentUser.type() == UserType.DRIVER
+                ? "redirect:/driver/profile"
+                : "redirect:/app/profile";
+    }
+
     @PostMapping("/app/scheduled/{tripId}/cancel")
     public String cancelScheduledTrip(@PathVariable Integer tripId,
             @RequestParam("reason") String reason,

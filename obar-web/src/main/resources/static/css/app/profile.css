@@ -245,6 +245,26 @@
     text-decoration: none;
 }
 
+.profile-secondary-button {
+    align-items: center;
+    background: transparent;
+    border: 1px solid #34343b;
+    border-radius: 7px;
+    color: #f5f5f6;
+    display: inline-flex;
+    font-size: 0.9rem;
+    font-weight: 850;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+.profile-secondary-button:hover {
+    border-color: rgba(255, 96, 30, 0.55);
+    color: var(--brand);
+}
+
 .profile-primary-link:hover {
     background: rgba(255, 96, 30, 0.12);
     text-decoration: none;

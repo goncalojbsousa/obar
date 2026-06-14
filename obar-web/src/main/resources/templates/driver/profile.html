@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil do Motorista | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=vehicle-selector-20260614">
+    <link rel="stylesheet" href="/css/app.css?v=profile-edit-20260614">
 </head>
 
 <body class="client-page profile-page driver-profile-page">
@@ -63,6 +63,13 @@
                 </div>
             </dl>
 
+            <p class="profile-upload-message is-success" th:if="${profileEditSuccess}"
+                th:text="${profileEditSuccess}"></p>
+            <p class="profile-upload-message is-error" th:if="${profileEditError}"
+                th:text="${profileEditError}"></p>
+            <button class="profile-secondary-button" type="button" data-profile-edit-open>
+                Editar perfil
+            </button>
             <a class="profile-primary-link" th:href="@{/app}">Nova viagem</a>
         </aside>
 
@@ -340,9 +347,73 @@
         </section>
     </div>
 
+    <div class="app-modal" data-profile-edit-modal th:attr="data-open=${profileEditError != null}" hidden>
+        <div class="app-modal-backdrop" data-profile-edit-close></div>
+        <section class="app-modal-panel profile-edit-modal-panel" role="dialog" aria-modal="true"
+            aria-labelledby="profile-edit-title">
+            <button class="modal-close-button" type="button" aria-label="Fechar" data-profile-edit-close>&times;</button>
+            <span class="modal-kicker">Perfil</span>
+            <h2 id="profile-edit-title">Editar perfil</h2>
+            <p>Atualiza os dados principais da tua conta de motorista.</p>
+            <p class="modal-error" th:if="${profileEditError}" th:text="${profileEditError}"></p>
+
+            <form class="modal-form profile-edit-form" th:action="@{/app/profile}" method="post">
+                <div class="profile-edit-form-grid">
+                    <label class="modal-field">
+                        <span>Nome</span>
+                        <input type="text" name="name" th:value="${driverProfile.name()}" autocomplete="name" required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Email</span>
+                        <input type="email" name="email" th:value="${driverProfile.email()}" autocomplete="email"
+                            required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Telefone</span>
+                        <input type="tel" name="phone" th:value="${driverProfile.phone() == '-' ? '' : driverProfile.phone()}"
+                            autocomplete="tel">
+                    </label>
+
+                    <label class="modal-field">
+                        <span>NIF</span>
+                        <input type="text" name="taxNumber"
+                            th:value="${driverProfile.taxNumber() == '-' ? '' : driverProfile.taxNumber()}"
+                            inputmode="numeric" autocomplete="off">
+                    </label>
+
+                    <label class="modal-field profile-edit-wide-field">
+                        <span>Carta</span>
+                        <input type="text" name="licenseNumber"
+                            th:value="${driverProfile.licenseNumber() == '-' ? '' : driverProfile.licenseNumber()}"
+                            autocomplete="off" required>
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Nova palavra-passe</span>
+                        <input type="password" name="newPassword" placeholder="Deixar vazio para manter"
+                            autocomplete="new-password">
+                    </label>
+
+                    <label class="modal-field">
+                        <span>Confirmar palavra-passe</span>
+                        <input type="password" name="confirmPassword" placeholder="Repetir nova palavra-passe"
+                            autocomplete="new-password">
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-profile-edit-close>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
     <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
-    <script src="/js/driver-profile.js?v=vehicle-selector-20260614"></script>
+    <script src="/js/driver-profile.js?v=profile-edit-20260614"></script>
 </body>
 
 </html>

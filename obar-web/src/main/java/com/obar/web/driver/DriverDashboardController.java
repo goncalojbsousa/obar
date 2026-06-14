@@ -123,6 +123,71 @@ public class DriverDashboardController {
         return "redirect:/driver/profile";
     }
 
+    @PostMapping("/driver/vehicles/{vehicleId}/remove")
+    public String removeVehicle(@PathVariable Integer vehicleId,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = requireDriver(session);
+        Vehicle vehicle = requireOwnedVehicle(vehicleId, currentUser);
+        vehicleService.remove(vehicle.getId());
+        redirectAttributes.addFlashAttribute("vehicleEditSuccess", "Carro removido da tua conta.");
+        return "redirect:/driver/profile";
+    }
+
+    @PostMapping("/driver/vehicles")
+    public String createVehicle(@RequestParam("brand") String brand,
+            @RequestParam("model") String model,
+            @RequestParam("licensePlate") String licensePlate,
+            @RequestParam("category") String category,
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = requireDriver(session);
+
+        try {
+            User driver = userService.findById(currentUser.id())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Motorista nao encontrado."));
+            String normalizedPlate = normalizeLicensePlate(licensePlate);
+            vehicleService.findByLicensePlate(normalizedPlate)
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Matricula ja registada.");
+                    });
+
+            Vehicle vehicle = new Vehicle();
+            vehicle.setDriver(driver);
+            vehicle.setBrand(requiredText(brand, "Marca e obrigatoria."));
+            vehicle.setModel(requiredText(model, "Modelo e obrigatorio."));
+            vehicle.setLicensePlate(normalizedPlate);
+            vehicle.setCategory(VehicleService.normalizeCategory(category));
+            vehicle.setYear(parseYear(year));
+            vehicle.setColor(nullableText(color));
+            vehicle.setActive(true);
+
+            Vehicle savedVehicle = vehicleService.addVehicle(vehicle);
+            redirectAttributes.addAttribute("vehicleId", savedVehicle.getId());
+
+            if (hasPhoto(photo)) {
+                try {
+                    savedVehicle.setPhotoUrl(storageService.uploadVehiclePhoto(savedVehicle.getId(), photo));
+                    vehicleService.update(savedVehicle);
+                    redirectAttributes.addFlashAttribute("vehicleCreateSuccess", "Veiculo criado com foto.");
+                } catch (ResponseStatusException exception) {
+                    redirectAttributes.addFlashAttribute("vehicleCreateSuccess", "Veiculo criado e ativado.");
+                    redirectAttributes.addFlashAttribute("vehiclePhotoError",
+                            "A foto nao foi guardada: " + exception.getReason());
+                }
+            } else {
+                redirectAttributes.addFlashAttribute("vehicleCreateSuccess", "Veiculo criado e ativado.");
+            }
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("vehicleCreateError", exception.getMessage());
+        }
+
+        return "redirect:/driver/profile";
+    }
+
     @PostMapping("/driver/vehicles/{vehicleId}")
     public String updateVehicle(@PathVariable Integer vehicleId,
             @RequestParam("brand") String brand,
@@ -171,6 +236,9 @@ public class DriverDashboardController {
     private Vehicle requireOwnedVehicle(Integer vehicleId, AuthenticatedUserDto currentUser) {
         Vehicle vehicle = vehicleService.findById(vehicleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veiculo nao encontrado."));
+        if (Boolean.TRUE.equals(vehicle.getRemoved())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veiculo nao encontrado.");
+        }
         if (!vehicle.getDriver().getId().equals(currentUser.id())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nao podes alterar este veiculo.");
         }
@@ -214,6 +282,10 @@ public class DriverDashboardController {
     private static String nullableText(String value) {
         String result = text(value);
         return result.isBlank() ? null : result;
+    }
+
+    private static boolean hasPhoto(MultipartFile photo) {
+        return photo != null && !photo.isEmpty();
     }
 
     public record DriverProfileView(

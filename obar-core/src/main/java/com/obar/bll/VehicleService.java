@@ -21,6 +21,7 @@ public class VehicleService {
         if (driver == null || driver.getType() != UserType.DRIVER) {
             throw new IllegalArgumentException("Veículo tem de ser associado a um condutor.");
         }
+        vehicle.setRemoved(false);
         return vehicleRepository.save(vehicle);
     }
 
@@ -67,6 +68,14 @@ public class VehicleService {
     public void deactivate(Integer vehicleId) {
         vehicleRepository.findById(vehicleId).ifPresent(v -> {
             v.setActive(false);
+            vehicleRepository.update(v);
+        });
+    }
+
+    public void remove(Integer vehicleId) {
+        vehicleRepository.findById(vehicleId).ifPresent(v -> {
+            v.setActive(false);
+            v.setRemoved(true);
             vehicleRepository.update(v);
         });
     }

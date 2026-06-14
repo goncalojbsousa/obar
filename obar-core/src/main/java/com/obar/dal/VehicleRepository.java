@@ -69,7 +69,11 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
     public List<Vehicle> findByDriverId(Integer driverId) {
         try (Session session = getSession()) {
             return session.createQuery(
-                    "FROM Vehicle v WHERE v.driver.id = :driverId AND v.active = true", Vehicle.class)
+                    "FROM Vehicle v "
+                            + "WHERE v.driver.id = :driverId "
+                            + "AND v.active = true "
+                            + "AND v.removed = false",
+                    Vehicle.class)
                     .setParameter("driverId", driverId)
                     .list();
         }
@@ -78,7 +82,11 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
     public List<Vehicle> findAllByDriverId(Integer driverId) {
         try (Session session = getSession()) {
             return session.createQuery(
-                    "FROM Vehicle v WHERE v.driver.id = :driverId ORDER BY v.id", Vehicle.class)
+                    "FROM Vehicle v "
+                            + "WHERE v.driver.id = :driverId "
+                            + "AND v.removed = false "
+                            + "ORDER BY v.id",
+                    Vehicle.class)
                     .setParameter("driverId", driverId)
                     .list();
         }
@@ -99,6 +107,7 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
                     "FROM Vehicle v "
                             + "WHERE v.driver.id = :driverId "
                             + "AND v.active = true "
+                            + "AND v.removed = false "
                             + "AND upper(v.category) = upper(:category)",
                     Vehicle.class)
                     .setParameter("driverId", driverId)
@@ -114,6 +123,7 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
                     "SELECT DISTINCT upper(v.category) "
                             + "FROM Vehicle v "
                             + "WHERE v.active = true "
+                            + "AND v.removed = false "
                             + "ORDER BY upper(v.category)",
                     String.class)
                     .list();
@@ -134,6 +144,7 @@ public class VehicleRepository extends BaseRepository<Vehicle, Integer> {
                         + "SET v.active = false "
                         + "WHERE v.driver.id = :driverId "
                         + "AND v.active = true "
+                        + "AND v.removed = false "
                         + "AND v.id <> :vehicleId")
                 .setParameter("driverId", vehicle.getDriver().getId())
                 .setParameter("vehicleId", vehicle.getId())

@@ -331,6 +331,7 @@
     color: #f5f5f6;
     font-size: 1rem;
     margin: 0;
+    margin-right: auto;
 }
 
 .profile-panel-icon {
@@ -591,7 +592,13 @@
     margin: 0;
 }
 
+.driver-vehicle-remove-form {
+    margin: 0;
+}
+
 .driver-vehicle-edit-button,
+.driver-vehicle-add-button,
+.driver-vehicle-remove-button,
 .driver-vehicle-activate-button {
     align-items: center;
     background: transparent;
@@ -608,6 +615,12 @@
     width: 112px;
 }
 
+.driver-vehicle-add-button {
+    min-height: 34px;
+    min-width: 122px;
+    width: auto;
+}
+
 .driver-vehicle-activate-button {
     background: var(--brand);
     color: #ffffff;
@@ -615,8 +628,19 @@
 
 .driver-vehicle-selector-button:hover,
 .driver-vehicle-edit-button:hover,
+.driver-vehicle-add-button:hover,
+.driver-vehicle-remove-button:hover,
 .driver-vehicle-activate-button:hover {
     background: rgba(255, 96, 30, 0.12);
+}
+
+.driver-vehicle-remove-button {
+    border-color: rgba(255, 145, 145, 0.45);
+    color: #ffb5b5;
+}
+
+.driver-vehicle-remove-button:hover {
+    background: rgba(255, 145, 145, 0.10);
 }
 
 .driver-vehicle-activate-button:hover {
@@ -667,6 +691,8 @@
     background: #15161a;
     border: 1px solid #2b2b33;
     border-radius: 8px;
+    display: grid;
+    gap: 8px;
     padding: 18px;
 }
 
@@ -833,7 +859,9 @@
     }
 
     .driver-vehicle-edit-button,
+    .driver-vehicle-remove-button,
     .driver-vehicle-activate-button,
+    .driver-vehicle-remove-form,
     .driver-vehicle-activate-form {
         width: 100%;
     }

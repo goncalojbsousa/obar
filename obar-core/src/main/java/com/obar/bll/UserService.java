@@ -96,6 +96,37 @@ public class UserService {
         return userRepository.update(user);
     }
 
+    public User requestDriverUpgrade(Integer userId, String phone, String licenseNumber) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilizador nao encontrado."));
+        String normalizedPhone = nullableText(phone);
+        String normalizedLicenseNumber = nullableText(licenseNumber);
+
+        if (user.getType() != UserType.CLIENT) {
+            throw new IllegalArgumentException("Esta conta ja nao e uma conta cliente.");
+        }
+        if (normalizedLicenseNumber == null) {
+            throw new IllegalArgumentException("Numero da carta e obrigatorio.");
+        }
+        if (normalizedPhone != null && normalizedPhone.length() > 40) {
+            throw new IllegalArgumentException("Telefone demasiado longo.");
+        }
+
+        userRepository.findByLicenseNumber(normalizedLicenseNumber)
+                .filter(existing -> !existing.getId().equals(userId))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("Numero da carta ja registado.");
+                });
+
+        user.setPhone(normalizedPhone);
+        user.setLicenseNumber(normalizedLicenseNumber);
+        user.setType(UserType.DRIVER);
+        user.setStatus(AccountStatus.PENDING);
+        user.setOnline(false);
+        user.setAvailable(false);
+        return userRepository.update(user);
+    }
+
     public void blockUser(Integer userId) {
         userRepository.findById(userId).ifPresent(u -> {
             u.setStatus(AccountStatus.BLOCKED);

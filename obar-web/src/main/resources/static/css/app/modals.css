@@ -319,6 +319,82 @@
     width: min(620px, 100%);
 }
 
+.vehicle-remove-modal-panel {
+    width: min(500px, 100%);
+}
+
+.driver-upgrade-modal-panel {
+    width: min(560px, 100%);
+}
+
+.driver-upgrade-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.driver-upgrade-form-grid .modal-field {
+    min-width: 0;
+}
+
+.driver-upgrade-note {
+    background: #101114;
+    border: 1px solid #34343b;
+    border-radius: 8px;
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+}
+
+.driver-upgrade-note strong {
+    color: #f5f5f6;
+    font-size: 0.9rem;
+}
+
+.driver-upgrade-note span {
+    color: #8c8c96;
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.vehicle-remove-modal-panel p strong {
+    color: #f5f5f6;
+}
+
+.vehicle-remove-summary {
+    background: #101114;
+    border: 1px solid #34343b;
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+}
+
+.vehicle-remove-summary span {
+    background: #1d1e23;
+    border: 1px solid #34343b;
+    border-radius: 999px;
+    color: #d8d8df;
+    font-size: 0.78rem;
+    font-weight: 850;
+    padding: 5px 9px;
+}
+
+.danger-button {
+    background: #ff5b5b;
+    border: 1px solid #ff6c6c;
+    border-radius: 8px;
+    color: #ffffff;
+    min-height: 42px;
+    padding: 10px 14px;
+}
+
+.danger-button:hover {
+    background: #ff4747;
+}
+
 .profile-edit-form-grid {
     display: grid;
     gap: 12px;
@@ -350,14 +426,19 @@
 @media (max-width: 560px) {
     .review-modal-panel,
     .vehicle-edit-modal-panel,
+    .vehicle-remove-modal-panel,
+    .driver-upgrade-modal-panel,
     .profile-edit-modal-panel {
         padding: 20px;
     }
 
     .review-modal-panel .modal-actions,
     .vehicle-edit-modal-panel .modal-actions,
+    .vehicle-remove-modal-panel .modal-actions,
+    .driver-upgrade-modal-panel .modal-actions,
     .profile-edit-modal-panel .modal-actions,
     .profile-edit-form-grid,
+    .driver-upgrade-form-grid,
     .vehicle-edit-form-grid {
         grid-template-columns: 1fr;
     }

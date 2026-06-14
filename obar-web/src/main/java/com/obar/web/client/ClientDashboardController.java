@@ -7,6 +7,7 @@ import com.obar.bll.VehicleService;
 import com.obar.bll.auth.AuthenticatedUserDto;
 import com.obar.model.Trip;
 import com.obar.model.User;
+import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.TripStatus;
 import com.obar.model.enums.UserType;
 import com.obar.web.session.WebSessionHelper;
@@ -44,6 +45,10 @@ public class ClientDashboardController {
     @GetMapping("/app")
     public String dashboard(HttpSession session, Model model) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        String driverRedirect = refreshApprovedDriverSession(currentUser, session, "redirect:/driver");
+        if (driverRedirect != null) {
+            return driverRedirect;
+        }
         if (currentUser.type() == UserType.DRIVER
                 && userService.findById(currentUser.id())
                         .map(User::getOnline)
@@ -60,6 +65,10 @@ public class ClientDashboardController {
             HttpSession session,
             Model model) {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        String driverRedirect = refreshApprovedDriverSession(currentUser, session, "redirect:/driver");
+        if (driverRedirect != null) {
+            return driverRedirect;
+        }
         var scheduledTrips = tripService.findScheduledByClient(currentUser.id());
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("scheduledPage",
@@ -75,6 +84,10 @@ public class ClientDashboardController {
         AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
         User client = userService.findById(currentUser.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente nao encontrado."));
+        String driverRedirect = refreshApprovedDriverSession(currentUser, client, session, "redirect:/driver/profile");
+        if (driverRedirect != null) {
+            return driverRedirect;
+        }
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("clientProfile",
                 ClientViews.ClientProfileView.from(
@@ -95,7 +108,9 @@ public class ClientDashboardController {
         try {
             user.setPhotoUrl(storageService.uploadUserPhoto(user.getId(), photo));
             User updatedUser = userService.update(user);
-            WebSessionHelper.login(session, AuthenticatedUserDto.from(updatedUser));
+            if (updatedUser.getStatus() == AccountStatus.ACTIVE) {
+                WebSessionHelper.login(session, AuthenticatedUserDto.from(updatedUser));
+            }
             redirectAttributes.addFlashAttribute("photoSuccess", "Foto de perfil atualizada.");
         } catch (ResponseStatusException exception) {
             redirectAttributes.addFlashAttribute("photoError", exception.getReason());
@@ -136,6 +151,44 @@ public class ClientDashboardController {
         return currentUser.type() == UserType.DRIVER
                 ? "redirect:/driver/profile"
                 : "redirect:/app/profile";
+    }
+
+    @PostMapping("/app/profile/become-driver")
+    public String requestDriverUpgrade(@RequestParam(value = "phone", required = false) String phone,
+            @RequestParam("licenseNumber") String licenseNumber,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        AuthenticatedUserDto currentUser = WebSessionHelper.getCurrentUser(session).orElseThrow();
+        if (currentUser.type() != UserType.CLIENT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Pedido reservado a clientes.");
+        }
+
+        try {
+            userService.requestDriverUpgrade(currentUser.id(), phone, licenseNumber);
+            redirectAttributes.addFlashAttribute("driverUpgradeSuccess",
+                    "Pedido enviado. Podes continuar a usar a conta enquanto aguardas aprovacao.");
+            return "redirect:/app/profile";
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("driverUpgradeError", exception.getMessage());
+            return "redirect:/app/profile";
+        }
+    }
+
+    private String refreshApprovedDriverSession(AuthenticatedUserDto currentUser, HttpSession session, String redirect) {
+        User user = userService.findById(currentUser.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilizador nao encontrado."));
+        return refreshApprovedDriverSession(currentUser, user, session, redirect);
+    }
+
+    private String refreshApprovedDriverSession(AuthenticatedUserDto currentUser, User user, HttpSession session,
+            String redirect) {
+        if (currentUser.type() == UserType.CLIENT
+                && user.getType() == UserType.DRIVER
+                && user.getStatus() == AccountStatus.ACTIVE) {
+            WebSessionHelper.login(session, AuthenticatedUserDto.from(user));
+            return redirect;
+        }
+        return null;
     }
 
     @PostMapping("/app/scheduled/{tripId}/cancel")

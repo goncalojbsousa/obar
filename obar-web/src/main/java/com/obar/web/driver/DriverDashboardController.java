@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -88,6 +89,56 @@ public class DriverDashboardController {
                 tripService.findByClient(currentUser.id()),
                 reviewService.countByReviewed(currentUser.id())));
         return "driver/profile";
+    }
+
+    @GetMapping("/driver/history")
+    public String history(@RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(name = "client", required = false) String client,
+            HttpSession session, Model model) {
+        AuthenticatedUserDto currentUser = requireDriver(session);
+        TripStatus selectedStatus = parseStatus(status);
+        LocalDateTime fromTime = from == null ? null : from.atStartOfDay();
+        LocalDateTime toTime = to == null ? null : to.plusDays(1).atStartOfDay();
+        String clientQuery = text(client);
+        long totalTrips = tripService.countDriverHistory(
+                currentUser.id(), selectedStatus, fromTime, toTime, clientQuery);
+        int totalPages = Math.max(1, (int) Math.ceil(totalTrips / (double) DriverHistoryViews.PAGE_SIZE));
+        int selectedPage = Math.max(1, Math.min(page, totalPages));
+        int offset = (selectedPage - 1) * DriverHistoryViews.PAGE_SIZE;
+        long completedTrips = selectedStatus != null && selectedStatus != TripStatus.COMPLETED
+                ? 0
+                : tripService.countDriverHistory(
+                        currentUser.id(), TripStatus.COMPLETED, fromTime, toTime, clientQuery);
+        BigDecimal totalEarnings = selectedStatus != null && selectedStatus != TripStatus.COMPLETED
+                ? BigDecimal.ZERO
+                : tripService.sumCompletedDriverHistory(currentUser.id(), fromTime, toTime, clientQuery)
+                        .multiply(new BigDecimal("0.25"))
+                        .setScale(2, RoundingMode.HALF_UP);
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("historyPage",
+                DriverHistoryViews.HistoryPage.from(
+                        tripService.findDriverHistory(
+                                currentUser.id(),
+                                selectedStatus,
+                                fromTime,
+                                toTime,
+                                clientQuery,
+                                offset,
+                                DriverHistoryViews.PAGE_SIZE),
+                        selectedPage,
+                        totalPages,
+                        totalTrips,
+                        completedTrips,
+                        totalEarnings,
+                        status,
+                        from,
+                        to,
+                        clientQuery));
+        return "driver/history";
     }
 
     @PostMapping("/driver/vehicles/{vehicleId}/photo")
@@ -343,7 +394,8 @@ public class DriverDashboardController {
                     vehicleViews,
                     selectedVehicle == null ? null : VehicleView.from(selectedVehicle, true),
                     driver.getTotalTrips() == null ? completedDriverTrips.size() : driver.getTotalTrips(),
-                    String.format(PT_LOCALE, "%.1f", driver.getAverageRating() == null ? 0f : driver.getAverageRating()),
+                    String.format(PT_LOCALE, "%.1f",
+                            driver.getAverageRating() == null ? 0f : driver.getAverageRating()),
                     reviewCount,
                     completedDriverTrips.stream()
                             .map(trip -> trip.getFinalPrice() == null ? BigDecimal.ZERO : trip.getFinalPrice())
@@ -566,5 +618,17 @@ public class DriverDashboardController {
 
     private static String text(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private static TripStatus parseStatus(String status) {
+        String value = text(status);
+        if (value.isBlank()) {
+            return null;
+        }
+        try {
+            return TripStatus.valueOf(value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 }

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hist&oacute;rico de viagens | Obar</title>
+        <link rel="stylesheet" href="/css/base.css?v=font-20260613">
+        <link rel="stylesheet"
+            href="/css/app.css?v=driver-history-filters-20260614">
+    </head>
+
+    <body class="client-page driver-history-page">
+        <header
+            th:replace="~{fragments/client-navbar :: navbar('driver-history')}"></header>
+
+        <main class="driver-history-shell">
+            <section class="driver-history-content">
+                <header class="driver-history-header">
+                    <div>
+                        <h1>Hist&oacute;rico de viagens</h1>
+                        <p>Consulta as viagens em que foste o motorista.</p>
+                    </div>
+                    <div class="driver-history-summary">
+                        <div>
+                            <span>Total</span>
+                            <strong
+                                th:text="${historyPage.totalTrips()}">0</strong>
+                        </div>
+                        <div>
+                            <span>Conclu&iacute;das</span>
+                            <strong
+                                th:text="${historyPage.completedTrips()}">0</strong>
+                        </div>
+                        <div>
+                            <span>Ganhos (25%)</span>
+                            <strong
+                                th:text="${#numbers.formatDecimal(historyPage.totalEarnings(), 1, 'POINT', 2, 'COMMA') + ' €'}">0,00
+                                &euro;</strong>
+                        </div>
+                    </div>
+                </header>
+
+                <form class="driver-history-filters" method="get"
+                    th:action="@{/driver/history}">
+                    <label class="driver-filter-field">
+                        <span>Estado</span>
+                        <span class="driver-filter-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 6h16"></path>
+                                <path d="M7 12h10"></path>
+                                <path d="M10 18h4"></path>
+                            </svg>
+                            <select name="status">
+                                <option value
+                                    th:selected="${historyPage.selectedStatus().isBlank()}">Todos
+                                    os estados</option>
+                                <option value="COMPLETED"
+                                    th:selected="${historyPage.selectedStatus() == 'COMPLETED'}">Conclu&iacute;das</option>
+                                <option value="ACCEPTED"
+                                    th:selected="${historyPage.selectedStatus() == 'ACCEPTED'}">Aceites</option>
+                                <option value="IN_PROGRESS"
+                                    th:selected="${historyPage.selectedStatus() == 'IN_PROGRESS'}">Em
+                                    curso</option>
+                                <option value="CANCELLED"
+                                    th:selected="${historyPage.selectedStatus() == 'CANCELLED'}">Canceladas</option>
+                                <option value="REJECTED"
+                                    th:selected="${historyPage.selectedStatus() == 'REJECTED'}">Rejeitadas</option>
+                            </select>
+                        </span>
+                    </label>
+                    <label class="driver-filter-field">
+                        <span>Desde</span>
+                        <span class="driver-filter-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4" y="5" width="16" height="15"
+                                    rx="2"></rect>
+                                <path d="M8 3v4"></path>
+                                <path d="M16 3v4"></path>
+                                <path d="M4 10h16"></path>
+                            </svg>
+                            <input type="date" name="from"
+                                th:value="${historyPage.from()}">
+                        </span>
+                    </label>
+                    <label class="driver-filter-field">
+                        <span>At&eacute;</span>
+                        <span class="driver-filter-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4" y="5" width="16" height="15"
+                                    rx="2"></rect>
+                                <path d="M8 3v4"></path>
+                                <path d="M16 3v4"></path>
+                                <path d="M4 10h16"></path>
+                            </svg>
+                            <input type="date" name="to"
+                                th:value="${historyPage.to()}">
+                        </span>
+                    </label>
+                    <label
+                        class="driver-filter-field driver-history-client-filter">
+                        <span>Cliente</span>
+                        <span class="driver-filter-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="6"></circle>
+                                <path d="m16 16 4 4"></path>
+                            </svg>
+                            <input type="search" name="client"
+                                placeholder="Pesquisar cliente"
+                                th:value="${historyPage.clientQuery()}">
+                        </span>
+                    </label>
+                    <div class="driver-filter-actions">
+                        <a class="driver-filter-clear"
+                            th:href="@{/driver/history}">Limpar</a>
+                        <button class="driver-filter-submit" type="submit">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 6h16"></path>
+                                <path d="M7 12h10"></path>
+                                <path d="M10 18h4"></path>
+                            </svg>
+                            Aplicar
+                        </button>
+                    </div>
+                </form>
+
+                <div class="driver-history-list"
+                    th:if="${!#lists.isEmpty(historyPage.trips())}">
+                    <article class="driver-history-row"
+                        th:each="trip : ${historyPage.trips()}">
+                        <div class="driver-history-date">
+                            <span th:text="${trip.dateLabel()}">14 jun
+                                2026</span>
+                            <strong th:text="${trip.timeLabel()}">16:20</strong>
+                        </div>
+                        <div class="driver-history-client">
+                            <span>Cliente</span>
+                            <strong
+                                th:text="${trip.clientName()}">Cliente</strong>
+                        </div>
+                        <div class="driver-history-route">
+                            <strong th:text="${trip.origin()}">Origem</strong>
+                            <span aria-hidden="true">&rarr;</span>
+                            <strong
+                                th:text="${trip.destination()}">Destino</strong>
+                        </div>
+                        <div>
+                            <span>Dist&acirc;ncia</span>
+                            <strong th:text="${trip.distanceLabel()}">0,0
+                                km</strong>
+                        </div>
+                        <div>
+                            <span>Pre&ccedil;o</span>
+                            <strong
+                                th:text="${#numbers.formatDecimal(trip.price(), 1, 'POINT', 2, 'COMMA') + ' €'}">0,00
+                                &euro;</strong>
+                        </div>
+                        <span class="status-pill"
+                            th:classappend="${trip.statusClass()}"
+                            th:text="${trip.statusLabel()}">Conclu&iacute;da</span>
+                    </article>
+                </div>
+
+                <div class="empty-state driver-history-empty"
+                    th:if="${#lists.isEmpty(historyPage.trips())}">
+                    <strong>Ainda n&atilde;o tens viagens como
+                        motorista</strong>
+                    <p>Quando aceitares uma viagem, ela passa a aparecer neste
+                        hist&oacute;rico.</p>
+                </div>
+
+                <nav class="scheduled-pagination"
+                    aria-label="Paginacao do historico"
+                    th:if="${historyPage.hasPagination()}">
+                    <a th:if="${historyPage.hasPreviousPage()}"
+                        th:href="@{/driver/history(page=${historyPage.previousPage()},status=${historyPage.selectedStatus()},from=${historyPage.from()},to=${historyPage.to()},client=${historyPage.clientQuery()})}">Anterior</a>
+                    <span class="scheduled-pagination-disabled"
+                        th:if="${!historyPage.hasPreviousPage()}">Anterior</span>
+                    <span class="scheduled-pagination-status">
+                        <span th:text="${historyPage.page()}">1</span>
+                        <span>/</span>
+                        <span th:text="${historyPage.totalPages()}">1</span>
+                    </span>
+                    <a th:if="${historyPage.hasNextPage()}"
+                        th:href="@{/driver/history(page=${historyPage.nextPage()},status=${historyPage.selectedStatus()},from=${historyPage.from()},to=${historyPage.to()},client=${historyPage.clientQuery()})}">Seguinte</a>
+                    <span class="scheduled-pagination-disabled"
+                        th:if="${!historyPage.hasNextPage()}">Seguinte</span>
+                </nav>
+            </section>
+        </main>
+    </body>
+
+</html>

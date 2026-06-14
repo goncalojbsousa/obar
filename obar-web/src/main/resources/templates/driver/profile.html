@@ -214,7 +214,9 @@
                         </article>
                         <article class="profile-card profile-stat-card">
                             <span>Ganhos</span>
-                            <strong th:text="${#numbers.formatCurrency(driverProfile.totalEarnings())}">3 420 &euro;</strong>
+                            <strong
+                                th:text="${#numbers.formatDecimal(driverProfile.totalEarnings(), 1, 'POINT', 2, 'COMMA') + ' €'}">3
+                                420 &euro;</strong>
                         </article>
                     </div>
 
@@ -224,7 +226,8 @@
                                 <span>Últimos 7 dias</span>
                                 <h4 id="weekly-earnings-title">Ganhos semanais</h4>
                             </div>
-                            <strong th:text="${#numbers.formatCurrency(driverProfile.weeklyEarnings().total())}">
+                            <strong
+                                th:text="${#numbers.formatDecimal(driverProfile.weeklyEarnings().total(), 1, 'POINT', 2, 'COMMA') + ' €'}">
                                 0,00 €
                             </strong>
                         </div>
@@ -232,7 +235,8 @@
                             <div class="driver-earnings-day"
                                 th:each="day : ${driverProfile.weeklyEarnings().days()}">
                                 <span class="driver-earnings-value"
-                                    th:text="${#numbers.formatCurrency(day.amount())}">0,00 €</span>
+                                    th:text="${#numbers.formatDecimal(day.amount(), 1, 'POINT', 2, 'COMMA') + ' €'}">0,00
+                                    €</span>
                                 <div class="driver-earnings-track">
                                     <span class="driver-earnings-bar"
                                         th:style="'height:' + ${day.heightPercent()} + '%'"></span>

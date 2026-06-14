@@ -1,6 +1,6 @@
 -- Expands the demo dataset to 30 clients, 12 drivers, 15 vehicles and
 -- 900 additional trips spread across roughly 18 months.
--- All generated users use the seed password Carlos123!.
+-- Generated users use the seed password FirstName123!.
 
 -- Keep the original accounts but give them stable Random User photos.
 UPDATE users
@@ -31,40 +31,41 @@ WHERE email IN (
 WITH client_seed (
     name,
     email,
+    password_hash,
     phone,
     tax_number,
     photo_url,
     created_days_ago
 ) AS (
     VALUES
-        ('Lillian Fox', 'lillian.fox@seed.obar.pt', '+351 931 000 001', '245000001', 'https://randomuser.me/api/portraits/women/87.jpg', 510),
-        ('Maria Black', 'maria.black@seed.obar.pt', '+351 931 000 002', '245000002', 'https://randomuser.me/api/portraits/women/68.jpg', 492),
-        ('Alyssia Robert', 'alyssia.robert@seed.obar.pt', '+351 931 000 003', '245000003', 'https://randomuser.me/api/portraits/women/45.jpg', 474),
-        ('Ian Simmons', 'ian.simmons@seed.obar.pt', '+351 931 000 004', '245000004', 'https://randomuser.me/api/portraits/men/10.jpg', 456),
-        ('Line Rolland', 'line.rolland@seed.obar.pt', '+351 931 000 005', '245000005', 'https://randomuser.me/api/portraits/women/78.jpg', 438),
-        ('Amy Kuhn', 'amy.kuhn@seed.obar.pt', '+351 931 000 006', '245000006', 'https://randomuser.me/api/portraits/women/17.jpg', 420),
-        ('Leandre Perez', 'leandre.perez@seed.obar.pt', '+351 931 000 007', '245000007', 'https://randomuser.me/api/portraits/men/43.jpg', 402),
-        ('Patricia Sanz', 'patricia.sanz@seed.obar.pt', '+351 931 000 008', '245000008', 'https://randomuser.me/api/portraits/women/88.jpg', 384),
-        ('Veronica Herrero', 'veronica.herrero@seed.obar.pt', '+351 931 000 009', '245000009', 'https://randomuser.me/api/portraits/women/12.jpg', 366),
-        ('Gerardo Castillo', 'gerardo.castillo@seed.obar.pt', '+351 931 000 010', '245000010', 'https://randomuser.me/api/portraits/men/44.jpg', 348),
-        ('Lidia Blanco', 'lidia.blanco@seed.obar.pt', '+351 931 000 011', '245000011', 'https://randomuser.me/api/portraits/women/84.jpg', 330),
-        ('Alicia Ruiz', 'alicia.ruiz@seed.obar.pt', '+351 931 000 012', '245000012', 'https://randomuser.me/api/portraits/women/51.jpg', 312),
-        ('Reginald Kuhn', 'reginald.kuhn@seed.obar.pt', '+351 931 000 013', '245000013', 'https://randomuser.me/api/portraits/men/86.jpg', 294),
-        ('Glen Fowler', 'glen.fowler@seed.obar.pt', '+351 931 000 014', '245000014', 'https://randomuser.me/api/portraits/men/53.jpg', 276),
-        ('Maelyne Durand', 'maelyne.durand@seed.obar.pt', '+351 931 000 015', '245000015', 'https://randomuser.me/api/portraits/women/34.jpg', 258),
-        ('Marin Masson', 'marin.masson@seed.obar.pt', '+351 931 000 016', '245000016', 'https://randomuser.me/api/portraits/men/90.jpg', 240),
-        ('Teresa Rivera', 'teresa.rivera@seed.obar.pt', '+351 931 000 017', '245000017', 'https://randomuser.me/api/portraits/women/31.jpg', 222),
-        ('Todd Matthews', 'todd.matthews@seed.obar.pt', '+351 931 000 018', '245000018', 'https://randomuser.me/api/portraits/men/0.jpg', 204),
-        ('Maiwenn Gerard', 'maiwenn.gerard@seed.obar.pt', '+351 931 000 019', '245000019', 'https://randomuser.me/api/portraits/women/92.jpg', 186),
-        ('Samantha Brewer', 'samantha.brewer@seed.obar.pt', '+351 931 000 020', '245000020', 'https://randomuser.me/api/portraits/women/49.jpg', 168),
-        ('Felix Herrero', 'felix.herrero@seed.obar.pt', '+351 931 000 021', '245000021', 'https://randomuser.me/api/portraits/men/55.jpg', 150),
-        ('Leslie West', 'leslie.west@seed.obar.pt', '+351 931 000 022', '245000022', 'https://randomuser.me/api/portraits/men/18.jpg', 132),
-        ('Andrew Larson', 'andrew.larson@seed.obar.pt', '+351 931 000 023', '245000023', 'https://randomuser.me/api/portraits/men/80.jpg', 114),
-        ('Felix Sanchez', 'felix.sanchez@seed.obar.pt', '+351 931 000 024', '245000024', 'https://randomuser.me/api/portraits/men/38.jpg', 96),
-        ('Tracy Martin', 'tracy.martin@seed.obar.pt', '+351 931 000 025', '245000025', 'https://randomuser.me/api/portraits/men/6.jpg', 78),
-        ('Elea Girard', 'elea.girard@seed.obar.pt', '+351 931 000 026', '245000026', 'https://randomuser.me/api/portraits/women/18.jpg', 60),
-        ('Henry Evans', 'henry.evans@seed.obar.pt', '+351 931 000 027', '245000027', 'https://randomuser.me/api/portraits/men/81.jpg', 42),
-        ('Heidi Carpenter', 'heidi.carpenter@seed.obar.pt', '+351 931 000 028', '245000028', 'https://randomuser.me/api/portraits/women/85.jpg', 24)
+        ('Lillian Fox', 'lillian.fox@gmail.com', '$2a$12$gQAX3zNJRmZzYcByjBDGyeFdnKjsO1WUwBhkqqU3Aq8qwtM4Rr6rW', '+351 931 000 001', '245000001', 'https://randomuser.me/api/portraits/women/87.jpg', 510),
+        ('Maria Black', 'maria.black@gmail.com', '$2a$12$cC0KBGzpnEgZKZYtn.IVvu97yGlbYSvFY3ijXsbgzAO4.tT/X4VMa', '+351 931 000 002', '245000002', 'https://randomuser.me/api/portraits/women/68.jpg', 492),
+        ('Alyssia Robert', 'alyssia.robert@gmail.com', '$2a$12$JlqZsUzeLIt6dZYKiN5ksORHgiovPO50OjJdzx4FjTtO8rQFBeElS', '+351 931 000 003', '245000003', 'https://randomuser.me/api/portraits/women/45.jpg', 474),
+        ('Ian Simmons', 'ian.simmons@gmail.com', '$2a$12$u/67VOhbTSIkMI0JDhveOeMHgB18vG5q3i0LrYG3mIa9BzsdxGk0y', '+351 931 000 004', '245000004', 'https://randomuser.me/api/portraits/men/10.jpg', 456),
+        ('Line Rolland', 'line.rolland@gmail.com', '$2a$12$p0HrUPRpEOZZsOgr7cdmL.mWqcE/PL5qZXF5eKSzdoky0VFH3NssK', '+351 931 000 005', '245000005', 'https://randomuser.me/api/portraits/women/78.jpg', 438),
+        ('Amy Kuhn', 'amy.kuhn@gmail.com', '$2a$12$mAO97rPZmI344hlH4EW/m.5zp18D3xg8xnFHMmHMUYRTw9PImsfqq', '+351 931 000 006', '245000006', 'https://randomuser.me/api/portraits/women/17.jpg', 420),
+        ('Leandre Perez', 'leandre.perez@gmail.com', '$2a$12$rhzybbZCmvpnRO71fIwtYur0TU/.t7UoI99SdIBYFAEw66i5atf6y', '+351 931 000 007', '245000007', 'https://randomuser.me/api/portraits/men/43.jpg', 402),
+        ('Patricia Sanz', 'patricia.sanz@gmail.com', '$2a$12$F1RV8ZaFO6w2Rrsd2Koq4u1zxog2wQc0I4oGrFy.Cgm0KVYhS7PIy', '+351 931 000 008', '245000008', 'https://randomuser.me/api/portraits/women/88.jpg', 384),
+        ('Veronica Herrero', 'veronica.herrero@gmail.com', '$2a$12$OYjtd71qdxdII0X81a64re75RjfkX0yA4AB3Lp4jF25Vm5X51SEBW', '+351 931 000 009', '245000009', 'https://randomuser.me/api/portraits/women/12.jpg', 366),
+        ('Gerardo Castillo', 'gerardo.castillo@gmail.com', '$2a$12$WY8qTEbsPUEgOGteitaIzu49GIVanGbO.Ifr9oMq96CYKsyg2Ue.i', '+351 931 000 010', '245000010', 'https://randomuser.me/api/portraits/men/44.jpg', 348),
+        ('Lidia Blanco', 'lidia.blanco@gmail.com', '$2a$12$5TRgkzCY2HoE/GnS2.aj8OoN/5UGcrZalJLKZM57nlHxj2pGwp4xe', '+351 931 000 011', '245000011', 'https://randomuser.me/api/portraits/women/84.jpg', 330),
+        ('Alicia Ruiz', 'alicia.ruiz@gmail.com', '$2a$12$TWhyOz4VighGJePgDrZ6aeizN/KY/kCxVTLeAfeZZxTVagaR6agD6', '+351 931 000 012', '245000012', 'https://randomuser.me/api/portraits/women/51.jpg', 312),
+        ('Reginald Kuhn', 'reginald.kuhn@gmail.com', '$2a$12$yQEuKnQhXKFdLdnBouHo4esSNYgcC6rquHkjYs4FNMFagvh0vjt8G', '+351 931 000 013', '245000013', 'https://randomuser.me/api/portraits/men/86.jpg', 294),
+        ('Glen Fowler', 'glen.fowler@gmail.com', '$2a$12$jrit51gEsoZ1zvRwlaJ6X./4qkcp4/dikt1SA2lCw4R.un88YBKgO', '+351 931 000 014', '245000014', 'https://randomuser.me/api/portraits/men/53.jpg', 276),
+        ('Maelyne Durand', 'maelyne.durand@gmail.com', '$2a$12$IYX6imSeGyfAU14sYpcE7erU/rAzwCFvF9ytp50UkK/3RBRa51X4W', '+351 931 000 015', '245000015', 'https://randomuser.me/api/portraits/women/34.jpg', 258),
+        ('Marin Masson', 'marin.masson@gmail.com', '$2a$12$vg2G9MWtQVyOEpQhALmQGuhPFy45Nl6sxErFkI6Y9VTm5ZxjgFr3e', '+351 931 000 016', '245000016', 'https://randomuser.me/api/portraits/men/90.jpg', 240),
+        ('Teresa Rivera', 'teresa.rivera@gmail.com', '$2a$12$qndzyhUsXEbGaSIYAf1R4uRsVVvfOvzIQ3wS0IYl9wxChIEbfVhva', '+351 931 000 017', '245000017', 'https://randomuser.me/api/portraits/women/31.jpg', 222),
+        ('Todd Matthews', 'todd.matthews@gmail.com', '$2a$12$kahPO44oiFeOZj2nDcYm.O3q7P8sOD73rRiVwiNsdJzjQ7A5qZDtu', '+351 931 000 018', '245000018', 'https://randomuser.me/api/portraits/men/0.jpg', 204),
+        ('Maiwenn Gerard', 'maiwenn.gerard@gmail.com', '$2a$12$nJef1lMY6kUkEdvBPleTdOB8IQ/HpMHwdsLZXbvSou7UDoM7/UGl.', '+351 931 000 019', '245000019', 'https://randomuser.me/api/portraits/women/92.jpg', 186),
+        ('Samantha Brewer', 'samantha.brewer@gmail.com', '$2a$12$nYcGubgZtLG8V0kYumCSIOeN6XbsRcWT2bhPDdZ1R6GytRsDgzVPO', '+351 931 000 020', '245000020', 'https://randomuser.me/api/portraits/women/49.jpg', 168),
+        ('Felix Herrero', 'felix.herrero@gmail.com', '$2a$12$HRN43Kp3DkDFOha6X.FqgeejE0/BJvNsoAlT06jSV3gT9zknViKvu', '+351 931 000 021', '245000021', 'https://randomuser.me/api/portraits/men/55.jpg', 150),
+        ('Leslie West', 'leslie.west@gmail.com', '$2a$12$YTDwCjY6jbC5VVpJ/SqN0.qPt/k7uGR3XCbS1g3.Y5MsBu/lZBrbq', '+351 931 000 022', '245000022', 'https://randomuser.me/api/portraits/men/18.jpg', 132),
+        ('Andrew Larson', 'andrew.larson@gmail.com', '$2a$12$NKrp3pcNdkjawp9rqtnDC.bpxMBQcbxH6y.QE0ctQVgripLcQ4cOS', '+351 931 000 023', '245000023', 'https://randomuser.me/api/portraits/men/80.jpg', 114),
+        ('Felix Sanchez', 'felix.sanchez@gmail.com', '$2a$12$KnV1MI88ybfbfOcWGs8zIO54GnC5NWLJVOtVt6nLUiHNHXz0kDfK2', '+351 931 000 024', '245000024', 'https://randomuser.me/api/portraits/men/38.jpg', 96),
+        ('Tracy Martin', 'tracy.martin@gmail.com', '$2a$12$clh7tPvCMb3/SC5Kmty4leQpwNXuBSFH//1ffKoMlasCZKywFR.1i', '+351 931 000 025', '245000025', 'https://randomuser.me/api/portraits/men/6.jpg', 78),
+        ('Elea Girard', 'elea.girard@gmail.com', '$2a$12$uTbIM4T7aVh4ubRR61VahenBr6cSqVQe/HiXJxDSiS1rWKYNsIxIK', '+351 931 000 026', '245000026', 'https://randomuser.me/api/portraits/women/18.jpg', 60),
+        ('Henry Evans', 'henry.evans@gmail.com', '$2a$12$qLt0EN9IIsUxyIKJrRYGyOFccH1nc1nQCag4Sb2LBeTC.ZDjK28UC', '+351 931 000 027', '245000027', 'https://randomuser.me/api/portraits/men/81.jpg', 42),
+        ('Heidi Carpenter', 'heidi.carpenter@gmail.com', '$2a$12$gvjxG9E2wtVhlb2pUrUAteoXAGlbUg0v8DtIssE/688hjxrYsKAB6', '+351 931 000 028', '245000028', 'https://randomuser.me/api/portraits/women/85.jpg', 24)
 )
 INSERT INTO users (
     name,
@@ -85,7 +86,7 @@ INSERT INTO users (
 SELECT
     cs.name,
     cs.email,
-    '$2a$12$DzNm7Q5fKbCTDBjL8lfO3Om47n8jTTYRg9X5.SOG5BPYUEsvWIFbO',
+    cs.password_hash,
     cs.phone,
     cs.photo_url,
     'ACTIVE',
@@ -99,12 +100,15 @@ SELECT
     false
 FROM client_seed cs
 ON CONFLICT (email) DO UPDATE
-SET photo_url = EXCLUDED.photo_url;
+SET
+    photo_url = EXCLUDED.photo_url,
+    password_hash = EXCLUDED.password_hash;
 
 -- Add 10 active drivers around Braga, Guimaraes, Barcelos and Viana.
 WITH driver_seed (
     name,
     email,
+    password_hash,
     phone,
     license_number,
     photo_url,
@@ -115,16 +119,16 @@ WITH driver_seed (
     online
 ) AS (
     VALUES
-        ('Maelys Bonnet', 'maelys.bonnet.driver@seed.obar.pt', '+351 932 100 001', 'PTSEED001', 'https://randomuser.me/api/portraits/women/33.jpg', 41.5454, -8.4265, 4.7, false, false),
-        ('Greg Weaver', 'greg.weaver.driver@seed.obar.pt', '+351 932 100 002', 'PTSEED002', 'https://randomuser.me/api/portraits/men/97.jpg', 41.5518, -8.4229, 4.8, false, false),
-        ('Elizabeth Rhodes', 'elizabeth.rhodes.driver@seed.obar.pt', '+351 932 100 003', 'PTSEED003', 'https://randomuser.me/api/portraits/women/59.jpg', 41.4444, -8.2962, 4.9, false, false),
-        ('Ernest Patterson', 'ernest.patterson.driver@seed.obar.pt', '+351 932 100 004', 'PTSEED004', 'https://randomuser.me/api/portraits/men/72.jpg', 41.5388, -8.6151, 4.6, false, false),
-        ('Chloe Grant', 'chloe.grant.driver@seed.obar.pt', '+351 932 100 005', 'PTSEED005', 'https://randomuser.me/api/portraits/women/77.jpg', 41.6932, -8.8329, 4.9, false, true),
-        ('Nolan Gauthier', 'nolan.gauthier.driver@seed.obar.pt', '+351 932 100 006', 'PTSEED006', 'https://randomuser.me/api/portraits/men/46.jpg', 41.7671, -8.5839, 4.8, false, false),
-        ('Gonzalo Alvarez', 'gonzalo.alvarez.driver@seed.obar.pt', '+351 932 100 007', 'PTSEED007', 'https://randomuser.me/api/portraits/men/35.jpg', 41.4050, -8.5222, 4.7, false, true),
-        ('Emy Olivier', 'emy.olivier.driver@seed.obar.pt', '+351 932 100 008', 'PTSEED008', 'https://randomuser.me/api/portraits/women/80.jpg', 41.3530, -8.7430, 4.9, false, true),
-        ('Elmer Hayes', 'elmer.hayes.driver@seed.obar.pt', '+351 932 100 009', 'PTSEED009', 'https://randomuser.me/api/portraits/men/9.jpg', 41.6918, -8.4280, 4.6, false, false),
-        ('Barbara Graves', 'barbara.graves.driver@seed.obar.pt', '+351 932 100 010', 'PTSEED010', 'https://randomuser.me/api/portraits/women/38.jpg', 41.5780, -8.2700, 4.8, false, false)
+        ('Maelys Bonnet', 'maelys.bonnet.driver@gmail.com', '$2a$12$FMfDwbYxHTBf0lpkSsGg4uLL4ydZ9eXlmNA1.9L3jZ/JeTRkCk3L2', '+351 932 100 001', 'PTSEED001', 'https://randomuser.me/api/portraits/women/33.jpg', 41.5454, -8.4265, 4.7, false, false),
+        ('Greg Weaver', 'greg.weaver.driver@gmail.com', '$2a$12$15jCDaCVnrUm2VwH3gc1Yu36m3xSWNy/HrGMrVBYrZCkp8tWbuwY2', '+351 932 100 002', 'PTSEED002', 'https://randomuser.me/api/portraits/men/97.jpg', 41.5518, -8.4229, 4.8, false, false),
+        ('Elizabeth Rhodes', 'elizabeth.rhodes.driver@gmail.com', '$2a$12$6EaBqXgJkg4tv23a499luOkrdGzWKnLjZKhrWLDEizZf6F5Q/B75O', '+351 932 100 003', 'PTSEED003', 'https://randomuser.me/api/portraits/women/59.jpg', 41.4444, -8.2962, 4.9, false, false),
+        ('Ernest Patterson', 'ernest.patterson.driver@gmail.com', '$2a$12$fsInqP0DLZEA.L/wSgscPOjNQ2EWwVrL909O5wPYrzuW.HYJ.s0W2', '+351 932 100 004', 'PTSEED004', 'https://randomuser.me/api/portraits/men/72.jpg', 41.5388, -8.6151, 4.6, false, false),
+        ('Chloe Grant', 'chloe.grant.driver@gmail.com', '$2a$12$BaxMGgIYPZRoL7sI.aMQwO5e5GSJKnEnhC7vJPsS6TuzZ3.aTOcEG', '+351 932 100 005', 'PTSEED005', 'https://randomuser.me/api/portraits/women/77.jpg', 41.6932, -8.8329, 4.9, false, true),
+        ('Nolan Gauthier', 'nolan.gauthier.driver@gmail.com', '$2a$12$At4dQ/f8/5CR3.113BuzKO46icGf1/AhcWyfG7vUq.Q654kPcRtP.', '+351 932 100 006', 'PTSEED006', 'https://randomuser.me/api/portraits/men/46.jpg', 41.7671, -8.5839, 4.8, false, false),
+        ('Gonzalo Alvarez', 'gonzalo.alvarez.driver@gmail.com', '$2a$12$d9hVWLWIvqYTQ/9QyEnWZOrqeL0b6.dGy/E4zDYtJmwWPzRE8NZY6', '+351 932 100 007', 'PTSEED007', 'https://randomuser.me/api/portraits/men/35.jpg', 41.4050, -8.5222, 4.7, false, true),
+        ('Emy Olivier', 'emy.olivier.driver@gmail.com', '$2a$12$wvSg4II8P9vGVCiUWiY4O.tDn3ueaTBTQN2ywRVHUMb3t5b.RrKB.', '+351 932 100 008', 'PTSEED008', 'https://randomuser.me/api/portraits/women/80.jpg', 41.3530, -8.7430, 4.9, false, true),
+        ('Elmer Hayes', 'elmer.hayes.driver@gmail.com', '$2a$12$9.CdOOpgGABAqvJ.kSaO6u69Zvzl6BoxwMNxNcbpDyK7bpTWcSICC', '+351 932 100 009', 'PTSEED009', 'https://randomuser.me/api/portraits/men/9.jpg', 41.6918, -8.4280, 4.6, false, false),
+        ('Barbara Graves', 'barbara.graves.driver@gmail.com', '$2a$12$1KBeOM1Rj4VwibQoqfd8MeeLYxC/fo8KRzrnL1pDqx0Gq2Ts3mX8y', '+351 932 100 010', 'PTSEED010', 'https://randomuser.me/api/portraits/women/38.jpg', 41.5780, -8.2700, 4.8, false, false)
 )
 INSERT INTO users (
     name,
@@ -147,7 +151,7 @@ INSERT INTO users (
 SELECT
     ds.name,
     ds.email,
-    '$2a$12$DzNm7Q5fKbCTDBjL8lfO3Om47n8jTTYRg9X5.SOG5BPYUEsvWIFbO',
+    ds.password_hash,
     ds.phone,
     ds.photo_url,
     'ACTIVE',
@@ -163,7 +167,9 @@ SELECT
     now()
 FROM driver_seed ds
 ON CONFLICT (email) DO UPDATE
-SET photo_url = EXCLUDED.photo_url;
+SET
+    photo_url = EXCLUDED.photo_url,
+    password_hash = EXCLUDED.password_hash;
 
 -- Match the four existing vehicles to the first four permanent car assets.
 UPDATE vehicles
@@ -205,17 +211,17 @@ WITH vehicle_seed (
     photo_url
 ) AS (
     VALUES
-        ('maelys.bonnet.driver@seed.obar.pt', 'Mercedes-Benz', 'A 160 CDI Style', 'White', 'SE-01-AA', 2021, 'STANDARD', 4.50, 0.82, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mercedes-a160.jpg'),
-        ('greg.weaver.driver@seed.obar.pt', 'Mercedes-Benz', 'CLA 250', 'Black', 'SE-02-AB', 2022, 'PREMIUM', 7.50, 1.55, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mercedes-cla250.jpg'),
-        ('elizabeth.rhodes.driver@seed.obar.pt', 'MINI', 'One Sport Edition', 'Blue', 'SE-03-AC', 2020, 'STANDARD', 4.20, 0.80, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mini-one-sport.jpg'),
-        ('ernest.patterson.driver@seed.obar.pt', 'MINI', 'Countryman Cooper SE', 'Green', 'SE-04-AD', 2023, 'XL', 5.80, 1.12, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mini-countryman-se.jpg'),
-        ('chloe.grant.driver@seed.obar.pt', 'Nissan', 'Qashqai N-Connecta', 'Grey', 'SE-05-AE', 2022, 'XL', 5.50, 1.08, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/nissan-qashqai.jpg'),
-        ('nolan.gauthier.driver@seed.obar.pt', 'Peugeot', '208 PureTech', 'Yellow', 'SE-06-AF', 2021, 'STANDARD', 4.10, 0.79, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-208.jpg'),
-        ('gonzalo.alvarez.driver@seed.obar.pt', 'Peugeot', '3008 Hybrid Allure', 'White', 'SE-07-AG', 2023, 'XL', 5.90, 1.15, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-3008-hybrid.jpg'),
-        ('emy.olivier.driver@seed.obar.pt', 'Peugeot', '308 BlueHDi', 'Red', 'SE-08-AH', 2022, 'STANDARD', 4.60, 0.86, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-308.jpg'),
-        ('elmer.hayes.driver@seed.obar.pt', 'Peugeot', '308 SW BlueHDi', 'Blue', 'SE-09-AJ', 2021, 'XL', 5.20, 1.02, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-308-sw.jpg'),
-        ('barbara.graves.driver@seed.obar.pt', 'Peugeot', '508 SW', 'Black', 'SE-10-AK', 2023, 'PREMIUM', 7.20, 1.48, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-508-sw.jpg'),
-        ('barbara.graves.driver@seed.obar.pt', 'Tesla', 'Model 3', 'White', 'SE-11-AL', 2024, 'PREMIUM', 7.80, 1.60, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/tesla-model-3.jpg')
+        ('maelys.bonnet.driver@gmail.com', 'Mercedes-Benz', 'A 160 CDI Style', 'White', 'SE-01-AA', 2021, 'STANDARD', 4.50, 0.82, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mercedes-a160.jpg'),
+        ('greg.weaver.driver@gmail.com', 'Mercedes-Benz', 'CLA 250', 'Black', 'SE-02-AB', 2022, 'PREMIUM', 7.50, 1.55, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mercedes-cla250.jpg'),
+        ('elizabeth.rhodes.driver@gmail.com', 'MINI', 'One Sport Edition', 'Blue', 'SE-03-AC', 2020, 'STANDARD', 4.20, 0.80, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mini-one-sport.jpg'),
+        ('ernest.patterson.driver@gmail.com', 'MINI', 'Countryman Cooper SE', 'Green', 'SE-04-AD', 2023, 'XL', 5.80, 1.12, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/mini-countryman-se.jpg'),
+        ('chloe.grant.driver@gmail.com', 'Nissan', 'Qashqai N-Connecta', 'Grey', 'SE-05-AE', 2022, 'XL', 5.50, 1.08, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/nissan-qashqai.jpg'),
+        ('nolan.gauthier.driver@gmail.com', 'Peugeot', '208 PureTech', 'Yellow', 'SE-06-AF', 2021, 'STANDARD', 4.10, 0.79, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-208.jpg'),
+        ('gonzalo.alvarez.driver@gmail.com', 'Peugeot', '3008 Hybrid Allure', 'White', 'SE-07-AG', 2023, 'XL', 5.90, 1.15, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-3008-hybrid.jpg'),
+        ('emy.olivier.driver@gmail.com', 'Peugeot', '308 BlueHDi', 'Red', 'SE-08-AH', 2022, 'STANDARD', 4.60, 0.86, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-308.jpg'),
+        ('elmer.hayes.driver@gmail.com', 'Peugeot', '308 SW BlueHDi', 'Blue', 'SE-09-AJ', 2021, 'XL', 5.20, 1.02, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-308-sw.jpg'),
+        ('barbara.graves.driver@gmail.com', 'Peugeot', '508 SW', 'Black', 'SE-10-AK', 2023, 'PREMIUM', 7.20, 1.48, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/peugeot-508-sw.jpg'),
+        ('barbara.graves.driver@gmail.com', 'Tesla', 'Model 3', 'White', 'SE-11-AL', 2024, 'PREMIUM', 7.80, 1.60, 'https://oqgdapuibldohxfnbkfo.supabase.co/storage/v1/object/public/vehicle-photos/seed/cars/tesla-model-3.jpg')
 )
 INSERT INTO vehicles (
     driver_id,
@@ -506,9 +512,9 @@ WHERE trip.driver_id = carlos.id
 -- assigned to three distinct drivers.
 WITH active_assignment (trip_note, driver_email) AS (
     VALUES
-        ('seed_bulk_trip_0893', 'emy.olivier.driver@seed.obar.pt'),
-        ('seed_bulk_trip_0894', 'gonzalo.alvarez.driver@seed.obar.pt'),
-        ('seed_bulk_trip_0895', 'chloe.grant.driver@seed.obar.pt')
+        ('seed_bulk_trip_0893', 'emy.olivier.driver@gmail.com'),
+        ('seed_bulk_trip_0894', 'gonzalo.alvarez.driver@gmail.com'),
+        ('seed_bulk_trip_0895', 'chloe.grant.driver@gmail.com')
 )
 UPDATE trips trip
 SET
@@ -710,3 +716,26 @@ FROM (
     GROUP BY d.id
 ) stats
 WHERE driver.id = stats.driver_id;
+
+-- Keep at most one active vehicle per driver.
+WITH ranked_active_vehicles AS (
+    SELECT
+        id,
+        ROW_NUMBER() OVER (
+            PARTITION BY driver_id
+            ORDER BY id
+        ) AS active_rank
+    FROM vehicles
+    WHERE active = true
+)
+UPDATE vehicles
+SET active = false
+WHERE id IN (
+    SELECT id
+    FROM ranked_active_vehicles
+    WHERE active_rank > 1
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_vehicles_one_active_per_driver
+    ON vehicles (driver_id)
+    WHERE active = true;

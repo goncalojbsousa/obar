@@ -124,9 +124,9 @@ public final class AdminFormatUtils {
 
     public static String formatCurrency(BigDecimal value) {
         if (value == null) {
-            return "EUR 0.00";
+            return "0.00 \u20AC";
         }
-        return "EUR " + value;
+        return value.setScale(2, java.math.RoundingMode.HALF_UP) + " \u20AC";
     }
 
     public static String formatTripPrice(AdminTripDTO trip) {
@@ -134,14 +134,14 @@ public final class AdminFormatUtils {
         if (amount == null) {
             return "-";
         }
-        return "EUR " + amount;
+        return amount.setScale(2, java.math.RoundingMode.HALF_UP) + " \u20AC";
     }
 
     public static String formatPaymentAmount(AdminPaymentByTripDTO payment) {
         if (payment.amount() == null) {
             return "-";
         }
-        return payment.currencyCode() + " " + payment.amount();
+        return payment.amount().setScale(2, java.math.RoundingMode.HALF_UP) + " \u20AC";
     }
 
     public static String formatTaxRateDisplay(AdminTaxRateDTO taxRate) {

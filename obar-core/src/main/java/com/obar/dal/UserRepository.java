@@ -23,6 +23,24 @@ public class UserRepository extends BaseRepository<User, Integer> {
         }
     }
 
+    public Optional<User> findByTaxNumber(String taxNumber) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "FROM User u WHERE u.taxNumber = :taxNumber", User.class)
+                    .setParameter("taxNumber", taxNumber)
+                    .uniqueResultOptional();
+        }
+    }
+
+    public Optional<User> findByLicenseNumber(String licenseNumber) {
+        try (Session session = getSession()) {
+            return session.createQuery(
+                    "FROM User u WHERE u.licenseNumber = :licenseNumber", User.class)
+                    .setParameter("licenseNumber", licenseNumber)
+                    .uniqueResultOptional();
+        }
+    }
+
     public List<User> findByType(UserType type) {
         try (Session session = getSession()) {
             return session.createQuery(

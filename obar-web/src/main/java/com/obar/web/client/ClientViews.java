@@ -2,7 +2,9 @@ package com.obar.web.client;
 
 import com.obar.model.Trip;
 import com.obar.model.User;
+import com.obar.model.enums.AccountStatus;
 import com.obar.model.enums.TripStatus;
+import com.obar.model.enums.UserType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,7 +37,9 @@ public final class ClientViews {
             int scheduledTrips,
             String lastTripDate,
             String lastTripRoute,
-            String lastTripStatus) {
+            String lastTripStatus,
+            boolean canRequestDriverUpgrade,
+            boolean driverUpgradePending) {
 
         private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("MMM yyyy",
                 Locale.forLanguageTag("pt-PT"));
@@ -66,7 +70,9 @@ public final class ClientViews {
                     (int) safeTrips.stream().filter(ClientProfileView::isScheduledTrip).count(),
                     lastTrip == null ? "-" : formatDate(tripReferenceTime(lastTrip)),
                     lastTrip == null ? "Ainda sem viagens" : routeLabel(lastTrip),
-                    lastTrip == null ? "-" : tripStatusLabel(lastTrip.getStatus()));
+                    lastTrip == null ? "-" : tripStatusLabel(lastTrip.getStatus()),
+                    user.getType() == UserType.CLIENT,
+                    user.getType() == UserType.DRIVER && user.getStatus() == AccountStatus.PENDING);
         }
 
         private static boolean isScheduledTrip(Trip trip) {

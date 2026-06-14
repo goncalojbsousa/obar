@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.obar.desktop.admin.sections.trips.TripsController">
@@ -67,7 +68,11 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Button text="x" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
                 </HBox>
-                <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
+                <StackPane minWidth="54.0" minHeight="54.0" maxWidth="54.0" maxHeight="54.0">
+                    <Label fx:id="detailInitialsLabel" text="--" styleClass="detail-avatar" />
+                    <ImageView fx:id="detailPhotoImage" fitWidth="54.0" fitHeight="54.0"
+                        preserveRatio="false" visible="false" />
+                </StackPane>
                 <Label fx:id="detailNameLabel" text="Sem selecao" styleClass="detail-name" />
                 <Label fx:id="detailEmailLabel" text="-" styleClass="admin-subtitle" />
                 <HBox spacing="6.0">

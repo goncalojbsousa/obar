@@ -141,12 +141,12 @@ final class FinancialDashboardController {
 
     private void renderEmpty(AdminFinancialPeriod period) {
         setText(revenuePeriodLabel, "Receita Total");
-        setText(revenueTotalLabel, "EUR 0.00");
+        setText(revenueTotalLabel, "0.00 \u20AC");
         setText(revenueTrendLabel, "Sem dados no periodo selecionado.");
-        setText(netRevenueValueLabel, "EUR 0.00");
-        setText(platformCommissionValueLabel, "EUR 0.00");
+        setText(netRevenueValueLabel, "0.00 \u20AC");
+        setText(platformCommissionValueLabel, "0.00 \u20AC");
         setText(billedTripsValueLabel, "0");
-        setText(avgTicketValueLabel, "EUR 0.00");
+        setText(avgTicketValueLabel, "0.00 \u20AC");
         setText(processedPaymentsValueLabel, "0");
         setText(refundedPaymentsValueLabel, "0");
         setText(failedRateValueLabel, "0.0%");
@@ -355,12 +355,12 @@ final class FinancialDashboardController {
     private String formatCompactCurrency(BigDecimal value) {
         BigDecimal safe = AdminFormatUtils.defaultAmount(value);
         if (safe.compareTo(BigDecimal.ZERO) == 0) {
-            return "EUR 0";
+            return "0 \u20AC";
         }
         if (safe.compareTo(new BigDecimal("1000")) >= 0) {
-            return "EUR " + safe.divide(new BigDecimal("1000"), 1, RoundingMode.HALF_UP) + "k";
+            return safe.divide(new BigDecimal("1000"), 1, RoundingMode.HALF_UP) + "k \u20AC";
         }
-        return "EUR " + safe.setScale(0, RoundingMode.HALF_UP);
+        return safe.setScale(0, RoundingMode.HALF_UP) + " \u20AC";
     }
 
     private void setText(Label label, String text) {

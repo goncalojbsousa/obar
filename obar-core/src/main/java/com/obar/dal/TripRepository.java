@@ -6,6 +6,7 @@ import com.obar.model.enums.TripType;
 import org.hibernate.Session;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,19 +34,19 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
     public Optional<Trip> findLatestCompletedWithoutClientReview(Integer clientId) {
         try (Session session = getSession()) {
             return session.createQuery(
-                            "SELECT t FROM Trip t "
-                                    + "JOIN FETCH t.client "
-                                    + "JOIN FETCH t.driver "
-                                    + "JOIN FETCH t.route "
-                                    + "WHERE t.client.id = :clientId "
-                                    + "AND t.status = :status "
-                                    + "AND NOT EXISTS ("
-                                    + "SELECT r.id FROM Review r "
-                                    + "WHERE r.trip.id = t.id "
-                                    + "AND r.reviewerType = :reviewerType"
-                                    + ") "
-                                    + "ORDER BY t.endTime DESC",
-                            Trip.class)
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.client "
+                            + "JOIN FETCH t.driver "
+                            + "JOIN FETCH t.route "
+                            + "WHERE t.client.id = :clientId "
+                            + "AND t.status = :status "
+                            + "AND NOT EXISTS ("
+                            + "SELECT r.id FROM Review r "
+                            + "WHERE r.trip.id = t.id "
+                            + "AND r.reviewerType = :reviewerType"
+                            + ") "
+                            + "ORDER BY t.endTime DESC",
+                    Trip.class)
                     .setParameter("clientId", clientId)
                     .setParameter("status", TripStatus.COMPLETED)
                     .setParameter("reviewerType", "CLIENT")
@@ -74,9 +75,103 @@ public class TripRepository extends BaseRepository<Trip, Integer> {
     public List<Trip> findByDriverId(Integer driverId) {
         try (Session session = getSession()) {
             return session.createQuery(
-                    "FROM Trip t WHERE t.driver.id = :driverId", Trip.class)
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.route "
+                            + "JOIN FETCH t.client "
+                            + "LEFT JOIN FETCH t.driver "
+                            + "LEFT JOIN FETCH t.vehicle "
+                            + "WHERE t.driver.id = :driverId "
+                            + "ORDER BY t.requestTime DESC",
+                    Trip.class)
                     .setParameter("driverId", driverId)
                     .list();
+        }
+    }
+
+    public List<Trip> findDriverHistory(Integer driverId, TripStatus status, LocalDateTime from,
+            LocalDateTime to, String clientQuery, int offset, int limit) {
+        try (Session session = getSession()) {
+            String filters = driverHistoryFilters(status, from, to, clientQuery);
+            var query = session.createQuery(
+                    "SELECT t FROM Trip t "
+                            + "JOIN FETCH t.route "
+                            + "JOIN FETCH t.client c "
+                            + "LEFT JOIN FETCH t.vehicle "
+                            + "WHERE t.driver.id = :driverId "
+                            + filters
+                            + "ORDER BY COALESCE(t.endTime, t.startTime, t.scheduledTime, t.requestTime) DESC",
+                    Trip.class)
+                    .setParameter("driverId", driverId)
+                    .setFirstResult(offset)
+                    .setMaxResults(limit);
+            applyDriverHistoryParameters(query, status, from, to, clientQuery);
+            return query.list();
+        }
+    }
+
+    public long countDriverHistory(Integer driverId, TripStatus status, LocalDateTime from,
+            LocalDateTime to, String clientQuery) {
+        try (Session session = getSession()) {
+            String filters = driverHistoryFilters(status, from, to, clientQuery);
+            var query = session.createQuery(
+                    "SELECT COUNT(t.id) FROM Trip t "
+                            + "JOIN t.client c "
+                            + "WHERE t.driver.id = :driverId "
+                            + filters,
+                    Long.class)
+                    .setParameter("driverId", driverId);
+            applyDriverHistoryParameters(query, status, from, to, clientQuery);
+            return query.uniqueResult();
+        }
+    }
+
+    public BigDecimal sumCompletedDriverHistory(Integer driverId, LocalDateTime from,
+            LocalDateTime to, String clientQuery) {
+        try (Session session = getSession()) {
+            String filters = driverHistoryFilters(TripStatus.COMPLETED, from, to, clientQuery);
+            var query = session.createQuery(
+                    "SELECT COALESCE(SUM(COALESCE(t.finalPrice, t.estimatedPrice)), 0) FROM Trip t "
+                            + "JOIN t.client c "
+                            + "WHERE t.driver.id = :driverId "
+                            + filters,
+                    BigDecimal.class)
+                    .setParameter("driverId", driverId);
+            applyDriverHistoryParameters(query, TripStatus.COMPLETED, from, to, clientQuery);
+            return query.uniqueResult();
+        }
+    }
+
+    private String driverHistoryFilters(TripStatus status, LocalDateTime from,
+            LocalDateTime to, String clientQuery) {
+        StringBuilder filters = new StringBuilder();
+        if (status != null) {
+            filters.append("AND t.status = :historyStatus ");
+        }
+        if (from != null) {
+            filters.append("AND COALESCE(t.endTime, t.startTime, t.scheduledTime, t.requestTime) >= :historyFrom ");
+        }
+        if (to != null) {
+            filters.append("AND COALESCE(t.endTime, t.startTime, t.scheduledTime, t.requestTime) < :historyTo ");
+        }
+        if (clientQuery != null && !clientQuery.isBlank()) {
+            filters.append("AND LOWER(c.name) LIKE :clientQuery ");
+        }
+        return filters.toString();
+    }
+
+    private void applyDriverHistoryParameters(org.hibernate.query.Query<?> query, TripStatus status,
+            LocalDateTime from, LocalDateTime to, String clientQuery) {
+        if (status != null) {
+            query.setParameter("historyStatus", status);
+        }
+        if (from != null) {
+            query.setParameter("historyFrom", from);
+        }
+        if (to != null) {
+            query.setParameter("historyTo", to);
+        }
+        if (clientQuery != null && !clientQuery.isBlank()) {
+            query.setParameter("clientQuery", "%" + clientQuery.trim().toLowerCase() + "%");
         }
     }
 

@@ -760,9 +760,9 @@ async function fetchJson(url, options = {}) {
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("pt-PT", {
-        style: "currency",
-        currency: "EUR"
-    }).format(value);
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value) + " €";
 }
 
 function formatTaxRate(value) {

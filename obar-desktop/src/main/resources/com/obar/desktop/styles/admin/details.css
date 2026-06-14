@@ -106,6 +106,20 @@
 
 }
 
+.detail-vehicle-photo {
+    -fx-background-color: #10131a;
+    -fx-border-color: #2a3040;
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+    -fx-alignment: center;
+}
+
+.detail-vehicle-photo-fallback {
+    -fx-text-fill: #7f89a2;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
 
 
 .detail-name {

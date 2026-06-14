@@ -21,11 +21,16 @@ public class VehicleService {
         if (driver == null || driver.getType() != UserType.DRIVER) {
             throw new IllegalArgumentException("Veículo tem de ser associado a um condutor.");
         }
+        vehicle.setRemoved(false);
         return vehicleRepository.save(vehicle);
     }
 
     public List<Vehicle> findByDriver(Integer driverId) {
         return vehicleRepository.findByDriverId(driverId);
+    }
+
+    public List<Vehicle> findAllByDriver(Integer driverId) {
+        return vehicleRepository.findAllByDriverId(driverId);
     }
 
     public List<String> findActiveCategories() {
@@ -34,6 +39,10 @@ public class VehicleService {
 
     public List<String> supportedCategories() {
         return SUPPORTED_CATEGORIES;
+    }
+
+    public Optional<Vehicle> findByLicensePlate(String licensePlate) {
+        return vehicleRepository.findByLicensePlate(licensePlate);
     }
 
     public static String normalizeCategory(String category) {
@@ -59,6 +68,14 @@ public class VehicleService {
     public void deactivate(Integer vehicleId) {
         vehicleRepository.findById(vehicleId).ifPresent(v -> {
             v.setActive(false);
+            vehicleRepository.update(v);
+        });
+    }
+
+    public void remove(Integer vehicleId) {
+        vehicleRepository.findById(vehicleId).ifPresent(v -> {
+            v.setActive(false);
+            v.setRemoved(true);
             vehicleRepository.update(v);
         });
     }

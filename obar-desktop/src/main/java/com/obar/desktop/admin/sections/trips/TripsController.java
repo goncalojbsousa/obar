@@ -7,6 +7,7 @@ import com.obar.bll.admin.AdminTripCommand;
 import com.obar.bll.admin.AdminTripDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.model.enums.TripStatus;
@@ -22,6 +23,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
@@ -84,6 +86,8 @@ public class TripsController implements AdminSectionController {
     private VBox detailPanel;
     @FXML
     private Label detailInitialsLabel;
+    @FXML
+    private ImageView detailPhotoImage;
     @FXML
     private Label detailTitleLabel;
     @FXML
@@ -313,6 +317,11 @@ public class TripsController implements AdminSectionController {
             return;
         }
         allTrips.setAll(adminService.listTrips());
+        allTrips.forEach(trip -> {
+            AdminImageUtils.preload(trip.clientPhotoUrl());
+            AdminImageUtils.preload(trip.driverPhotoUrl());
+            AdminImageUtils.preload(trip.vehiclePhotoUrl());
+        });
         applyTripFilter();
         updateCountLabels();
     }
@@ -491,7 +500,8 @@ public class TripsController implements AdminSectionController {
 
         String route = AdminFormatUtils.fallback(trip.originAddress())
                 + " -> " + AdminFormatUtils.fallback(trip.destinationAddress());
-        setLabelText(detailInitialsLabel, trip.id() == null ? "--" : "#" + trip.id());
+        setLabelText(detailInitialsLabel, AdminFormatUtils.extractInitials(trip.clientName()));
+        AdminImageUtils.showAvatar(detailPhotoImage, detailInitialsLabel, trip.clientPhotoUrl(), 54);
         setLabelText(detailTitleLabel, "Detalhe da viagem");
         setLabelText(detailNameLabel, route);
         setLabelText(detailEmailLabel, "Cliente: " + AdminFormatUtils.fallback(trip.clientName()));
@@ -509,9 +519,9 @@ public class TripsController implements AdminSectionController {
         setLabelText(detailCardFourValueLabel, trip.distanceKm() == null ? "-" : trip.distanceKm() + " km");
         setLabelText(detailReferenceTitleLabel, "Preco estimado");
         setLabelText(detailReferenceValueLabel,
-                trip.estimatedPrice() == null ? "-" : "EUR " + trip.estimatedPrice());
+                trip.estimatedPrice() == null ? "-" : trip.estimatedPrice() + " \u20AC");
         setLabelText(detailExtraOneTitleLabel, "Preco final");
-        setLabelText(detailExtraOneValueLabel, trip.finalPrice() == null ? "-" : "EUR " + trip.finalPrice());
+        setLabelText(detailExtraOneValueLabel, trip.finalPrice() == null ? "-" : trip.finalPrice() + " \u20AC");
         setLabelText(detailExtraTwoTitleLabel, "Inicio");
         setLabelText(detailExtraTwoValueLabel, trip.startTime() == null ? "-" : trip.startTime().toString());
         setLabelText(detailExtraThreeTitleLabel, "Fim");
@@ -603,6 +613,6 @@ public class TripsController implements AdminSectionController {
     }
 
     private String formatMoney(java.math.BigDecimal value) {
-        return value == null ? "-" : "EUR " + value;
+        return value == null ? "-" : value + " \u20AC";
     }
 }

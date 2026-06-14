@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Perfil | Obar</title>
     <link rel="stylesheet" href="/css/base.css?v=font-20260613">
-    <link rel="stylesheet" href="/css/app.css?v=profile-reviews-20260613">
+    <link rel="stylesheet" href="/css/app.css?v=driver-upgrade-20260614">
 </head>
 
 <body class="client-page profile-page">
@@ -59,6 +59,16 @@
             </dl>
 
             <a class="profile-primary-link" th:href="@{/app}">Nova viagem</a>
+            <button class="profile-secondary-button" type="button" data-driver-upgrade-open
+                th:if="${clientProfile.canRequestDriverUpgrade()}">
+                Tornar-me motorista
+            </button>
+            <p class="profile-upload-message is-success" th:if="${driverUpgradeSuccess}"
+                th:text="${driverUpgradeSuccess}"></p>
+            <p class="profile-upload-message is-error" th:if="${driverUpgradeError}" th:text="${driverUpgradeError}"></p>
+            <p class="profile-upload-message is-success" th:if="${clientProfile.driverUpgradePending()}">
+                Pedido de motorista pendente de aprova&ccedil;&atilde;o.
+            </p>
         </aside>
 
         <section class="profile-main">
@@ -144,8 +154,47 @@
             </section>
         </section>
     </main>
+    <div class="app-modal" data-driver-upgrade-modal
+        th:if="${clientProfile.canRequestDriverUpgrade()}"
+        th:attr="data-open=${driverUpgradeError != null}" hidden>
+        <div class="app-modal-backdrop" data-driver-upgrade-close></div>
+        <section class="app-modal-panel driver-upgrade-modal-panel" role="dialog" aria-modal="true"
+            aria-labelledby="driver-upgrade-title">
+            <button class="modal-close-button" type="button" aria-label="Fechar" data-driver-upgrade-close>&times;</button>
+            <span class="modal-kicker">Motorista</span>
+            <h2 id="driver-upgrade-title">Tornar-me motorista</h2>
+            <p>Preenche os dados em falta para enviares o pedido de aprova&ccedil;&atilde;o ao administrador.</p>
+            <p class="modal-error" th:if="${driverUpgradeError}" th:text="${driverUpgradeError}"></p>
+
+            <form class="modal-form driver-upgrade-form" th:action="@{/app/profile/become-driver}" method="post">
+                <div class="driver-upgrade-form-grid">
+                    <label class="modal-field">
+                        <span>Telefone</span>
+                        <input type="tel" name="phone" th:value="${clientProfile.phone() == '-' ? '' : clientProfile.phone()}"
+                            placeholder="912 345 678" autocomplete="tel">
+                    </label>
+
+                    <label class="modal-field">
+                        <span>N&uacute;mero da carta</span>
+                        <input type="text" name="licenseNumber" placeholder="PT123456789" autocomplete="off" required>
+                    </label>
+                </div>
+
+                <div class="driver-upgrade-note">
+                    <strong>Aprova&ccedil;&atilde;o necess&aacute;ria</strong>
+                    <span>Depois de enviares o pedido, a sess&atilde;o termina e s&oacute; poder&aacute;s entrar novamente ap&oacute;s aprova&ccedil;&atilde;o.</span>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="ghost-button" type="button" data-driver-upgrade-close>Cancelar</button>
+                    <button class="primary-button" type="submit">Enviar pedido</button>
+                </div>
+            </form>
+        </section>
+    </div>
     <script src="/js/navbar-online.js?v=driver-online-20260613"></script>
     <script src="/js/photo-upload.js?v=photo-trigger-20260613"></script>
+    <script src="/js/client-profile.js?v=driver-upgrade-20260614"></script>
 </body>
 
 </html>

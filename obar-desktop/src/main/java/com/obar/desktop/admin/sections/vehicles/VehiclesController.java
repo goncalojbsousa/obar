@@ -7,6 +7,7 @@ import com.obar.bll.admin.AdminVehicleCommand;
 import com.obar.bll.admin.AdminVehicleDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.desktop.admin.shared.AdminPdfExportService;
 import javafx.beans.property.SimpleStringProperty;
@@ -22,6 +23,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -80,6 +82,10 @@ public class VehiclesController implements AdminSectionController {
     private VBox detailPanel;
     @FXML
     private Label detailTitleLabel;
+    @FXML
+    private ImageView detailVehiclePhotoImage;
+    @FXML
+    private Label detailVehiclePhotoFallback;
     @FXML
     private Label detailVehicleLabel;
     @FXML
@@ -359,6 +365,7 @@ public class VehiclesController implements AdminSectionController {
             return;
         }
         allVehicles.setAll(adminService.listVehicles());
+        allVehicles.forEach(vehicle -> AdminImageUtils.preload(vehicle.photoUrl()));
         applyVehicleFilter();
         updateCountLabels();
     }
@@ -413,6 +420,8 @@ public class VehiclesController implements AdminSectionController {
         }
 
         detailTitleLabel.setText("Detalhe do veiculo");
+        AdminImageUtils.showVehicle(
+                detailVehiclePhotoImage, detailVehiclePhotoFallback, vehicle.photoUrl(), 288, 150);
         detailVehicleLabel.setText(vehicle.vehicleName());
         detailLicensePlateLabel.setText(AdminFormatUtils.fallback(vehicle.licensePlate()));
         detailStatusLabel.setText(isActive(vehicle) ? "Ativo" : "Inativo");
@@ -608,7 +617,7 @@ public class VehiclesController implements AdminSectionController {
     }
 
     private static String formatMoney(BigDecimal value) {
-        return value == null ? "-" : "EUR " + value;
+        return value == null ? "-" : value + " \u20AC";
     }
 
     private static String blankIfMissing(String value) {

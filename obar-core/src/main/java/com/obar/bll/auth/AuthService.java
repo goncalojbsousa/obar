@@ -70,6 +70,7 @@ public class AuthService {
         if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             throw new AuthenticationException("Email already registered.");
         }
+        validateRegistrationReference(type, safeRef);
 
         User user = new User();
         user.setName(safeName);
@@ -86,6 +87,27 @@ public class AuthService {
 
         User saved = userRepository.save(user);
         return AuthenticatedUserDto.from(saved);
+    }
+
+    private void validateRegistrationReference(UserType type, String reference) {
+        if (type == UserType.DRIVER) {
+            if (reference == null || reference.isBlank()) {
+                throw new AuthenticationException("Numero da carta e obrigatorio.");
+            }
+            if (userRepository.findByLicenseNumber(reference).isPresent()) {
+                throw new AuthenticationException("Numero da carta ja registado.");
+            }
+            return;
+        }
+
+        if (type == UserType.CLIENT) {
+            if (reference == null || reference.isBlank()) {
+                throw new AuthenticationException("NIF e obrigatorio.");
+            }
+            if (userRepository.findByTaxNumber(reference).isPresent()) {
+                throw new AuthenticationException("NIF ja registado.");
+            }
+        }
     }
 
     /**

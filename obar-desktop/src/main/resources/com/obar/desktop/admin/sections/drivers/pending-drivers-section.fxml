@@ -9,7 +9,9 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 
 <HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.obar.desktop.admin.sections.drivers.PendingDriversController"
@@ -90,7 +92,11 @@
             <Button text="X" onAction="#handleCloseDetail" styleClass="detail-close" />
         </HBox>
 
-        <!-- Avatar gerado pelas iniciais (texto fixo — controller actualiza nome abaixo) -->
+        <StackPane minWidth="54.0" minHeight="54.0" maxWidth="54.0" maxHeight="54.0">
+            <Label fx:id="detailPhotoFallback" text="--" styleClass="detail-avatar" />
+            <ImageView fx:id="detailPhotoImage" fitWidth="54.0" fitHeight="54.0"
+                preserveRatio="false" visible="false" />
+        </StackPane>
         <Label fx:id="detailNameLabel" text="—" styleClass="detail-name" wrapText="true" />
         <Label fx:id="detailEmailLabel" text="—" styleClass="admin-subtitle" />
 

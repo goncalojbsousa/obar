@@ -10,12 +10,14 @@ import com.obar.desktop.admin.sections.financial.FinancialController;
 import com.obar.desktop.admin.sections.trips.TripsController;
 import com.obar.desktop.admin.sections.vehicles.VehiclesController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import com.obar.desktop.navigation.NavigationManager;
 import com.obar.desktop.session.SessionManager;
 import com.obar.model.enums.UserType;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
 /**
@@ -45,6 +47,8 @@ public class AdminController {
     private Label currentSectionLabel;
     @FXML
     private Label sidebarUserInitialsLabel;
+    @FXML
+    private ImageView sidebarUserPhotoImage;
     @FXML
     private Label sidebarUserNameLabel;
     @FXML
@@ -220,6 +224,7 @@ public class AdminController {
         if (sidebarUserInitialsLabel != null) {
             sidebarUserInitialsLabel.setText(AdminFormatUtils.extractInitials(currentUser.name()));
         }
+        AdminImageUtils.showAvatar(sidebarUserPhotoImage, sidebarUserInitialsLabel, currentUser.photoUrl(), 30);
         if (sidebarUserNameLabel != null) {
             sidebarUserNameLabel.setText(AdminFormatUtils.fallback(currentUser.name()));
         }

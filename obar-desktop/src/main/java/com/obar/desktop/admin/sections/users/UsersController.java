@@ -7,6 +7,7 @@ import com.obar.bll.admin.AdminUserCommand;
 import com.obar.bll.admin.AdminUserDTO;
 import com.obar.desktop.admin.sections.AdminSectionController;
 import com.obar.desktop.admin.shared.AdminFormatUtils;
+import com.obar.desktop.admin.shared.AdminImageUtils;
 import com.obar.desktop.admin.shared.AdminModalIncludeController;
 import com.obar.desktop.admin.shared.AdminPdfExportService;
 import com.obar.model.enums.AccountStatus;
@@ -22,6 +23,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
@@ -109,6 +111,8 @@ public abstract class UsersController implements AdminSectionController {
     protected VBox detailPanel;
     @FXML
     protected Label detailInitialsLabel;
+    @FXML
+    protected ImageView detailPhotoImage;
     @FXML
     protected Label detailTitleLabel;
     @FXML
@@ -392,6 +396,7 @@ public abstract class UsersController implements AdminSectionController {
             return;
         }
         allUsers.setAll(adminService.listUsersByType(sectionConfig().type()));
+        allUsers.forEach(user -> AdminImageUtils.preload(user.photoUrl()));
         applyUserFilter();
         updateCountLabels();
     }
@@ -529,6 +534,7 @@ public abstract class UsersController implements AdminSectionController {
 
         UserSectionConfig config = sectionConfig();
         setLabelText(detailInitialsLabel, AdminFormatUtils.extractInitials(user.name()));
+        AdminImageUtils.showAvatar(detailPhotoImage, detailInitialsLabel, user.photoUrl(), 54);
         setLabelText(detailTitleLabel, "Detalhe do " + config.badgeLabel().toLowerCase(Locale.ROOT));
         setLabelText(detailNameLabel, AdminFormatUtils.fallback(user.name()));
         setLabelText(detailEmailLabel, AdminFormatUtils.fallback(user.email()));

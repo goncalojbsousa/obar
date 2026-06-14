@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.obar.desktop.admin.sections.vehicles.VehiclesController">
@@ -68,6 +69,13 @@
                     <Region HBox.hgrow="ALWAYS" />
                     <Button text="X" onAction="#handleCloseDetailPanel" styleClass="detail-close" />
                 </HBox>
+                <StackPane minWidth="288.0" minHeight="150.0" maxWidth="288.0" maxHeight="150.0"
+                    styleClass="detail-vehicle-photo">
+                    <Label fx:id="detailVehiclePhotoFallback" text="Sem fotografia"
+                        styleClass="detail-vehicle-photo-fallback" />
+                    <ImageView fx:id="detailVehiclePhotoImage" fitWidth="288.0" fitHeight="150.0"
+                        preserveRatio="false" visible="false" />
+                </StackPane>
                 <Label fx:id="detailVehicleLabel" text="Sem selecao" styleClass="detail-name" />
                 <Label fx:id="detailLicensePlateLabel" text="-" styleClass="admin-subtitle" />
                 <HBox spacing="6.0">

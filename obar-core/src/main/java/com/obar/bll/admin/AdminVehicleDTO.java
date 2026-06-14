@@ -17,7 +17,8 @@ public record AdminVehicleDTO(
         String category,
         BigDecimal baseFare,
         BigDecimal pricePerKm,
-        Boolean active) {
+        Boolean active,
+        String photoUrl) {
 
     public static AdminVehicleDTO from(Vehicle vehicle) {
         User driver = vehicle.getDriver();
@@ -33,7 +34,8 @@ public record AdminVehicleDTO(
                 vehicle.getCategory(),
                 vehicle.getBaseFare(),
                 vehicle.getPricePerKm(),
-                vehicle.getActive());
+                vehicle.getActive(),
+                vehicle.getPhotoUrl());
     }
 
     public String vehicleName() {
